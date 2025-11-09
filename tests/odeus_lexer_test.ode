@@ -1,0 +1,25 @@
+; comment, should skip
+(
+
+) ; parenthesies
+
+"string"
+
+"string with escapes: \" \n \t \r '"
+
+;; numbers
+1 ; positive integer
+-1 ; negative integer
+0.1 ; positive float
+-0.1 ; negative float
+
+;; atoms
+
+atom
+*atom*
+abcdefghijklmnoprstqwxyz_ABCDEFGHIJKLMNOPRSTQWXYZ-0123456789/:.*+_=-!?<>@$%^&
+
+;; quote
+'(
+)
+'quoted-atom
