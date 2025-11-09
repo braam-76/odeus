@@ -45,4 +45,4 @@ Contributions and feedback are welcome. Open an issue or submit a pull request.
 
 ## License
 
-No license at the moment
+See [LICENSE](LICENSE)
