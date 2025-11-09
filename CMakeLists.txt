@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-include_directories(core include)
+include_directories(core test)
 
 add_library(odeus_lexer OBJECT core/odeus_lexer.c)
 

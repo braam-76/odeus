@@ -1,9 +1,9 @@
 ; comment, should skip
 (
 
-) ; parenthesies
+   ) ; parenthesies
 
-"string"
+       "string"
 
 "string with escapes: \" \n \t \r '"
 
@@ -16,7 +16,7 @@
 ;; atoms
 
 atom
-*atom*
+                                                                                                    *atom*
 abcdefghijklmnoprstqwxyz_ABCDEFGHIJKLMNOPRSTQWXYZ-0123456789/:.*+_=-!?<>@$%^&
 
 ;; quote

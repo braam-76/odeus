@@ -9,7 +9,7 @@
 
 typedef enum
 {
-  TOKEN_NONE,
+  TOKEN_NONE = 0,
   TOKEN_OPEN_PAREN,
   TOKEN_CLOSE_PAREN,
   TOKEN_QUOTE,
@@ -27,6 +27,7 @@ typedef struct
   core_Token_Type type;
   char *value;
   size_t line;
+  size_t column;
   size_t position;
 } core_Token;
 
