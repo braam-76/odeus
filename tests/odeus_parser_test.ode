@@ -1,0 +1,4 @@
+(print t "Hello, world" (+ 1 0.2))
+
+(def something (arg1 arg2)
+  (print '(+ arg1 arg2)))
