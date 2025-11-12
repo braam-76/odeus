@@ -11,28 +11,28 @@
 // Internal helpers
 // ───────────────────────────────
 
-static char peek (core_Lexer *lexer);
-static char peek_next (core_Lexer *lexer, int n);
-static void advance (core_Lexer *lexer);
-static void panic (core_Lexer *lexer, const char *message);
+static char peek (Lexer *lexer);
+static char peek_next (Lexer *lexer, int n);
+static void advance (Lexer *lexer);
+static void panic (Lexer *lexer, const char *message);
 static bool is_allowed_for_atom (char ch);
 static char *copy_substring (const char *src, size_t start, size_t end);
 
-static core_Token string_token (core_Lexer *lexer);
-static core_Token number_token (core_Lexer *lexer);
-static core_Token atom_token (core_Lexer *lexer);
+static Token string_token (Lexer *lexer);
+static Token number_token (Lexer *lexer);
+static Token atom_token (Lexer *lexer);
 
-static core_Token create_token (core_Lexer *lexer, core_Token_Type type);
-static core_Token create_token_with_value (core_Lexer *lexer, core_Token_Type type, char *value);
+static Token create_token (Lexer *lexer, Token_Type type);
+static Token create_token_with_value (Lexer *lexer, Token_Type type, char *value);
 
 // ───────────────────────────────
-// Lexer initialization
+// Lexer
 // ───────────────────────────────
 
-core_Lexer
-core_lexer_init (const char *filename, const char *source, size_t source_size)
+Lexer
+lexer_init (char *filename, char *source, size_t source_size)
 {
-  core_Lexer lexer = { 0 };
+  Lexer lexer = { 0 };
 
   lexer.filename = filename;
   lexer.source = source;
@@ -45,14 +45,22 @@ core_lexer_init (const char *filename, const char *source, size_t source_size)
   return lexer;
 }
 
+void
+lexer_free (Lexer *lexer)
+{
+  free (lexer->filename);
+  free (lexer->source);
+  free (lexer);
+}
+
 // ───────────────────────────────
 // Tokenization core
 // ───────────────────────────────
 
-core_Token
-core_lexer_next_token (core_Lexer *lexer)
+Token
+lexer_next_token (Lexer *lexer)
 {
-  core_Token token_to_return = { 0 };
+  Token token_to_return = { 0 };
 
   while (true)
     {
@@ -79,7 +87,8 @@ core_lexer_next_token (core_Lexer *lexer)
         case '\'': token_to_return = create_token (lexer, TOKEN_QUOTE); break;
 
         case '.':
-          if (is_allowed_for_atom (peek_next (lexer, 1))) return atom_token (lexer);
+          if (is_allowed_for_atom (peek_next (lexer, 1)))
+            return atom_token (lexer);
           token_to_return = create_token (lexer, TOKEN_PERIOD);
           break;
 
@@ -111,7 +120,8 @@ core_lexer_next_token (core_Lexer *lexer)
             }
         }
 
-      if (token_to_return.type != TOKEN_NONE) break;
+      if (token_to_return.type != TOKEN_NONE)
+        break;
     }
 
   advance (lexer);
@@ -123,30 +133,32 @@ core_lexer_next_token (core_Lexer *lexer)
 // ───────────────────────────────
 
 static inline char
-peek (core_Lexer *lexer)
+peek (Lexer *lexer)
 {
   return peek_next (lexer, 0);
 }
 
 static char
-peek_next (core_Lexer *lexer, int n)
+peek_next (Lexer *lexer, int n)
 {
   size_t pos = lexer->position + n;
-  if (pos >= lexer->source_size) return '\0';
+  if (pos >= lexer->source_size)
+    return '\0';
   return lexer->source[pos];
 }
 
 static void
-advance (core_Lexer *lexer)
+advance (Lexer *lexer)
 {
   lexer->position++;
   lexer->column++;
 }
 
 static void
-panic (core_Lexer *lexer, const char *message)
+panic (Lexer *lexer, const char *message)
 {
-  fprintf (stderr, "%s:%ld:%ld: ERROR: %s\n", lexer->filename, (long)lexer->line, (long)lexer->column, message);
+  fprintf (stderr, "%s:%ld:%ld: ERROR: %s\n", lexer->filename, (long)lexer->line,
+           (long)lexer->column, message);
   exit (EXIT_FAILURE);
 }
 
@@ -165,16 +177,16 @@ copy_substring (const char *src, size_t start, size_t end)
   return s;
 }
 
-static core_Token
-create_token (core_Lexer *lexer, core_Token_Type type)
+static Token
+create_token (Lexer *lexer, Token_Type type)
 {
   return create_token_with_value (lexer, type, NULL);
 }
 
-static core_Token
-create_token_with_value (core_Lexer *lexer, core_Token_Type type, char *value)
+static Token
+create_token_with_value (Lexer *lexer, Token_Type type, char *value)
 {
-  core_Token token = { 0 };
+  Token token = { 0 };
   token.type = type;
   token.value = value;
   token.line = lexer->line;
@@ -189,19 +201,21 @@ create_token_with_value (core_Lexer *lexer, core_Token_Type type, char *value)
 // Token parsing functions
 // ───────────────────────────────
 
-static core_Token
-string_token (core_Lexer *lexer)
+static Token
+string_token (Lexer *lexer)
 {
   advance (lexer); // skip opening quote
 
   size_t capacity = 64;
   size_t length = 0;
   char *buffer = malloc (capacity);
-  if (!buffer) panic (lexer, "out of memory");
+  if (!buffer)
+    panic (lexer, "out of memory");
 
   while (peek (lexer) != '"' && peek (lexer) != '\0')
     {
-      if (peek (lexer) == '\n') panic (lexer, "incomplete string");
+      if (peek (lexer) == '\n')
+        panic (lexer, "incomplete string");
 
       char c = ' ';
 
@@ -238,7 +252,8 @@ string_token (core_Lexer *lexer)
       advance (lexer);
     }
 
-  if (peek (lexer) != '"') panic (lexer, "unterminated string literal");
+  if (peek (lexer) != '"')
+    panic (lexer, "unterminated string literal");
 
   buffer[length] = '\0';
   advance (lexer); // skip closing quote
@@ -246,19 +261,21 @@ string_token (core_Lexer *lexer)
   return create_token_with_value (lexer, TOKEN_STRING, buffer);
 }
 
-static core_Token
-number_token (core_Lexer *lexer)
+static Token
+number_token (Lexer *lexer)
 {
   size_t number_start = lexer->position;
   bool is_float = false;
 
-  if (peek (lexer) == '-') advance (lexer);
+  if (peek (lexer) == '-')
+    advance (lexer);
 
   while (isdigit (peek (lexer)) || peek (lexer) == '.')
     {
       if (peek (lexer) == '.')
         {
-          if (is_float) panic (lexer, "multiple '.' in number");
+          if (is_float)
+            panic (lexer, "multiple '.' in number");
           is_float = true;
         }
       advance (lexer);
@@ -267,12 +284,12 @@ number_token (core_Lexer *lexer)
   size_t number_end = lexer->position;
   char *number = copy_substring (lexer->source, number_start, number_end);
 
-  core_Token_Type type = is_float ? TOKEN_FLOAT : TOKEN_INTEGER;
+  Token_Type type = is_float ? TOKEN_FLOAT : TOKEN_INTEGER;
   return create_token_with_value (lexer, type, number);
 }
 
-static core_Token
-atom_token (core_Lexer *lexer)
+static Token
+atom_token (Lexer *lexer)
 {
   size_t atom_start = lexer->position;
 
@@ -292,7 +309,8 @@ atom_token (core_Lexer *lexer)
 static bool
 is_allowed_for_atom (char ch)
 {
-  if (ch == '\0') return false;
+  if (ch == '\0')
+    return false;
 
   const char *not_allowed = " \t\n\r()[]\";,\'|\\#";
   return strchr (not_allowed, ch) == NULL;

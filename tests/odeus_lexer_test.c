@@ -7,13 +7,17 @@
 #include "../core/odeus_token.h"
 #include "utest.h"
 
-static core_Lexer lexer;
-const char *filename = NULL;
+static Lexer lexer;
+char *filename = NULL;
 
 UTEST (odeus_lexer, init)
 {
   FILE *f = fopen (filename, "r");
-  ASSERT_TRUE (f != NULL);
+  if (!f)
+    {
+      fprintf (stderr, "ERROR: utest_odeus_lexer_init: could not open file: %s\n", strerror (errno));
+      exit (1);
+    }
 
   fseek (f, 0, SEEK_END);
   size_t source_size = ftell (f);
@@ -26,7 +30,7 @@ UTEST (odeus_lexer, init)
   source[bytes_read] = '\0';
   fclose (f);
 
-  lexer = core_lexer_init (filename, source, source_size);
+  lexer = lexer_init (filename, source, source_size);
 
   ASSERT_EQ (filename, lexer.filename);
   ASSERT_EQ (source, lexer.source);
@@ -35,12 +39,12 @@ UTEST (odeus_lexer, init)
 
 UTEST (odeus_lexer, parenthesis)
 {
-  core_Token open_paren = core_lexer_next_token (&lexer);
+  Token open_paren = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_OPEN_PAREN, (int)open_paren.type);
   ASSERT_EQ ((size_t)2, open_paren.line);
   ASSERT_EQ ((size_t)0, open_paren.column);
 
-  core_Token close_paren = core_lexer_next_token (&lexer);
+  Token close_paren = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_CLOSE_PAREN, (int)close_paren.type);
   ASSERT_EQ ((size_t)4, close_paren.line);
   ASSERT_EQ ((size_t)3, close_paren.column);
@@ -48,13 +52,13 @@ UTEST (odeus_lexer, parenthesis)
 
 UTEST (odeus_lexer, strings)
 {
-  core_Token string = core_lexer_next_token (&lexer);
+  Token string = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_STRING, (int)string.type);
   ASSERT_STREQ (string.value, "string");
   ASSERT_EQ ((size_t)6, string.line);
   ASSERT_EQ ((size_t)7, string.column);
 
-  core_Token string_with_escapes = core_lexer_next_token (&lexer);
+  Token string_with_escapes = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_STRING, (int)string_with_escapes.type);
   ASSERT_STREQ (string_with_escapes.value, "string with escapes: \" \n \t \r '");
   ASSERT_EQ ((size_t)8, string_with_escapes.line);
@@ -63,25 +67,25 @@ UTEST (odeus_lexer, strings)
 
 UTEST (odeus_lexer, numbers)
 {
-  core_Token positive_number = core_lexer_next_token (&lexer);
+  Token positive_number = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_INTEGER, (int)positive_number.type);
   ASSERT_STREQ (positive_number.value, "1");
   ASSERT_EQ ((size_t)11, positive_number.line);
   ASSERT_EQ ((size_t)0, positive_number.column);
 
-  core_Token negative_integer = core_lexer_next_token (&lexer);
+  Token negative_integer = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_INTEGER, (int)negative_integer.type);
   ASSERT_STREQ (negative_integer.value, "-1");
   ASSERT_EQ ((size_t)12, negative_integer.line);
   ASSERT_EQ ((size_t)0, negative_integer.column);
 
-  core_Token positive_float = core_lexer_next_token (&lexer);
+  Token positive_float = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_FLOAT, (int)positive_float.type);
   ASSERT_STREQ (positive_float.value, "0.1");
   ASSERT_EQ ((size_t)13, positive_float.line);
   ASSERT_EQ ((size_t)0, positive_float.column);
 
-  core_Token negative_float = core_lexer_next_token (&lexer);
+  Token negative_float = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_FLOAT, (int)negative_float.type);
   ASSERT_STREQ (negative_float.value, "-0.1");
   ASSERT_EQ ((size_t)14, negative_float.line);
@@ -89,19 +93,19 @@ UTEST (odeus_lexer, numbers)
 }
 UTEST (odeus_lexer, atoms)
 {
-  core_Token atom = core_lexer_next_token (&lexer);
+  Token atom = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_ATOM, (int)atom.type);
   ASSERT_STREQ (atom.value, "atom");
   ASSERT_EQ ((size_t)18, atom.line);
   ASSERT_EQ ((size_t)0, atom.column);
 
-  core_Token starred_atom = core_lexer_next_token (&lexer);
+  Token starred_atom = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_ATOM, (int)starred_atom.type);
   ASSERT_STREQ (starred_atom.value, "*atom*");
   ASSERT_EQ ((size_t)19, starred_atom.line);
   ASSERT_EQ ((size_t)100, starred_atom.column);
 
-  core_Token all_characters_atom = core_lexer_next_token (&lexer);
+  Token all_characters_atom = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_ATOM, (int)all_characters_atom.type);
   ASSERT_STREQ (all_characters_atom.value,
                 "abcdefghijklmnoprstqwxyz_ABCDEFGHIJKLMNOPRSTQWXYZ-0123456789/:.*+_=-!?<>@$%^&");
@@ -111,17 +115,17 @@ UTEST (odeus_lexer, atoms)
 
 UTEST (odeus_lexer, quote_before_parens)
 {
-  core_Token quote = core_lexer_next_token (&lexer);
+  Token quote = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_QUOTE, (int)quote.type);
   ASSERT_EQ ((size_t)23, quote.line);
   ASSERT_EQ ((size_t)0, quote.column);
 
-  core_Token open_paren = core_lexer_next_token (&lexer);
+  Token open_paren = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_OPEN_PAREN, (int)open_paren.type);
   ASSERT_EQ ((size_t)23, open_paren.line);
   ASSERT_EQ ((size_t)1, open_paren.column);
 
-  core_Token close_paren = core_lexer_next_token (&lexer);
+  Token close_paren = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_CLOSE_PAREN, (int)close_paren.type);
   ASSERT_EQ ((size_t)24, close_paren.line);
   ASSERT_EQ ((size_t)0, close_paren.column);
@@ -129,12 +133,12 @@ UTEST (odeus_lexer, quote_before_parens)
 
 UTEST (odeus_lexer, quote_before_atom)
 {
-  core_Token quote = core_lexer_next_token (&lexer);
+  Token quote = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_QUOTE, (int)quote.type);
   ASSERT_EQ ((size_t)25, quote.line);
   ASSERT_EQ ((size_t)0, quote.column);
 
-  core_Token atom = core_lexer_next_token (&lexer);
+  Token atom = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_ATOM, (int)atom.type);
   ASSERT_STREQ (atom.value, "quoted-atom");
   ASSERT_EQ ((size_t)25, atom.line);
@@ -142,7 +146,7 @@ UTEST (odeus_lexer, quote_before_atom)
 }
 UTEST (odeus_lexer, end_of_file)
 {
-  core_Token end_of_file = core_lexer_next_token (&lexer);
+  Token end_of_file = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_END_OF_FILE, (int)end_of_file.type);
   ASSERT_EQ ((size_t)26, end_of_file.line);
   ASSERT_EQ ((size_t)0, end_of_file.column);

@@ -1,8 +1,6 @@
 #ifndef ODEUS_CORE_TOKEN_H_
 #define ODEUS_CORE_TOKEN_H_
 
-// #include "odeus_utils.h"
-
 #include <stddef.h>
 
 #define MAX_LENGTH_NAME 255
@@ -20,19 +18,19 @@ typedef enum
   TOKEN_STRING,
   TOKEN_ATOM,
   TOKEN_END_OF_FILE
-} core_Token_Type;
+} Token_Type;
 
 typedef struct
 {
-  core_Token_Type type;
+  Token_Type type;
   char *value;
   size_t line;
   size_t column;
   size_t position;
-} core_Token;
+} Token;
 
 static inline const char *
-core_token_type_as_str (core_Token_Type token_type)
+token_type_as_str (Token_Type token_type)
 {
   switch (token_type)
     {
@@ -51,4 +49,4 @@ core_token_type_as_str (core_Token_Type token_type)
     }
 }
 
-#endif // ODEUS_CORE_TOKEN_H_
+#endif // ODEUS_TOKEN_H_

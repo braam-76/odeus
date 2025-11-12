@@ -12,16 +12,17 @@
 
 typedef struct
 {
-  const char *filename;
-  const char *source;
+  char *filename;
+  char *source;
   size_t source_size;
   size_t position;
   size_t line;
   size_t column;
   size_t token_start_column; // special field to fix tokens column value problem
-} core_Lexer;
+} Lexer;
 
-core_Lexer core_lexer_init (const char *filename, const char *source, size_t source_size);
-core_Token core_lexer_next_token (core_Lexer *lexer);
+Lexer lexer_init (char *filename, char *source, size_t source_size);
+Token lexer_next_token (Lexer *lexer);
+void lexer_free (Lexer *lexer);
 
 #endif // ODEUS_LEXER_H_
