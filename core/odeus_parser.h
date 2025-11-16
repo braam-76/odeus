@@ -14,12 +14,14 @@
 typedef enum
 {
   AST_NIL,
-  AST_ATOM,
+  AST_SYMBOL,
   AST_INTEGER,
   AST_FLOAT,
   AST_STRING,
   AST_QUOTE,
   AST_CONS,
+  AST_LAMBDA,
+
   AST_FILE,
   AST_END_OF_FILE,
 } AST_Node_Type;
@@ -32,16 +34,25 @@ typedef struct AST
     long INTEGER;
     double FLOAT;
     char *STRING;
-    char *ATOM;
+    char *SYMBOL;
+
     struct
     {
       struct AST *EXPR;
     } QUOTE;
+
     struct
     {
       struct AST *CAR;
       struct AST *CDR;
     } CONS;
+
+    struct
+    {
+      struct AST *ARGUMENTS;
+      struct AST *BODY;
+    } LAMBDA;
+
     struct
     {
       struct AST **BODY;

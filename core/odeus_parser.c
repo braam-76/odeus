@@ -6,17 +6,21 @@
  *      | '(' expr '.' expr ')'
  *      | list
  *      | quote
+ *      | lambda
  */
 static AST_Node *parse_expr (Lexer *lexer, Token *token);
 
 /* list = '(' expr+ ')' */
 static AST_Node *parse_list (Lexer *lexer);
 
-/* literal = ATOM | INTEGER | FLOAT | STRING */
+/* literal = SYMBOL | INTEGER | FLOAT | STRING */
 static AST_Node *parse_literal (Lexer *lexer, Token *token);
 
 /* quote = '\'' expr  */
 static AST_Node *parse_quote (Lexer *lexer, Token *token);
+
+/* lambda = '(' id* ')' '(' expr+ ')'  */
+static AST_Node *parse_lambda (Lexer *lexer);
 
 // helper functions for ast
 static void ast_file_append (AST_Node *file, AST_Node *expr);
@@ -77,7 +81,7 @@ parse_expr (Lexer *lexer, Token *token)
     case TOKEN_INTEGER: return parse_literal (lexer, token);
     case TOKEN_FLOAT: return parse_literal (lexer, token);
     case TOKEN_STRING: return parse_literal (lexer, token);
-    case TOKEN_ATOM: return parse_literal (lexer, token);
+    case TOKEN_SYMBOL: return parse_literal (lexer, token);
     case TOKEN_OPEN_PAREN: return parse_list (lexer);
     case TOKEN_QUOTE: return parse_quote (lexer, token);
 
@@ -111,12 +115,72 @@ parse_expr (Lexer *lexer, Token *token)
 }
 
 static AST_Node *
+parse_lambda (Lexer *lexer)
+{ // lambda symbol is already consumed at this point
+  AST_Node *node = malloc (sizeof (AST_Node));
+  if (!node)
+    {
+      fprintf (stderr, "ERROR: parse_lambda: Memory allocation failure\n");
+      exit (1);
+    }
+
+  node->type = AST_LAMBDA;
+
+  // lambda arguments: id* (which is just list of SYMBOLS)
+  Token token = lexer_next_token (lexer);
+  if (token.type != TOKEN_OPEN_PAREN)
+    parser_panic (&token, lexer->filename, "Expected '(' after lambda symbol");
+
+  AST_Node *arguments_head = NULL;
+  AST_Node **arguments_tail = &arguments_head;
+
+  token = lexer_next_token (lexer);
+  while (token.type == TOKEN_SYMBOL)
+    {
+      AST_Node *symbol = parse_literal (lexer, &token);
+      *arguments_tail = make_cons (symbol, make_nil ());
+      arguments_tail = &(*arguments_tail)->value.CONS.CDR;
+
+      token = lexer_next_token (lexer);
+    }
+
+  if (token.type != TOKEN_CLOSE_PAREN)
+    parser_panic (&token, lexer->filename, "Expected ')' after lambda arguments");
+
+  node->value.LAMBDA.ARGUMENTS = arguments_head ? arguments_head : make_nil ();
+
+  // lambda body: expr+
+  AST_Node *body_head = NULL;
+  AST_Node **body_tail = &body_head;
+
+  token = lexer_next_token (lexer);
+  while (token.type != TOKEN_CLOSE_PAREN)
+    {
+      AST_Node *expression = parse_expr (lexer, &token);
+      if (expression)
+        {
+          *body_tail = make_cons (expression, make_nil ());
+          body_tail = &(*body_tail)->value.CONS.CDR;
+        }
+
+      token = lexer_next_token (lexer);
+    }
+
+  node->value.LAMBDA.BODY = body_head ? body_head : make_nil ();
+
+  return node;
+}
+
+static AST_Node *
 parse_list (Lexer *lexer)
 { // Open parenthesis is already "consumed"
+  Token token = lexer_next_token (lexer);
+  if (token.type == TOKEN_SYMBOL && strcmp (token.value, "lambda") == 0)
+    return parse_lambda (lexer);
+
   AST_Node *head = NULL;
   AST_Node **tail = &head; // Pointer to the last CDR pointer
 
-  Token token = lexer_next_token (lexer);
   while (token.type != TOKEN_END_OF_FILE && token.type != TOKEN_CLOSE_PAREN)
     {
       AST_Node *expr = parse_expr (lexer, &token);
@@ -196,10 +260,10 @@ parse_literal (Lexer *lexer, Token *token)
           exit (1);
         }
       break;
-    case TOKEN_ATOM:
-      literal->type = AST_ATOM;
-      literal->value.ATOM = strdup (token->value);
-      if (!literal->value.ATOM)
+    case TOKEN_SYMBOL:
+      literal->type = AST_SYMBOL;
+      literal->value.SYMBOL = strdup (token->value);
+      if (!literal->value.SYMBOL)
         {
           fprintf (stderr, "ERROR: parse_literal: Memory allocation error: %s", strerror (errno));
           free (literal);
@@ -289,7 +353,7 @@ ast_print (AST_Node *node)
     {
     case AST_NIL: printf ("()"); break;
 
-    case AST_ATOM: printf ("%s", node->value.ATOM); break;
+    case AST_SYMBOL: printf ("%s", node->value.SYMBOL); break;
 
     case AST_INTEGER: printf ("%ld", node->value.INTEGER); break;
 
@@ -323,6 +387,14 @@ ast_print (AST_Node *node)
       printf (")");
       break;
 
+    case AST_LAMBDA:
+      printf ("(lambda ");
+      ast_print (node->value.LAMBDA.ARGUMENTS);
+      printf (" ");
+      ast_print (node->value.LAMBDA.BODY);
+      printf (")");
+      break;
+
     case AST_FILE: ast_print_file (node); break;
 
     case AST_END_OF_FILE: printf ("#<EOF>"); break;
@@ -348,9 +420,9 @@ ast_print_pretty (AST_Node *node, int indent_level)
       printf ("()\n");
       break;
 
-    case AST_ATOM:
+    case AST_SYMBOL:
       print_indent (indent_level);
-      printf ("ATOM: %s\n", node->value.ATOM);
+      printf ("SYMBOL: %s\n", node->value.SYMBOL);
       break;
 
     case AST_INTEGER:
@@ -383,6 +455,17 @@ ast_print_pretty (AST_Node *node, int indent_level)
       print_indent (indent_level + 1);
       printf ("CDR:\n");
       ast_print_pretty (node->value.CONS.CDR, indent_level + 2);
+      break;
+
+    case AST_LAMBDA:
+      print_indent (indent_level);
+      printf ("LAMBDA:\n");
+      print_indent (indent_level + 1);
+      printf ("ARGUMENTS:\n");
+      ast_print_pretty (node->value.LAMBDA.ARGUMENTS, indent_level + 2);
+      print_indent (indent_level + 1);
+      printf ("BODY:\n");
+      ast_print_pretty (node->value.LAMBDA.BODY, indent_level + 2);
       break;
 
     case AST_FILE:
