@@ -15,12 +15,12 @@ static char peek (Lexer *lexer);
 static char peek_next (Lexer *lexer, int n);
 static void advance (Lexer *lexer);
 static void panic (Lexer *lexer, const char *message);
-static bool is_allowed_for_atom (char ch);
+static bool is_allowed_for_symbol (char ch);
 static char *copy_substring (const char *src, size_t start, size_t end);
 
 static Token string_token (Lexer *lexer);
 static Token number_token (Lexer *lexer);
-static Token atom_token (Lexer *lexer);
+static Token symbol_token (Lexer *lexer);
 
 static Token create_token (Lexer *lexer, Token_Type type);
 static Token create_token_with_value (Lexer *lexer, Token_Type type, char *value);
@@ -40,7 +40,7 @@ lexer_init (char *filename, char *source, size_t source_size)
   lexer.position = 0;
   lexer.line = 1;
   lexer.column = 0;
-  lexer.token_start_column = 0; // new field initialization
+  lexer.token_start_column = 0;
 
   return lexer;
 }
@@ -61,12 +61,9 @@ Token
 lexer_next_token (Lexer *lexer)
 {
   Token token_to_return = { 0 };
-
   while (true)
-    {
-      // record start column before consuming
+    { // record start column before consuming
       lexer->token_start_column = lexer->column - 1;
-
       switch (peek (lexer))
         {
         // Whitespace
@@ -87,8 +84,8 @@ lexer_next_token (Lexer *lexer)
         case '\'': token_to_return = create_token (lexer, TOKEN_QUOTE); break;
 
         case '.':
-          if (is_allowed_for_atom (peek_next (lexer, 1)))
-            return atom_token (lexer);
+          if (is_allowed_for_symbol (peek_next (lexer, 1)))
+            return symbol_token (lexer);
           token_to_return = create_token (lexer, TOKEN_PERIOD);
           break;
 
@@ -104,14 +101,12 @@ lexer_next_token (Lexer *lexer)
         // End of file
         case '\0': token_to_return = create_token (lexer, TOKEN_END_OF_FILE); break;
 
-        // Numbers or atoms
+        // Numbers or symbols
         default:
           if (isdigit (peek (lexer)) || (peek (lexer) == '-' && isdigit (peek_next (lexer, 1))))
             return number_token (lexer);
-
-          else if (is_allowed_for_atom (peek (lexer)))
-            return atom_token (lexer);
-
+          else if (is_allowed_for_symbol (peek (lexer)))
+            return symbol_token (lexer);
           else
             {
               char buf[64];
@@ -191,7 +186,6 @@ create_token_with_value (Lexer *lexer, Token_Type type, char *value)
   token.value = value;
   token.line = lexer->line;
 
-  // ✅ FIX: use start column, not current column
   token.column = lexer->token_start_column;
 
   return token;
@@ -289,17 +283,17 @@ number_token (Lexer *lexer)
 }
 
 static Token
-atom_token (Lexer *lexer)
+symbol_token (Lexer *lexer)
 {
-  size_t atom_start = lexer->position;
+  size_t symbol_start = lexer->position;
 
-  while (is_allowed_for_atom (peek (lexer)))
+  while (is_allowed_for_symbol (peek (lexer)))
     advance (lexer);
 
-  size_t atom_end = lexer->position;
-  char *atom = copy_substring (lexer->source, atom_start, atom_end);
+  size_t symbol_end = lexer->position;
+  char *symbol = copy_substring (lexer->source, symbol_start, symbol_end);
 
-  return create_token_with_value (lexer, TOKEN_ATOM, atom);
+  return create_token_with_value (lexer, TOKEN_SYMBOL, symbol);
 }
 
 // ───────────────────────────────
@@ -307,11 +301,10 @@ atom_token (Lexer *lexer)
 // ───────────────────────────────
 
 static bool
-is_allowed_for_atom (char ch)
+is_allowed_for_symbol (char ch)
 {
   if (ch == '\0')
     return false;
-
   const char *not_allowed = " \t\n\r()[]\";,\'|\\#";
   return strchr (not_allowed, ch) == NULL;
 }

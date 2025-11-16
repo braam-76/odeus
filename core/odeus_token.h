@@ -16,7 +16,7 @@ typedef enum
   TOKEN_INTEGER,
   TOKEN_FLOAT,
   TOKEN_STRING,
-  TOKEN_ATOM,
+  TOKEN_SYMBOL,
   TOKEN_END_OF_FILE
 } Token_Type;
 
@@ -43,7 +43,7 @@ token_type_as_str (Token_Type token_type)
     case TOKEN_INTEGER:     return "TOKEN_INTEGER";
     case TOKEN_FLOAT:       return "TOKEN_FLOAT";
     case TOKEN_STRING:      return "TOKEN_STRING";
-    case TOKEN_ATOM:        return "TOKEN_ATOM";
+    case TOKEN_SYMBOL:      return "TOKEN_SYMBOL";
     case TOKEN_END_OF_FILE: return "TOKEN_END_OF_FILE";
     default:                return "Unknown token type";
     }

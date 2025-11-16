@@ -13,13 +13,13 @@
 0.1 ; positive float
 -0.1 ; negative float
 
-;; atoms
+;; symbols
 
-atom
-                                                                                                    *atom*
+symbol
+                                                                                                    *symbol*
 abcdefghijklmnoprstqwxyz_ABCDEFGHIJKLMNOPRSTQWXYZ-0123456789/:.*+_=-!?<>@$%^&
 
 ;; quote
 '(
 )
-'quoted-atom
+'quoted-symbol

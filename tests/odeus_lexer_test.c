@@ -91,26 +91,26 @@ UTEST (odeus_lexer, numbers)
   ASSERT_EQ ((size_t)14, negative_float.line);
   ASSERT_EQ ((size_t)0, negative_float.column);
 }
-UTEST (odeus_lexer, atoms)
+UTEST (odeus_lexer, symbols)
 {
-  Token atom = lexer_next_token (&lexer);
-  ASSERT_EQ (TOKEN_ATOM, (int)atom.type);
-  ASSERT_STREQ (atom.value, "atom");
-  ASSERT_EQ ((size_t)18, atom.line);
-  ASSERT_EQ ((size_t)0, atom.column);
+  Token symbol = lexer_next_token (&lexer);
+  ASSERT_EQ (TOKEN_SYMBOL, (int)symbol.type);
+  ASSERT_STREQ (symbol.value, "symbol");
+  ASSERT_EQ ((size_t)18, symbol.line);
+  ASSERT_EQ ((size_t)0, symbol.column);
 
-  Token starred_atom = lexer_next_token (&lexer);
-  ASSERT_EQ (TOKEN_ATOM, (int)starred_atom.type);
-  ASSERT_STREQ (starred_atom.value, "*atom*");
-  ASSERT_EQ ((size_t)19, starred_atom.line);
-  ASSERT_EQ ((size_t)100, starred_atom.column);
+  Token starred_symbol = lexer_next_token (&lexer);
+  ASSERT_EQ (TOKEN_SYMBOL, (int)starred_symbol.type);
+  ASSERT_STREQ (starred_symbol.value, "*symbol*");
+  ASSERT_EQ ((size_t)19, starred_symbol.line);
+  ASSERT_EQ ((size_t)100, starred_symbol.column);
 
-  Token all_characters_atom = lexer_next_token (&lexer);
-  ASSERT_EQ (TOKEN_ATOM, (int)all_characters_atom.type);
-  ASSERT_STREQ (all_characters_atom.value,
+  Token all_characters_symbol = lexer_next_token (&lexer);
+  ASSERT_EQ (TOKEN_SYMBOL, (int)all_characters_symbol.type);
+  ASSERT_STREQ (all_characters_symbol.value,
                 "abcdefghijklmnoprstqwxyz_ABCDEFGHIJKLMNOPRSTQWXYZ-0123456789/:.*+_=-!?<>@$%^&");
-  ASSERT_EQ ((size_t)20, all_characters_atom.line);
-  ASSERT_EQ ((size_t)0, all_characters_atom.column);
+  ASSERT_EQ ((size_t)20, all_characters_symbol.line);
+  ASSERT_EQ ((size_t)0, all_characters_symbol.column);
 }
 
 UTEST (odeus_lexer, quote_before_parens)
@@ -131,18 +131,18 @@ UTEST (odeus_lexer, quote_before_parens)
   ASSERT_EQ ((size_t)0, close_paren.column);
 }
 
-UTEST (odeus_lexer, quote_before_atom)
+UTEST (odeus_lexer, quote_before_symbol)
 {
   Token quote = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_QUOTE, (int)quote.type);
   ASSERT_EQ ((size_t)25, quote.line);
   ASSERT_EQ ((size_t)0, quote.column);
 
-  Token atom = lexer_next_token (&lexer);
-  ASSERT_EQ (TOKEN_ATOM, (int)atom.type);
-  ASSERT_STREQ (atom.value, "quoted-atom");
-  ASSERT_EQ ((size_t)25, atom.line);
-  ASSERT_EQ ((size_t)1, atom.column);
+  Token symbol = lexer_next_token (&lexer);
+  ASSERT_EQ (TOKEN_SYMBOL, (int)symbol.type);
+  ASSERT_STREQ (symbol.value, "quoted-symbol");
+  ASSERT_EQ ((size_t)25, symbol.line);
+  ASSERT_EQ ((size_t)1, symbol.column);
 }
 UTEST (odeus_lexer, end_of_file)
 {
