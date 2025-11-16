@@ -19,11 +19,11 @@ Odeus Lisp language implementation in progress.
 
 ## Roadmap
 
-[x] Lexer (Nov. 9, 2025)
-[x] Parser (Nov. 12, 2025)
-[ ] Interpreter/VM (Dont know yet) | Evaluation
-[ ] Standard library
-[ ] REPL
+- [x] Lexer (Nov. 9, 2025)
+- [x] Parser (Nov. 12, 2025)
+- [ ] Interpreter/VM (Dont know yet) | Evaluation
+- [ ] Standard library
+- [ ] REPL
 
 ## Contributing
 
