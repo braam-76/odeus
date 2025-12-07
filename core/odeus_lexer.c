@@ -30,7 +30,7 @@ static Token create_token_with_value (Lexer *lexer, Token_Type type, char *value
 // ───────────────────────────────
 
 Lexer
-lexer_init (char *filename, char *source, size_t source_size)
+lexer_from_file (char *filename, char *source, size_t source_size)
 {
   Lexer lexer = { 0 };
 
@@ -44,6 +44,23 @@ lexer_init (char *filename, char *source, size_t source_size)
 
   return lexer;
 }
+
+Lexer
+lexer_from_string (char *source, size_t source_size)
+{
+  Lexer lexer = { 0 };
+
+  lexer.filename = "#<from_string>";
+  lexer.source = source;
+  lexer.source_size = source_size;
+  lexer.position = 0;
+  lexer.line = 1;
+  lexer.column = 0;
+  lexer.token_start_column = 0;
+
+  return lexer;
+}
+
 
 void
 lexer_free (Lexer *lexer)

@@ -30,7 +30,7 @@ UTEST (odeus_lexer, init)
   source[bytes_read] = '\0';
   fclose (f);
 
-  lexer = lexer_init (filename, source, source_size);
+  lexer = lexer_from_file (filename, source, source_size);
 
   ASSERT_EQ (filename, lexer.filename);
   ASSERT_EQ (source, lexer.source);

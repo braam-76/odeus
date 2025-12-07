@@ -21,7 +21,8 @@ typedef struct
   size_t token_start_column; // special field to fix tokens column value problem
 } Lexer;
 
-Lexer lexer_init (char *filename, char *source, size_t source_size);
+Lexer lexer_from_file (char *filename, char *source, size_t source_size);
+Lexer lexer_from_string (char* source, size_t source_size);
 Token lexer_next_token (Lexer *lexer);
 void lexer_free (Lexer *lexer);
 
