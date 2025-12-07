@@ -10,280 +10,95 @@
 
 static Lexer lexer;
 static Parser *parser;
-char *filename = NULL;
 
-UTEST (odeus_parser, init)
+UTEST(odeus_parser, init)
 {
-  FILE *f = fopen (filename, "r");
+    char *source = "(print t \"Hello, world\" (+ 1 0.2))";
+    lexer = lexer_from_string(source, strlen(source));
+    parser = parser_init(&lexer);
 
-  if (!f)
+    ASSERT_TRUE(parser != NULL);
+    ASSERT_TRUE(parser->start_node != NULL);
+    ASSERT_TRUE(parser->start_node->value.CONS.CDR == nil());
+}
+
+UTEST(odeus_parser, parse_program)
+{
+    parser_parse(parser);
+
+    AST_Node *program = parser->start_node->value.CONS.CDR;
+    ASSERT_TRUE(program != nil());
+
+    // Check first top-level expression
+    AST_Node *first_expr = program->value.CONS.CAR;
+    ASSERT_EQ(first_expr->type, AST_CONS);
+
+    AST_Node *car = first_expr->value.CONS.CAR;
+    ASSERT_EQ(car->type, AST_SYMBOL);
+    ASSERT_STREQ("print", car->value.SYMBOL);
+
+    AST_Node *cdr = first_expr->value.CONS.CDR;
+    ASSERT_EQ(cdr->type, AST_CONS);
+
+    AST_Node *first_arg = cdr->value.CONS.CAR;
+    ASSERT_EQ(first_arg->type, AST_SYMBOL);
+    ASSERT_STREQ("t", first_arg->value.SYMBOL);
+
+    AST_Node *second_arg_cdr = cdr->value.CONS.CDR;
+    ASSERT_EQ(second_arg_cdr->type, AST_CONS);
+    AST_Node *second_arg = second_arg_cdr->value.CONS.CAR;
+    ASSERT_EQ(second_arg->type, AST_STRING);
+    ASSERT_STREQ("Hello, world", second_arg->value.STRING);
+
+    AST_Node *third_arg_cdr = second_arg_cdr->value.CONS.CDR;
+    ASSERT_EQ(third_arg_cdr->type, AST_CONS);
+    AST_Node *third_arg = third_arg_cdr->value.CONS.CAR;
+    ASSERT_EQ(third_arg->type, AST_CONS);
+
+    // Nested + expression
+    AST_Node *plus_expr = third_arg->value.CONS.CAR;
+    ASSERT_EQ(plus_expr->type, AST_SYMBOL);
+    ASSERT_STREQ("+", plus_expr->value.SYMBOL);
+
+    AST_Node *plus_args = third_arg->value.CONS.CDR;
+    ASSERT_EQ(plus_args->type, AST_CONS);
+
+    AST_Node *plus_first = plus_args->value.CONS.CAR;
+    ASSERT_EQ(plus_first->type, AST_INTEGER);
+    ASSERT_EQ(1, plus_first->value.INTEGER);
+
+    AST_Node *plus_second_cdr = plus_args->value.CONS.CDR;
+    ASSERT_EQ(plus_second_cdr->type, AST_CONS);
+    AST_Node *plus_second = plus_second_cdr->value.CONS.CAR;
+    ASSERT_EQ(plus_second->type, AST_FLOAT);
+    ASSERT_EQ(0.2, plus_second->value.FLOAT);
+}
+
+UTEST(odeus_parser, walk_program)
+{
+    parser_parse(parser);
+
+    AST_Node *program = parser->start_node->value.CONS.CDR;
+    size_t count = 0;
+
+    while (program && program != nil())
     {
-      fprintf (stderr, "ERROR: utest_odeus_lexer_init: could not open file: %s\n",
-               strerror (errno));
-      exit (1);
+        AST_Node *expr = program->value.CONS.CAR;
+        printf("Expr %zu: ", count);
+        ast_print(expr);
+        printf("\n");
+
+        program = program->value.CONS.CDR;
+        count++;
     }
 
-  fseek (f, 0, SEEK_END);
-  size_t source_size = ftell (f);
-  rewind (f);
-
-  char *source = malloc (source_size + 1);
-  ASSERT_TRUE (source != NULL);
-
-  size_t bytes_read = fread (source, 1, source_size, f);
-  source[bytes_read] = '\0';
-  fclose (f);
-
-  lexer = lexer_init (filename, source, source_size);
-
-  ASSERT_EQ (filename, lexer.filename);
-  ASSERT_EQ (source, lexer.source);
-  ASSERT_EQ (source_size, lexer.source_size);
-
-  parser = parser_init (&lexer);
-
-  ASSERT_EQ (filename, parser->lexer->filename);
+    ASSERT_TRUE(count > 0);
 }
 
-UTEST (odeus_parser, parsed_whole_file)
+
+UTEST_STATE();
+
+int main(int argc, const char *const argv[])
 {
-  parser_parse (parser);
-
-  ASSERT_EQ (parser->file->type, (unsigned)AST_FILE);
-  ASSERT_TRUE (parser->file->value.FILE.COUNT > 0);
-}
-
-UTEST (odeus_parser, first_cons)
-{
-  // First expression: (print t "Hello, world" (+ 1 0.2))
-  AST_Node *first_expr = parser->file->value.FILE.BODY[0];
-  ASSERT_EQ (first_expr->type, AST_CONS);
-
-  // CAR should be "print" symbol
-  AST_Node *car = first_expr->value.CONS.CAR;
-  ASSERT_EQ (car->type, AST_SYMBOL);
-  ASSERT_STREQ ("print", car->value.SYMBOL);
-
-  // CDR should be a list of arguments
-  AST_Node *cdr = first_expr->value.CONS.CDR;
-  ASSERT_EQ (cdr->type, AST_CONS);
-
-  // First argument: t (symbol)
-  AST_Node *first_arg = cdr->value.CONS.CAR;
-  ASSERT_EQ (first_arg->type, AST_SYMBOL);
-  ASSERT_STREQ ("t", first_arg->value.SYMBOL);
-
-  // Second argument: "Hello, world" (string)
-  AST_Node *second_arg_cdr = cdr->value.CONS.CDR;
-  ASSERT_EQ (second_arg_cdr->type, AST_CONS);
-  AST_Node *second_arg = second_arg_cdr->value.CONS.CAR;
-  ASSERT_EQ (second_arg->type, AST_STRING);
-  ASSERT_STREQ ("Hello, world", second_arg->value.STRING);
-
-  // Third argument: (+ 1 0.2) (nested list)
-  AST_Node *third_arg_cdr = second_arg_cdr->value.CONS.CDR;
-  ASSERT_EQ (third_arg_cdr->type, AST_CONS);
-  AST_Node *third_arg = third_arg_cdr->value.CONS.CAR;
-  ASSERT_EQ (third_arg->type, AST_CONS);
-
-  // Verify the nested expression structure
-  AST_Node *plus_expr = third_arg->value.CONS.CAR;
-  ASSERT_EQ (plus_expr->type, AST_SYMBOL);
-  ASSERT_STREQ ("+", plus_expr->value.SYMBOL);
-
-  AST_Node *plus_args = third_arg->value.CONS.CDR;
-  ASSERT_EQ (plus_args->type, AST_CONS);
-
-  // First argument to +: 1 (integer)
-  AST_Node *plus_first_arg = plus_args->value.CONS.CAR;
-  ASSERT_EQ (plus_first_arg->type, AST_INTEGER);
-  ASSERT_EQ (1, plus_first_arg->value.INTEGER);
-
-  // Second argument to +: 0.2 (float)
-  AST_Node *plus_second_arg_cdr = plus_args->value.CONS.CDR;
-  ASSERT_EQ (plus_second_arg_cdr->type, AST_CONS);
-  AST_Node *plus_second_arg = plus_second_arg_cdr->value.CONS.CAR;
-
-  ASSERT_EQ (plus_second_arg->type, AST_FLOAT);
-  ASSERT_EQ (0.2, plus_second_arg->value.FLOAT);
-}
-
-UTEST (odeus_parser, second_cons)
-{
-  // Second expression: (def something (arg1 arg2) (print '(+ arg1 arg2)))
-  AST_Node *second_expr = parser->file->value.FILE.BODY[1];
-  ASSERT_EQ (second_expr->type, AST_CONS);
-
-  // CAR should be "def" symbol
-  AST_Node *car = second_expr->value.CONS.CAR;
-  ASSERT_EQ (car->type, AST_SYMBOL);
-  ASSERT_STREQ ("def", car->value.SYMBOL);
-
-  // CDR should contain function definition parts
-  AST_Node *cdr = second_expr->value.CONS.CDR;
-  ASSERT_EQ (cdr->type, AST_CONS);
-
-  // Function name: something
-  AST_Node *func_name = cdr->value.CONS.CAR;
-  ASSERT_EQ (func_name->type, AST_SYMBOL);
-  ASSERT_STREQ ("something", func_name->value.SYMBOL);
-
-  // Parameter list
-  AST_Node *params_cdr = cdr->value.CONS.CDR;
-  ASSERT_EQ (params_cdr->type, AST_CONS);
-  AST_Node *params = params_cdr->value.CONS.CAR;
-  ASSERT_EQ (params->type, AST_CONS);
-
-  // First parameter: arg1
-  AST_Node *first_param = params->value.CONS.CAR;
-  ASSERT_EQ (first_param->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg1", first_param->value.SYMBOL);
-
-  // Second parameter: arg2
-  AST_Node *second_param_cdr = params->value.CONS.CDR;
-  ASSERT_EQ (second_param_cdr->type, AST_CONS);
-  AST_Node *second_param = second_param_cdr->value.CONS.CAR;
-  ASSERT_EQ (second_param->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg2", second_param->value.SYMBOL);
-
-  // Function body
-  AST_Node *body_cdr = params_cdr->value.CONS.CDR;
-  ASSERT_EQ (body_cdr->type, AST_CONS);
-  AST_Node *body = body_cdr->value.CONS.CAR;
-  ASSERT_EQ (body->type, AST_CONS);
-
-  // Body is a print statement with quoted expression
-  AST_Node *body_car = body->value.CONS.CAR;
-  ASSERT_EQ (body_car->type, AST_SYMBOL);
-  ASSERT_STREQ ("print", body_car->value.SYMBOL);
-
-  body_cdr = body->value.CONS.CDR;
-  ASSERT_EQ (body_cdr->type, AST_CONS);
-  AST_Node *quoted_expr = body_cdr->value.CONS.CAR;
-  ASSERT_EQ (quoted_expr->type, AST_QUOTE);
-
-  // Verify the quoted expression
-  AST_Node *quoted_cons = quoted_expr->value.QUOTE.EXPR;
-  ASSERT_EQ (quoted_cons->type, AST_CONS);
-
-  AST_Node *quoted_plus = quoted_cons->value.CONS.CAR;
-  ASSERT_EQ (quoted_plus->type, AST_SYMBOL);
-  ASSERT_STREQ ("+", quoted_plus->value.SYMBOL);
-
-  AST_Node *quoted_args = quoted_cons->value.CONS.CDR;
-  ASSERT_EQ (quoted_args->type, AST_CONS);
-
-  AST_Node *quoted_arg1 = quoted_args->value.CONS.CAR;
-  ASSERT_EQ (quoted_arg1->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg1", quoted_arg1->value.SYMBOL);
-
-  AST_Node *quoted_arg2_cdr = quoted_args->value.CONS.CDR;
-  ASSERT_EQ (quoted_arg2_cdr->type, AST_CONS);
-  AST_Node *quoted_arg2 = quoted_arg2_cdr->value.CONS.CAR;
-  ASSERT_EQ (quoted_arg2->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg2", quoted_arg2->value.SYMBOL);
-}
-
-UTEST (odeus_parser, third_cons)
-{
-  // Third expression: (lambda (arg1 arg-2) arg1 (print arg1) arg-2)
-  AST_Node *third_expr = parser->file->value.FILE.BODY[2];
-  ASSERT_EQ (third_expr->type, AST_LAMBDA);
-
-  //
-  // --- PARAMETERS ---
-  //
-  AST_Node *params = third_expr->value.LAMBDA.ARGUMENTS;
-  ASSERT_EQ (params->type, AST_CONS);
-
-  // First param: arg1
-  AST_Node *p1 = params->value.CONS.CAR;
-  ASSERT_EQ (p1->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg1", p1->value.SYMBOL);
-
-  // Second param: arg-2
-  AST_Node *params_cdr = params->value.CONS.CDR;
-  ASSERT_EQ (params_cdr->type, AST_CONS);
-
-  AST_Node *p2 = params_cdr->value.CONS.CAR;
-  ASSERT_EQ (p2->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg-2", p2->value.SYMBOL);
-
-  // No more parameters
-  ASSERT_EQ (params_cdr->value.CONS.CDR->type, AST_NIL);
-
-  //
-  // --- BODY ---
-  //
-  AST_Node *body = third_expr->value.LAMBDA.BODY;
-  ASSERT_EQ (body->type, AST_CONS);
-
-  // 1st body element: arg1
-  AST_Node *body1 = body->value.CONS.CAR;
-  ASSERT_EQ (body1->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg1", body1->value.SYMBOL);
-
-  // 2nd body element: (print arg1)
-  AST_Node *body2_cdr = body->value.CONS.CDR;
-  ASSERT_EQ (body2_cdr->type, AST_CONS);
-
-  AST_Node *body2 = body2_cdr->value.CONS.CAR;
-  ASSERT_EQ (body2->type, AST_CONS);
-
-  // Check print symbol
-  AST_Node *print_sym = body2->value.CONS.CAR;
-  ASSERT_EQ (print_sym->type, AST_SYMBOL);
-  ASSERT_STREQ ("print", print_sym->value.SYMBOL);
-
-  // Check argument to print
-  AST_Node *print_args = body2->value.CONS.CDR;
-  ASSERT_EQ (print_args->type, AST_CONS);
-
-  AST_Node *print_arg1 = print_args->value.CONS.CAR;
-  ASSERT_EQ (print_arg1->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg1", print_arg1->value.SYMBOL);
-
-  ASSERT_EQ (print_args->value.CONS.CDR->type, AST_NIL);
-
-  // 3rd body element: arg-2
-  AST_Node *body3_cdr = body2_cdr->value.CONS.CDR;
-  ASSERT_EQ (body3_cdr->type, AST_CONS);
-
-  AST_Node *body3 = body3_cdr->value.CONS.CAR;
-  ASSERT_EQ (body3->type, AST_SYMBOL);
-  ASSERT_STREQ ("arg-2", body3->value.SYMBOL);
-
-  // No more body elements
-  ASSERT_EQ (body3_cdr->value.CONS.CDR->type, AST_NIL);
-}
-
-UTEST (odeus_parser, memory_cleanup)
-{
-  // Clean up the parser and lexer
-  if (parser && parser->file)
-    {
-      for (size_t i = 0; i < parser->file->value.FILE.COUNT; i++)
-        {
-          // In a real implementation, you'd have an ast_free function
-          // to recursively free all AST nodes
-          // For now, we just verify the structure is intact
-          ASSERT_TRUE (parser->file->value.FILE.BODY[i] != NULL);
-        }
-    }
-
-  // Note: In a complete implementation, you'd want to free:
-  // - parser->file->value.FILE.BODY and all its elements
-  // - parser->file
-  // - parser
-  // - lexer.source
-  // But for unit tests, the OS will clean up anyway
-}
-
-UTEST_STATE ();
-
-int
-main (int argc, const char *const argv[])
-{
-  filename = argc == 2 ? argv[1] : "odeus_lexer_test.ode";
-  return utest_main (argc, argv);
+    return utest_main(argc, argv);
 }

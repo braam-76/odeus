@@ -20,9 +20,7 @@ typedef enum
   AST_STRING,
   AST_QUOTE,
   AST_CONS,
-  AST_LAMBDA,
 
-  AST_FILE,
   AST_END_OF_FILE,
 } AST_Node_Type;
 
@@ -46,18 +44,6 @@ typedef struct AST
       struct AST *CAR;
       struct AST *CDR;
     } CONS;
-
-    struct
-    {
-      struct AST *ARGUMENTS;
-      struct AST *BODY;
-    } LAMBDA;
-
-    struct
-    {
-      struct AST **BODY;
-      size_t COUNT;
-    } FILE;
   } value;
   size_t line;
   size_t column;
@@ -66,15 +52,14 @@ typedef struct AST
 typedef struct
 {
   Lexer *lexer;
-  AST_Node *file;
+  AST_Node *start_node;
 } Parser;
 
 Parser *parser_init (Lexer *lexer);
 void parser_parse (Parser *parse);
 void parser_panic (Token *token, const char *filename, const char *message);
+AST_Node* nil(void);
 
 void ast_print(AST_Node *node);
-void ast_print_pretty(AST_Node *node, int indent_level);
-void ast_print_file(AST_Node *file);
 
 #endif // ODEUS_PARSER_H_
