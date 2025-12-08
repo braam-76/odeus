@@ -44,7 +44,7 @@ typedef struct AST
       struct AST *CAR;
       struct AST *CDR;
     } CONS;
-  } value;
+  } as;
   size_t line;
   size_t column;
 } AST_Node;
@@ -58,7 +58,20 @@ typedef struct
 Parser *parser_init (Lexer *lexer);
 void parser_parse (Parser *parse);
 void parser_panic (Token *token, const char *filename, const char *message);
-AST_Node* nil(void);
+
+AST_Node *symbol (char* name);
+AST_Node *cons (AST_Node *car, AST_Node *cdr);
+AST_Node *nil (void);
+
+#define CAR(cons) ((cons)->as.CONS.CAR)
+#define CDR(cons) ((cons)->as.CONS.CDR)
+
+#define CAAR(cons) (CAR (CAR ((cons))))
+#define CADR(cons) (CAR (CDR ((cons))))
+#define CDAR(cons) (CDR (CAR ((cons))))
+#define CDDR(cons) (CDR (CDR ((cons))))
+
+#define IS_NULL(a)((a) == NULL || (a)->type == AST_NIL)
 
 void ast_print(AST_Node *node);
 

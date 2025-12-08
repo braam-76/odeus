@@ -23,8 +23,6 @@ static AST_Node *parse_literal (Lexer *lexer, Token *token);
 /* quote = '\'' expr  */
 static AST_Node *parse_quote (Lexer *lexer, Token *token);
 
-static AST_Node *make_cons (AST_Node *car, AST_Node *cdr);
-
 static AST_Node *GLOBAL_NIL = NULL;
 
 AST_Node *
@@ -59,9 +57,9 @@ parser_init (Lexer *lexer)
 
   parser->lexer = lexer;
 
-  AST_Node *global_environment = make_cons (nil (), nil ());
+  AST_Node *global_environment = cons (nil (), nil ());
   AST_Node *program = nil ();
-  parser->start_node = make_cons (global_environment, program);
+  parser->start_node = cons (global_environment, program);
 
   return parser;
 }
@@ -74,16 +72,16 @@ ast_free (AST_Node *node)
 
   switch (node->type)
     {
-    case AST_STRING: free (node->value.STRING); break;
+    case AST_STRING: free (node->as.STRING); break;
 
-    case AST_SYMBOL: free (node->value.SYMBOL); break;
+    case AST_SYMBOL: free (node->as.SYMBOL); break;
 
     case AST_CONS:
-      ast_free (node->value.CONS.CAR);
-      ast_free (node->value.CONS.CDR);
+      ast_free (CAR (node));
+      ast_free (CDR (node));
       break;
 
-    case AST_QUOTE: ast_free (node->value.QUOTE.EXPR); break;
+    case AST_QUOTE: ast_free (node->as.QUOTE.EXPR); break;
 
     default: break;
     }
@@ -107,7 +105,8 @@ parser_free (Parser *parser)
 void
 parser_parse (Parser *parser)
 {
-  AST_Node **tail = &parser->start_node->value.CONS.CDR;
+  AST_Node *begin_head = nil ();
+  AST_Node **begin_tail = &begin_head;
 
   // initial token
   Token token = lexer_next_token (parser->lexer);
@@ -118,13 +117,16 @@ parser_parse (Parser *parser)
 
       if (expr)
         {
-          *tail = make_cons (expr, nil ());
-          tail = &(*tail)->value.CONS.CDR;
+          *begin_tail = cons (expr, nil ());
+          begin_tail = &CDR (*begin_tail);
         }
-
-      // fetch next token for the top-level loop
-      token = lexer_next_token (parser->lexer);
     }
+  AST_Node *begin_symbol = (AST_Node *)malloc (sizeof (AST_Node));
+  begin_symbol->type = AST_SYMBOL;
+  begin_symbol->as.SYMBOL = "BEGIN";
+  AST_Node *begin_node = cons (begin_symbol, begin_head);
+
+  CDR(parser->start_node) = begin_node;
 }
 
 /* ----------------------------------------------------------
@@ -153,7 +155,8 @@ parse_expr (Lexer *lexer, Token *token)
         char msg[256];
         snprintf (msg, sizeof (msg), "Unexpected token '%s'", token->value);
         parser_panic (token, lexer->filename, msg);
-      } break;
+      }
+      break;
 
     case TOKEN_END_OF_FILE:
       {
@@ -196,8 +199,8 @@ parse_list (Lexer *lexer, Token *token)
         }
 
       AST_Node *expr = parse_expr (lexer, token);
-      *tail = make_cons (expr, nil ());
-      tail = &(*tail)->value.CONS.CDR;
+      *tail = cons (expr, nil ());
+      tail = &CDR (*tail);
     }
 
   if (token->type != TOKEN_CLOSE_PAREN)
@@ -208,12 +211,12 @@ parse_list (Lexer *lexer, Token *token)
 }
 
 AST_Node *
-make_cons (AST_Node *car, AST_Node *cdr)
+cons (AST_Node *car, AST_Node *cdr)
 {
   AST_Node *n = malloc (sizeof (AST_Node));
   n->type = AST_CONS;
-  n->value.CONS.CAR = car;
-  n->value.CONS.CDR = cdr;
+  CAR (n) = car;
+  CDR (n) = cdr;
   n->line = car->line;
   n->column = car->column;
   return n;
@@ -230,22 +233,22 @@ parse_literal (Lexer *lexer, Token *token)
     {
     case TOKEN_INTEGER:
       n->type = AST_INTEGER;
-      n->value.INTEGER = strtol (token->value, NULL, 10);
+      n->as.INTEGER = strtol (token->value, NULL, 10);
       break;
 
     case TOKEN_FLOAT:
       n->type = AST_FLOAT;
-      n->value.FLOAT = strtod (token->value, NULL);
+      n->as.FLOAT = strtod (token->value, NULL);
       break;
 
     case TOKEN_STRING:
       n->type = AST_STRING;
-      n->value.STRING = strdup (token->value);
+      n->as.STRING = strdup (token->value);
       break;
 
     case TOKEN_SYMBOL:
       n->type = AST_SYMBOL;
-      n->value.SYMBOL = strdup (token->value);
+      n->as.SYMBOL = strdup (token->value);
       break;
 
     default:
@@ -272,7 +275,7 @@ parse_quote (Lexer *lexer, Token *token)
 
   *token = lexer_next_token (lexer);
 
-  n->value.QUOTE.EXPR = parse_expr (lexer, token);
+  n->as.QUOTE.EXPR = parse_expr (lexer, token);
 
   return n;
 }
@@ -294,26 +297,42 @@ ast_print (AST_Node *node)
     {
     case AST_NIL: printf ("nil"); break;
 
-    case AST_SYMBOL: printf ("%s", node->value.SYMBOL); break;
+    case AST_SYMBOL: printf ("%s", node->as.SYMBOL); break;
 
-    case AST_INTEGER: printf ("%ld", node->value.INTEGER); break;
+    case AST_INTEGER: printf ("%ld", node->as.INTEGER); break;
 
-    case AST_FLOAT: printf ("%f", node->value.FLOAT); break;
+    case AST_FLOAT: printf ("%f", node->as.FLOAT); break;
 
-    case AST_STRING: printf ("\"%s\"", node->value.STRING); break;
+    case AST_STRING: printf ("\"%s\"", node->as.STRING); break;
 
     case AST_QUOTE:
       printf ("'");
-      ast_print (node->value.QUOTE.EXPR);
+      ast_print (node->as.QUOTE.EXPR);
       break;
 
     case AST_CONS:
-      printf ("(");
-      ast_print (node->value.CONS.CAR);
-      printf (" . ");
-      ast_print (node->value.CONS.CDR);
-      printf (")");
-      break;
+      {
+        printf ("(");
+        AST_Node *cur = node;
+
+        while (cur->type == AST_CONS)
+          {
+            ast_print (CAR (cur));
+            cur = CDR (cur);
+
+            if (cur->type == AST_CONS)
+              printf (" ");
+          }
+
+        if (cur->type != AST_NIL)
+          {
+
+            printf (" . ");
+            ast_print (cur);
+          }
+            printf (")");
+        break;
+      }
 
     case AST_END_OF_FILE: printf ("#<EOF>"); break;
 
