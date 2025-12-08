@@ -20,7 +20,9 @@ Evaluator evaluates as follows:
     
 ### Notice
 
-Notice than it is quickly created evaluator. It is bulky and not optimal. It is not even 0.0.1 version, I have a lot to do with my project to actually make it even callable as version 0.0.1 
+than it is quickly created evaluator. It is bulky and not optimal. It is not even 0.0.1 version, I have a lot to do with my project to actually make it even callable as version 0.0.1.
+
+And by the way, REPL exits right after error occurs (because whole code just exits with 1 on error) 
 
 ### Predefined functions
 
@@ -30,6 +32,21 @@ Notice than it is quickly created evaluator. It is bulky and not optimal. It is 
 - QUOTE: quotes expression without evaluating
 - Basic algebra (+, -, *, /): you would know what it does :D
 
+## Getting started
+
+Clone the repo, then in clonned folder:
+
+``` sh
+mkdir build && cd build
+cmake ../
+make # or cmake --build .
+```
+
+Run REPL:
+
+``` sh
+./build/odeus_repl
+```
 
 ## Project Structure
 
