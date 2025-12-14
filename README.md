@@ -2,9 +2,23 @@
 
 Odeus Lisp language implementation in progress.
 
-## BIG CHANGES
+## (Dec. 14, 2025): Added lambda functions
 
-(Dec. 8, 2025): Now it can do something!
+Now Odeus LISP can do more useful stuff, by storing reused code in functions.
+Yet it still does not have same semantics to define functions as in any Scheme LISP dialects. The reason is, Odeus LISP still does not have macros, quasiquotes, unquote and etc.
+
+To define function in Odeus LISP, you just assign it to symbol
+
+``` scheme
+(define f (lambda (x) (+ x 4)))
+; then use it as usually
+(print (f 5))  ; => 9
+```
+
+Also, now program does not exit immediately, instead evaluator now returns AST.ERROR struct which has MESSAGE field with AST_ERROR type (! if error happend in eval step).
+And both Lexer and Parser now has error field which stores place and message of error.
+
+## (Dec. 8, 2025): Now it can do something!
 
 ### How it works
 
@@ -46,6 +60,8 @@ Run REPL:
 
 ``` sh
 ./build/odeus_repl
+# or if you in build folder
+./odeus_repl
 ```
 
 ## Project Structure
