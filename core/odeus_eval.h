@@ -2,9 +2,18 @@
 #define ODEUS_EVAL_H_
 
 #include "odeus_parser.h"
+#include "odeus_environment.h"
 
-void environment_set (AST_Node *env, AST_Node *symbol, AST_Node *value);
-AST_Node *environment_get (AST_Node *env, AST_Node *symbol);
-AST_Node *evaluate_expression (AST_Node *environment, AST_Node *expression);
+#include "builtins/odeus_basic_math.h"
+#include "builtins/odeus_primitives.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+AST *evaluate_expression (AST *environment, AST *expression);
+void set_builtins (AST *environment);
+
+#define ERROR_OUT(x) do { if ((x)->type == AST_ERROR) return (x); } while (0)
 
 #endif // ODEUS_EVAL_H_

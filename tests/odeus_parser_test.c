@@ -26,50 +26,50 @@ UTEST(odeus_parser, parse_program)
 {
     parser_parse(parser);
 
-    AST_Node *program = parser->start_node->as.CONS.CDR;
+    AST *program = parser->start_node->as.CONS.CDR;
     ASSERT_TRUE(program != nil());
 
     // Check first top-level expression
-    AST_Node *first_expr = program->as.CONS.CAR;
+    AST *first_expr = program->as.CONS.CAR;
     ASSERT_EQ(first_expr->type, AST_CONS);
 
-    AST_Node *car = first_expr->as.CONS.CAR;
+    AST *car = first_expr->as.CONS.CAR;
     ASSERT_EQ(car->type, AST_SYMBOL);
     ASSERT_STREQ("print", car->as.SYMBOL);
 
-    AST_Node *cdr = first_expr->as.CONS.CDR;
+    AST *cdr = first_expr->as.CONS.CDR;
     ASSERT_EQ(cdr->type, AST_CONS);
 
-    AST_Node *first_arg = cdr->as.CONS.CAR;
+    AST *first_arg = cdr->as.CONS.CAR;
     ASSERT_EQ(first_arg->type, AST_SYMBOL);
     ASSERT_STREQ("t", first_arg->as.SYMBOL);
 
-    AST_Node *second_arg_cdr = cdr->as.CONS.CDR;
+    AST *second_arg_cdr = cdr->as.CONS.CDR;
     ASSERT_EQ(second_arg_cdr->type, AST_CONS);
-    AST_Node *second_arg = second_arg_cdr->as.CONS.CAR;
+    AST *second_arg = second_arg_cdr->as.CONS.CAR;
     ASSERT_EQ(second_arg->type, AST_STRING);
     ASSERT_STREQ("Hello, world", second_arg->as.STRING);
 
-    AST_Node *third_arg_cdr = second_arg_cdr->as.CONS.CDR;
+    AST *third_arg_cdr = second_arg_cdr->as.CONS.CDR;
     ASSERT_EQ(third_arg_cdr->type, AST_CONS);
-    AST_Node *third_arg = third_arg_cdr->as.CONS.CAR;
+    AST *third_arg = third_arg_cdr->as.CONS.CAR;
     ASSERT_EQ(third_arg->type, AST_CONS);
 
     // Nested + expression
-    AST_Node *plus_expr = third_arg->as.CONS.CAR;
+    AST *plus_expr = third_arg->as.CONS.CAR;
     ASSERT_EQ(plus_expr->type, AST_SYMBOL);
     ASSERT_STREQ("+", plus_expr->as.SYMBOL);
 
-    AST_Node *plus_args = third_arg->as.CONS.CDR;
+    AST *plus_args = third_arg->as.CONS.CDR;
     ASSERT_EQ(plus_args->type, AST_CONS);
 
-    AST_Node *plus_first = plus_args->as.CONS.CAR;
+    AST *plus_first = plus_args->as.CONS.CAR;
     ASSERT_EQ(plus_first->type, AST_INTEGER);
     ASSERT_EQ(1, plus_first->as.INTEGER);
 
-    AST_Node *plus_second_cdr = plus_args->as.CONS.CDR;
+    AST *plus_second_cdr = plus_args->as.CONS.CDR;
     ASSERT_EQ(plus_second_cdr->type, AST_CONS);
-    AST_Node *plus_second = plus_second_cdr->as.CONS.CAR;
+    AST *plus_second = plus_second_cdr->as.CONS.CAR;
     ASSERT_EQ(plus_second->type, AST_FLOAT);
     ASSERT_EQ(0.2, plus_second->as.FLOAT);
 }
@@ -78,12 +78,12 @@ UTEST(odeus_parser, walk_program)
 {
     parser_parse(parser);
 
-    AST_Node *program = parser->start_node->as.CONS.CDR;
+    AST *program = parser->start_node->as.CONS.CDR;
     size_t count = 0;
 
     while (program && program != nil())
     {
-        AST_Node *expr = program->as.CONS.CAR;
+        AST *expr = program->as.CONS.CAR;
         printf("Expr %zu: ", count);
         ast_print(expr);
         printf("\n");

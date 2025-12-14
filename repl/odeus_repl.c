@@ -13,7 +13,8 @@ main ()
   char *prompt = "odeus> ";
 
   // Persistent global environment
-  AST_Node *global_env = cons (nil (), nil ());
+  AST *global_env = make_cons (nil (), nil ());
+  set_builtins(global_env);
 
   while (1)
     {
@@ -33,13 +34,13 @@ main ()
 
       // **Override parser start_node to reuse existing global_env**
       // program will be built in CDR(parser->start_node)
-      // (I know, so hackish to do it im main(), but I will fix it later)
+      // (I know, so hackish to do it in main(), but I will fix it later)
       parser->start_node->as.CONS.CAR = global_env;
 
       parser_parse (parser);
 
       // Evaluate the BEGIN node in CDR(parser->start_node)
-      AST_Node *result = evaluate_expression (global_env, CDR (parser->start_node));
+      AST *result = evaluate_expression (global_env, CDR (parser->start_node));
 
       ast_print (result);
       printf ("\n");

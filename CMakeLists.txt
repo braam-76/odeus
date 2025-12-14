@@ -19,7 +19,11 @@ link_directories(
 add_library(odeus_core STATIC
     core/odeus_lexer.c
     core/odeus_parser.c
+    core/builtins/odeus_basic_math.c
+    core/builtins/odeus_primitives.c
+    core/odeus_environment.c
     core/odeus_eval.c
+    core/odeus_make_asts.c
 )
 
 # REPL executable with readline

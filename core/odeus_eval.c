@@ -1,148 +1,177 @@
 #include "odeus_eval.h"
 
-void
-environment_set (AST_Node *env, AST_Node *symbol, AST_Node *value)
+static AST *evaluate_arguments (AST *environment, AST *arguments);
+AST *evaluate_expression (AST *environment, AST *expression);
+
+static AST *
+bind_arguments (AST *environment, AST *params, AST *args)
 {
-  AST_Node *variables = CDR (env);
-
-  while (variables->type != AST_NIL)
+  while (params->type == AST_CONS && args->type == AST_CONS)
     {
-      AST_Node *pair = CAR (variables); // (symbol . value)
-      AST_Node *key = CAR (pair);
+      AST *param = CAR (params);
+      AST *arg_value = evaluate_expression (environment, CAR (args));
 
-      if (strcmp (key->as.SYMBOL, symbol->as.SYMBOL) == 0)
+      if (param->type != AST_SYMBOL)
+        return make_error ("ERROR: lambda parameter must be symbol\n");
+
+      // Add new binding to the front of environment list
+      AST *binding = make_cons (param, arg_value);
+      environment->as.CONS.CDR = make_cons (binding, environment->as.CONS.CDR);
+
+      params = CDR (params);
+      args = CDR (args);
+    }
+
+  if (!IS_NULL (params) || !IS_NULL (args))
+    return make_error ("ERROR: argument count mismatch in lambda call\n");
+
+  return nil();
+}
+
+static AST *
+apply (AST *function, AST *environment, AST *arguments)
+{
+  if (function->type == AST_BUILTIN_SPECIAL)
+    return function->as.BUILTIN (environment, arguments);
+
+  if (function->type == AST_BUILTIN_NORMAL)
+    {
+      AST *evaluated_arguments = evaluate_arguments (environment, arguments);
+
+      if (evaluated_arguments->type == AST_ERROR)
+        return evaluated_arguments;
+
+      return function->as.BUILTIN (environment, evaluated_arguments);
+    }
+
+  if (function->type == AST_LAMBDA)
+    {
+      AST *lambda_environment = make_cons (function->as.LAMBDA.environment, nil ());
+
+      AST *err = bind_arguments (lambda_environment, function->as.LAMBDA.parameters, arguments);
+      ERROR_OUT (err);
+
+      AST *result = nil ();
+      AST *body = function->as.LAMBDA.body;
+
+      while (body->type == AST_CONS)
         {
-          CDR (pair) = value; // update existing binding
-          return;
+          result = evaluate_expression (lambda_environment, CAR (body));
+          ERROR_OUT(result);
+          body = CDR (body);
         }
-
-      variables = CDR (variables);
+      return result;
     }
 
-  // Prepend (symbol . value)
-  AST_Node *pair = cons (symbol, value);
-  CDR (env) = cons (pair, CDR (env));
+  return make_error ("ERROR: apply: tried to apply non-function\n");
 }
 
-AST_Node *
-environment_get (AST_Node *env, AST_Node *symbol)
+static AST *
+evaluate_arguments (AST *environment, AST *arguments)
 {
-  AST_Node *variables = CDR (env);
-  AST_Node *parent = CAR (env);
-
-  while (variables->type != AST_NIL)
-    {
-      AST_Node *pair = CAR (variables);
-      AST_Node *key = CAR (pair);
-
-      if (strcmp (key->as.SYMBOL, symbol->as.SYMBOL) == 0)
-        return CDR (pair);
-
-      variables = CDR (variables);
-    }
-
-  if (parent->type == AST_NIL)
-    {
-      fprintf (stderr, "ERROR: Unbound symbol: %s\n", symbol->as.SYMBOL);
-      exit (1);
-    }
-
-  return environment_get (parent, symbol);
-}
-
-/* Small helpers used by evaluator */
-
-static AST_Node *
-make_integer (long value)
-{
-  AST_Node *node = malloc (sizeof (AST_Node));
-  node->type = AST_INTEGER;
-  node->as.INTEGER = value;
-  node->line = 0;
-  node->column = 0;
-  return node;
-}
-
-static AST_Node *
-make_float (double value)
-{
-  AST_Node *node = malloc (sizeof (AST_Node));
-  node->type = AST_FLOAT;
-  node->as.FLOAT = value;
-  node->line = 0;
-  node->column = 0;
-  return node;
-}
-
-static AST_Node *
-make_string (const char *string)
-{
-  AST_Node *node = malloc (sizeof (AST_Node));
-  node->type = AST_STRING;
-  node->as.STRING = strdup (string);
-  node->line = 0;
-  node->column = 0;
-  return node;
-}
-
-static AST_Node *
-make_symbol (const char *symbol)
-{
-  AST_Node *node = malloc (sizeof (AST_Node));
-  node->type = AST_SYMBOL;
-  node->as.SYMBOL = strdup (symbol);
-  node->line = 0;
-  node->column = 0;
-  return node;
-}
-
-/* Forward declaration */
-AST_Node *evaluate_expression (AST_Node *environment, AST_Node *expression);
-
-static AST_Node *
-evaluate_arguments (AST_Node *environment, AST_Node *arguments)
-{
-  AST_Node *head = nil ();
-  AST_Node *tail = NULL;
+  AST *head = nil ();
+  AST *tail = NULL;
 
   while (arguments->type == AST_CONS)
     {
-      AST_Node *evaluated = evaluate_expression (environment, CAR (arguments));
-      AST_Node *node = cons (evaluated, nil ());
+      AST *value = evaluate_expression (environment, CAR (arguments));
+      ERROR_OUT(value);
+
+      AST *new_node = make_cons (value, nil ());
+
       if (tail)
-        CDR (tail) = node;
+        CDR (tail) = new_node;
       else
-        head = node;
-      tail = node;
+        head = new_node;
+
+      tail = new_node;
       arguments = CDR (arguments);
     }
 
-  return head ? head : nil ();
+  return head;
+}
+static AST *
+builtin_define (AST *environment, AST *arguments)
+{
+  if (IS_NULL (arguments) || IS_NULL (CDR (arguments)))
+    return make_error ("ERROR: define expects (symbol value_expression)\n");
+
+  AST *symbol = CAR (arguments);
+  if (symbol->type != AST_SYMBOL)
+    return make_error ("ERROR: define: first argument must be symbol\n");
+
+  AST *value = evaluate_expression (environment, CADR (arguments));
+  ERROR_OUT(value);
+
+  environment_set (environment, symbol, value);
+  return symbol;
 }
 
-AST_Node *
-evaluate_program (Parser *parser)
+static AST *
+builtin_begin (AST *environment, AST *arguments)
 {
-  if (!parser || !parser->start_node)
-    return nil ();
+  AST *last_value = nil ();
 
-  AST_Node *global_environment = CAR (parser->start_node);
-  AST_Node *program = CDR (parser->start_node);
-  AST_Node *last = nil ();
-
-  while (program->type == AST_CONS)
+  while (arguments->type == AST_CONS)
     {
-      AST_Node *expression = CAR (program);
-      last = evaluate_expression (global_environment, expression);
-      program = CDR (program);
+      last_value = evaluate_expression (environment, CAR (arguments));
+      ERROR_OUT(last_value);
+      arguments = CDR (arguments);
     }
 
-  return last;
+  return last_value;
 }
 
-/* Main evaluator */
-AST_Node *
-evaluate_expression (AST_Node *environment, AST_Node *expression)
+static AST *
+builtin_print (AST *environment, AST *arguments)
+{
+  while (arguments->type == AST_CONS)
+    {
+      AST *value = evaluate_expression (environment, CAR (arguments));
+      ERROR_OUT(value);
+
+      ast_print (value);
+      printf (" ");
+
+      arguments = CDR (arguments);
+    }
+
+  printf ("\n");
+  return nil ();
+}
+
+#define REGISTER_NORMAL(name, fn)                                                                  \
+  environment_set (environment, make_symbol (name), make_builtin (fn, AST_BUILTIN_NORMAL))
+
+#define REGISTER_SPECIAL(name, fn)                                                                 \
+  environment_set (environment, make_symbol (name), make_builtin (fn, AST_BUILTIN_SPECIAL))
+
+void
+set_builtins (AST *environment)
+{
+  environment_set (environment, make_symbol ("t"), t ());
+  environment_set (environment, make_symbol ("nil"), nil ());
+
+  REGISTER_SPECIAL ("begin", builtin_begin);
+
+  REGISTER_SPECIAL ("quote", builtin_quote);
+  REGISTER_NORMAL ("atom", builtin_atom);
+  REGISTER_NORMAL ("eq", builtin_eq);
+  REGISTER_NORMAL ("cons", builtin_cons);
+  REGISTER_NORMAL ("null", builtin_null); // lisper's not operator
+  REGISTER_NORMAL ("not", builtin_null);  // human readable not operator
+  REGISTER_SPECIAL ("lambda", builtin_lambda);
+
+  REGISTER_SPECIAL ("define", builtin_define);
+  REGISTER_NORMAL ("print", builtin_print);
+  REGISTER_NORMAL ("+", builtin_add);
+  REGISTER_NORMAL ("-", builtin_sub);
+  REGISTER_NORMAL ("*", builtin_mul);
+  REGISTER_NORMAL ("/", builtin_div);
+}
+
+AST *
+evaluate_expression (AST *environment, AST *expression)
 {
   if (!expression)
     return nil ();
@@ -152,282 +181,32 @@ evaluate_expression (AST_Node *environment, AST_Node *expression)
     case AST_INTEGER:
     case AST_FLOAT:
     case AST_STRING:
-    case AST_QUOTE: return expression;
+    case AST_QUOTE:
+    case AST_NIL: return expression;
 
     case AST_SYMBOL: return environment_get (environment, expression);
 
-    case AST_NIL: return expression;
-
     case AST_CONS:
       {
-        AST_Node *op = CAR (expression);
-        AST_Node *args = CDR (expression);
+        AST *operator_node = CAR (expression);
+        AST *arguments = CDR (expression);
 
-        /* --- If operator is a symbol, check special forms BEFORE evaluating op --- */
-        if (op->type == AST_SYMBOL)
-          {
-            if (strcmp (op->as.SYMBOL, "BEGIN") == 0)
-              {
+        AST *function = (operator_node->type == AST_SYMBOL)
+                            ? environment_get (environment, operator_node)
+                            : evaluate_expression (environment, operator_node);
 
-                AST_Node *result = nil ();
-                AST_Node *a = args;
-                while (a->type == AST_CONS)
-                  {
-                    result = evaluate_expression (environment, CAR (a));
-                    a = CDR (a);
-                  }
-                return result;
-              }
+        ERROR_OUT(function);
 
-            if (strcmp (op->as.SYMBOL, "QUOTE") == 0)
-              {
-                if (IS_NULL (args) || !IS_NULL (CDR (args)))
-                  {
-                    fprintf (stderr, "ERROR: QUOTE expects 1 argument\n");
-                    exit (1);
-                  }
-                return CAR (args);
-              }
+        if (function->type == AST_SYMBOL)
+          function = environment_get (environment, function);
 
-            if (strcmp (op->as.SYMBOL, "DEFINE") == 0)
-              {
-                /* (define sym expr) */
-                if (IS_NULL (args) || IS_NULL (CDR (args)))
-                  {
-                    fprintf (stderr, "ERROR: DEFINE expects (symbol value)\n");
-                    exit (1);
-                  }
-
-                AST_Node *sym = CAR (args);
-                if (sym->type != AST_SYMBOL)
-                  {
-                    fprintf (stderr, "ERROR: first argument for DEFINE must be a symbol\n");
-                    exit (1);
-                  }
-
-                AST_Node *value_expr = CAR (CDR (args));
-                AST_Node *value = evaluate_expression (environment, value_expr);
-                environment_set (environment, sym, value);
-                return sym;
-              }
-
-            if (strcmp (op->as.SYMBOL, "PRINT") == 0)
-              {
-                AST_Node *a = args;
-                while (a->type == AST_CONS)
-                  {
-                    AST_Node *v = evaluate_expression (environment, CAR (a));
-                    ast_print (v);
-                    printf (" ");
-                    a = CDR (a);
-                  }
-                printf ("\n");
-                return nil ();
-              }
-            if (strcmp (op->as.SYMBOL, "+") == 0)
-              {
-                if (IS_NULL (args))
-                  {
-                    fprintf (stderr, "ERROR: + expects at least one argument\n");
-                    exit (1);
-                  }
-
-                double acc = 0.0;
-                int any_float = 0;
-                AST_Node *a = args;
-                while (a->type == AST_CONS)
-                  {
-                    AST_Node *v = evaluate_expression (environment, CAR (a));
-                    if (v->type == AST_INTEGER)
-                      acc += (double)v->as.INTEGER;
-                    else if (v->type == AST_FLOAT)
-                      {
-                        acc += v->as.FLOAT;
-                        any_float = 1;
-                      }
-                    else
-                      {
-                        fprintf (stderr, "ERROR: + expects numeric arguments\n");
-                        exit (1);
-                      }
-                    a = CDR (a);
-                  }
-                if (any_float)
-                  return make_float (acc);
-                else
-                  return make_integer ((long)acc);
-              }
-
-            if (strcmp (op->as.SYMBOL, "-") == 0)
-              {
-                if (IS_NULL (args))
-                  {
-                    fprintf (stderr, "ERROR: - expects at least one argument\n");
-                    exit (1);
-                  }
-
-                double acc = 0.0;
-                int any_float = 0;
-                AST_Node *a = args;
-
-                AST_Node *first = evaluate_expression (environment, CAR (a));
-                if (first->type == AST_INTEGER)
-                  acc = (double)first->as.INTEGER;
-                else if (first->type == AST_FLOAT)
-                  {
-                    acc = first->as.FLOAT;
-                    any_float = 1;
-                  }
-                else
-                  {
-                    fprintf (stderr, "ERROR: - expects numeric arguments\n");
-                    exit (1);
-                  }
-                a = CDR (a);
-
-                while (a->type == AST_CONS)
-                  {
-                    AST_Node *v = evaluate_expression (environment, CAR (a));
-                    if (v->type == AST_INTEGER)
-                      acc -= (double)v->as.INTEGER;
-                    else if (v->type == AST_FLOAT)
-                      {
-                        acc -= v->as.FLOAT;
-                        any_float = 1;
-                      }
-                    else
-                      {
-                        fprintf (stderr, "ERROR: - expects numeric arguments\n");
-                        exit (1);
-                      }
-                    a = CDR (a);
-                  }
-
-                if (any_float)
-                  return make_float (acc);
-                else
-                  return make_integer ((long)acc);
-              }
-
-            if (strcmp (op->as.SYMBOL, "*") == 0)
-              {
-                if (IS_NULL (args))
-                  {
-                    fprintf (stderr, "ERROR: * expects at least one argument\n");
-                    exit (1);
-                  }
-
-                double acc = 1.0;
-                int any_float = 0;
-                AST_Node *a = args;
-                while (a->type == AST_CONS)
-                  {
-                    AST_Node *v = evaluate_expression (environment, CAR (a));
-                    if (v->type == AST_INTEGER)
-                      acc *= (double)v->as.INTEGER;
-                    else if (v->type == AST_FLOAT)
-                      {
-                        acc *= v->as.FLOAT;
-                        any_float = 1;
-                      }
-                    else
-                      {
-                        fprintf (stderr, "ERROR: * expects numeric arguments\n");
-                        exit (1);
-                      }
-                    a = CDR (a);
-                  }
-                if (any_float)
-                  return make_float (acc);
-                else
-                  return make_integer ((long)acc);
-              }
-
-            if (strcmp (op->as.SYMBOL, "/") == 0)
-              {
-                if (IS_NULL (args))
-                  {
-                    fprintf (stderr, "ERROR: / expects at least one argument\n");
-                    exit (1);
-                  }
-
-                AST_Node *a = args;
-                AST_Node *first = evaluate_expression (environment, CAR (a));
-                double acc;
-
-                if (first->type == AST_INTEGER)
-                  acc = (double)first->as.INTEGER;
-                else if (first->type == AST_FLOAT)
-                  acc = first->as.FLOAT;
-                else
-                  {
-                    fprintf (stderr, "ERROR: / expects numeric arguments\n");
-                    exit (1);
-                  }
-
-                a = CDR (a);
-
-                while (a->type == AST_CONS)
-                  {
-                    AST_Node *v = evaluate_expression (environment, CAR (a));
-                    double val;
-
-                    if (v->type == AST_INTEGER)
-                      val = (double)v->as.INTEGER;
-                    else if (v->type == AST_FLOAT)
-
-                      val = v->as.FLOAT;
-
-                    else
-                      {
-                        fprintf (stderr, "ERROR: / expects numeric arguments\n");
-                        exit (1);
-                      }
-
-                    if (val == 0.0)
-                      {
-                        fprintf (stderr, "ERROR: division by zero\n");
-                        exit (1);
-                      }
-
-                    acc /= val;
-                    a = CDR (a);
-                  }
-
-                return make_float (acc);
-              }
-          }
-
-        /* --- For non-special-form calls: evaluate operator then apply --- */
-
-        AST_Node *op_val = evaluate_expression (environment, op);
-
-        /* If after evaluation operator is a SYMBOL bound to something, try to get it */
-        if (op_val && op_val->type == AST_SYMBOL)
-          {
-            op_val = environment_get (environment, op_val);
-          }
-
-        // TODO: add lambdas (important to make language actially usefull)
-
-        /* If operator is not a function we know about, error */
-        fprintf (stderr, "ERROR: Unknown function/operator: ");
-        if (op->type == AST_SYMBOL)
-          fprintf (stderr, "'%s'\n", op->as.SYMBOL);
-        else
-          {
-            fprintf (stderr, "(non-symbol operator)\n");
-            ast_print (expression);
-            printf ("\n");
-            fprintf (stderr, "\n");
-          }
-        exit (1);
+        return apply (function, environment, arguments);
       }
 
     case AST_END_OF_FILE: return expression;
 
-    default:
-      fprintf (stderr, "ERROR: evaluate_expression: unhandled AST type %d\n", expression->type);
-      exit (1);
+    case AST_ERROR: return expression;
+
+    default: return make_error ("ERROR: evaluate_expression: unknown AST type\n");
     }
 }
