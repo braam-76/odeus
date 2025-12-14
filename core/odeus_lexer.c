@@ -1,4 +1,5 @@
 #include "odeus_lexer.h"
+#include "odeus_core_error.h"
 #include "odeus_token.h"
 
 #include <ctype.h>
@@ -129,6 +130,7 @@ lexer_next_token (Lexer *lexer)
               char buf[64];
               snprintf (buf, sizeof (buf), "Unknown character: '%c'", peek (lexer));
               panic (lexer, buf);
+              return (Token){.type = TOKEN_NONE};
             }
         }
 
@@ -169,9 +171,11 @@ advance (Lexer *lexer)
 static void
 panic (Lexer *lexer, const char *message)
 {
-  fprintf (stderr, "%s:%ld:%ld: ERROR: %s\n", lexer->filename, (long)lexer->line,
-           (long)lexer->column, message);
-  exit (EXIT_FAILURE);
+  lexer->error.status = ODEUS_ERROR;
+  lexer->error.message = message;
+  lexer->error.filename = lexer->filename;
+  lexer->error.line = lexer->line;
+  lexer->error.column = lexer->column;
 }
 
 static char *

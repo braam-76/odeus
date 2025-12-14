@@ -1,9 +1,5 @@
-/*
- *
- *
- */
-
 #include "odeus_parser.h"
+#include "odeus_core_error.h"
 #include "odeus_lexer.h"
 #include "odeus_token.h"
 
@@ -12,25 +8,26 @@
  *      | list
  *      | quote
  */
-static AST_Node *parse_expr (Lexer *lexer, Token *token);
+static AST *parse_expr (Parser *parser, Token *token);
 
 /* list = '(' expr+ ')' */
-static AST_Node *parse_list (Lexer *lexer, Token *token);
+static AST *parse_list (Parser *parser, Token *token);
 
 /* literal = SYMBOL | INTEGER | FLOAT | STRING */
-static AST_Node *parse_literal (Lexer *lexer, Token *token);
+static AST *parse_literal (Parser *parser, Token *token);
 
 /* quote = '\'' expr  */
-static AST_Node *parse_quote (Lexer *lexer, Token *token);
+static AST *parse_quote (Parser *parser, Token *token);
 
-static AST_Node *GLOBAL_NIL = NULL;
+static AST *GLOBAL_NIL = NULL;
+static AST *GLOBAL_T = NULL;
 
-AST_Node *
+AST *
 nil (void)
 {
   if (!GLOBAL_NIL)
     {
-      GLOBAL_NIL = malloc (sizeof (AST_Node));
+      GLOBAL_NIL = malloc (sizeof (AST));
       GLOBAL_NIL->type = AST_NIL;
       GLOBAL_NIL->line = 0;
       GLOBAL_NIL->column = 0;
@@ -38,11 +35,28 @@ nil (void)
   return GLOBAL_NIL;
 }
 
-void
-parser_panic (Token *token, const char *filename, const char *message)
+AST *
+t (void)
 {
-  fprintf (stderr, "%s:%ld:%ld: %s", filename, token->line, token->column, message);
-  exit (1);
+  if (!GLOBAL_T)
+    {
+      GLOBAL_T = malloc (sizeof (AST));
+      GLOBAL_T->type = AST_SYMBOL;
+      GLOBAL_T->as.SYMBOL = "t";
+      GLOBAL_T->line = 0;
+      GLOBAL_T->column = 0;
+    }
+  return GLOBAL_T;
+}
+
+void
+parser_panic (Parser *parser, Token *token, const char *message)
+{
+  parser->error.filename = parser->lexer->filename;
+  parser->error.status = ODEUS_ERROR;
+  parser->error.message = message;
+  parser->error.line = token->line;
+  parser->error.column = token->column;
 }
 
 Parser *
@@ -57,15 +71,15 @@ parser_init (Lexer *lexer)
 
   parser->lexer = lexer;
 
-  AST_Node *global_environment = cons (nil (), nil ());
-  AST_Node *program = nil ();
-  parser->start_node = cons (global_environment, program);
+  AST *global_environment = make_cons (nil (), nil ());
+  AST *program = nil ();
+  parser->start_node = make_cons (global_environment, program);
 
   return parser;
 }
 
 void
-ast_free (AST_Node *node)
+ast_free (AST *node)
 {
   if (!node)
     return;
@@ -82,6 +96,8 @@ ast_free (AST_Node *node)
       break;
 
     case AST_QUOTE: ast_free (node->as.QUOTE.EXPR); break;
+
+    case AST_ERROR: free (node->as.ERROR.MESSAGE); break;
 
     default: break;
     }
@@ -105,62 +121,62 @@ parser_free (Parser *parser)
 void
 parser_parse (Parser *parser)
 {
-  AST_Node *begin_head = nil ();
-  AST_Node **begin_tail = &begin_head;
+  AST *begin_head = nil ();
+  AST **begin_tail = &begin_head;
 
   // initial token
   Token token = lexer_next_token (parser->lexer);
 
   while (token.type != TOKEN_END_OF_FILE)
     {
-      AST_Node *expr = parse_expr (parser->lexer, &token); // token is updated internally
+      AST *expr = parse_expr (parser, &token); // token is updated internally
 
       if (expr)
         {
-          *begin_tail = cons (expr, nil ());
+          *begin_tail = make_cons (expr, nil ());
           begin_tail = &CDR (*begin_tail);
         }
     }
-  AST_Node *begin_symbol = (AST_Node *)malloc (sizeof (AST_Node));
+  AST *begin_symbol = (AST *)malloc (sizeof (AST));
   begin_symbol->type = AST_SYMBOL;
-  begin_symbol->as.SYMBOL = "BEGIN";
-  AST_Node *begin_node = cons (begin_symbol, begin_head);
+  begin_symbol->as.SYMBOL = "begin";
+  AST *begin_node = make_cons (begin_symbol, begin_head);
 
-  CDR(parser->start_node) = begin_node;
+  CDR (parser->start_node) = begin_node;
 }
 
 /* ----------------------------------------------------------
  *   PARSER HELPERS
  * ---------------------------------------------------------- */
 
-static AST_Node *
-parse_expr (Lexer *lexer, Token *token)
+static AST *
+parse_expr (Parser *parser, Token *token)
 {
   switch (token->type)
     {
     case TOKEN_INTEGER:
     case TOKEN_FLOAT:
     case TOKEN_STRING:
-    case TOKEN_SYMBOL: return parse_literal (lexer, token);
+    case TOKEN_SYMBOL: return parse_literal (parser, token);
 
-    case TOKEN_OPEN_PAREN: return parse_list (lexer, token);
+    case TOKEN_OPEN_PAREN: return parse_list (parser, token);
 
-    case TOKEN_QUOTE: return parse_quote (lexer, token);
+    case TOKEN_QUOTE: return parse_quote (parser, token);
 
     case TOKEN_NONE:
     case TOKEN_CLOSE_PAREN:
     case TOKEN_PERIOD:
     case TOKEN_COMMA:
       {
-        char msg[256];
-        snprintf (msg, sizeof (msg), "Unexpected token '%s'", token->value);
-        parser_panic (token, lexer->filename, msg);
+        char message[256];
+        snprintf (message, sizeof (message), "Unexpected token '%s'", token->value);
+        parser_panic (parser, token, message);
       }
       break;
 
     case TOKEN_END_OF_FILE:
       {
-        AST_Node *eof = malloc (sizeof (AST_Node));
+        AST *eof = malloc (sizeof (AST));
         eof->type = AST_END_OF_FILE;
         eof->line = token->line;
         eof->column = token->column;
@@ -170,50 +186,51 @@ parse_expr (Lexer *lexer, Token *token)
   return NULL;
 }
 
-static AST_Node *
-parse_list (Lexer *lexer, Token *token)
+static AST *
+parse_list (Parser *parser, Token *token)
 {
   // consume '('
-  *token = lexer_next_token (lexer);
+  *token = lexer_next_token (parser->lexer);
 
-  AST_Node *head = NULL;
-  AST_Node **tail = &head;
+  AST *head = NULL;
+  AST **tail = &head;
 
   while (token->type != TOKEN_END_OF_FILE && token->type != TOKEN_CLOSE_PAREN)
     {
       if (token->type == TOKEN_PERIOD)
         {
           // dot notation: CAR already exists, parse CDR
-          *token = lexer_next_token (lexer); // consume '.'
-          AST_Node *cdr = parse_expr (lexer, token);
+          *token = lexer_next_token (parser->lexer); // consume '.'
+          AST *cdr = parse_expr (parser, token);
 
           if (!head)
-            parser_panic (token, lexer->filename, "Dot without CAR");
+            parser_panic (parser, token, "Dot without CAR");
 
           *tail = cdr;
 
           if (token->type != TOKEN_CLOSE_PAREN)
-            *token = lexer_next_token (lexer);
+            parser_panic (parser, token, "Expected ')' after dotted pair\n");
 
+          *token = lexer_next_token (parser->lexer);
           return head;
         }
 
-      AST_Node *expr = parse_expr (lexer, token);
-      *tail = cons (expr, nil ());
+      AST *expr = parse_expr (parser, token);
+      *tail = make_cons (expr, nil ());
       tail = &CDR (*tail);
     }
 
   if (token->type != TOKEN_CLOSE_PAREN)
-    parser_panic (token, lexer->filename, "Unterminated list");
+    parser_panic (parser, token, "Unterminated list");
 
-  *token = lexer_next_token (lexer); // consume ')'
+  *token = lexer_next_token (parser->lexer); // consume ')'
   return head ? head : nil ();
 }
 
-AST_Node *
-cons (AST_Node *car, AST_Node *cdr)
+AST *
+make_cons (AST *car, AST *cdr)
 {
-  AST_Node *n = malloc (sizeof (AST_Node));
+  AST *n = malloc (sizeof (AST));
   n->type = AST_CONS;
   CAR (n) = car;
   CDR (n) = cdr;
@@ -222,10 +239,10 @@ cons (AST_Node *car, AST_Node *cdr)
   return n;
 }
 
-static AST_Node *
-parse_literal (Lexer *lexer, Token *token)
+static AST *
+parse_literal (Parser *parser, Token *token)
 {
-  AST_Node *n = malloc (sizeof (AST_Node));
+  AST *n = malloc (sizeof (AST));
   n->line = token->line;
   n->column = token->column;
 
@@ -256,26 +273,26 @@ parse_literal (Lexer *lexer, Token *token)
         char msg[256];
         snprintf (msg, sizeof (msg), "Unexpected literal token '%s'", token->value);
         free (n);
-        parser_panic (token, lexer->filename, msg);
+        parser_panic (parser, token, msg);
       }
     }
 
-  *token = lexer_next_token (lexer);
+  *token = lexer_next_token (parser->lexer);
 
   return n;
 }
 
-static AST_Node *
-parse_quote (Lexer *lexer, Token *token)
+static AST *
+parse_quote (Parser *parser, Token *token)
 {
-  AST_Node *n = malloc (sizeof (AST_Node));
+  AST *n = malloc (sizeof (AST));
   n->type = AST_QUOTE;
   n->line = token->line;
   n->column = token->column;
 
-  *token = lexer_next_token (lexer);
+  *token = lexer_next_token (parser->lexer);
 
-  n->as.QUOTE.EXPR = parse_expr (lexer, token);
+  n->as.QUOTE.EXPR = parse_expr (parser, token);
 
   return n;
 }
@@ -285,7 +302,7 @@ parse_quote (Lexer *lexer, Token *token)
  * ---------------------------------------------------------- */
 
 void
-ast_print (AST_Node *node)
+ast_print (AST *node)
 {
   if (!node)
     {
@@ -313,7 +330,7 @@ ast_print (AST_Node *node)
     case AST_CONS:
       {
         printf ("(");
-        AST_Node *cur = node;
+        AST *cur = node;
 
         while (cur->type == AST_CONS)
           {
@@ -330,10 +347,14 @@ ast_print (AST_Node *node)
             printf (" . ");
             ast_print (cur);
           }
-            printf (")");
+        printf (")");
         break;
       }
 
+    case AST_BUILTIN_NORMAL:
+    case AST_BUILTIN_SPECIAL: printf ("#<BUILTIN:%p>", node->as.BUILTIN); break;
+
+    case AST_ERROR: printf ("%s", node->as.ERROR.MESSAGE); break;
     case AST_END_OF_FILE: printf ("#<EOF>"); break;
 
     default: printf ("#<UNKNOWN>"); break;

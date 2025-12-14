@@ -21,12 +21,20 @@ typedef enum
   AST_QUOTE,
   AST_CONS,
 
-  AST_END_OF_FILE,
-} AST_Node_Type;
+  AST_BUILTIN_NORMAL,
+  AST_BUILTIN_SPECIAL,
+  AST_LAMBDA,
 
-typedef struct AST
+  AST_ERROR,
+  AST_END_OF_FILE,
+} AST_Type;
+
+typedef struct AST_Node AST;
+typedef AST *(*Builtin_Function) (AST *environment, AST *arguments);
+
+struct AST_Node
 {
-  AST_Node_Type type;
+  AST_Type type;
   union
   {
     long INTEGER;
@@ -36,32 +44,58 @@ typedef struct AST
 
     struct
     {
-      struct AST *EXPR;
+      AST *EXPR;
     } QUOTE;
 
     struct
     {
-      struct AST *CAR;
-      struct AST *CDR;
+      AST *CAR;
+      AST *CDR;
     } CONS;
+
+    struct
+    {
+      char *MESSAGE;
+    } ERROR;
+
+    // used in eval step
+    Builtin_Function BUILTIN;
+    struct
+    {
+      AST *environment;
+      AST *parameters;
+      AST *body;
+    } LAMBDA;
   } as;
   size_t line;
   size_t column;
-} AST_Node;
+};
 
 typedef struct
 {
   Lexer *lexer;
-  AST_Node *start_node;
+  AST *start_node;
+  Error error;
 } Parser;
 
 Parser *parser_init (Lexer *lexer);
-void parser_parse (Parser *parse);
-void parser_panic (Token *token, const char *filename, const char *message);
+void parser_parse (Parser *parser);
+void parser_panic (Parser *parser, Token *token, const char *message);
 
-AST_Node *symbol (char* name);
-AST_Node *cons (AST_Node *car, AST_Node *cdr);
-AST_Node *nil (void);
+AST *make_integer (long value);
+AST *make_float (double value);
+AST *make_string (const char *string);
+AST *make_symbol (const char *symbol);
+AST *make_cons (AST *car, AST *cdr);
+
+// 'kind' should be either AST_BUILTIN_NORMAL or AST_BUILTIN_SPECIAL
+AST *make_builtin (Builtin_Function builtin_function, AST_Type kind);
+
+// special AST node builder, only for error messages
+AST* make_error (const char* message);
+
+AST *nil (void);
+AST *t (void);
 
 #define CAR(cons) ((cons)->as.CONS.CAR)
 #define CDR(cons) ((cons)->as.CONS.CDR)
@@ -71,8 +105,8 @@ AST_Node *nil (void);
 #define CDAR(cons) (CDR (CAR ((cons))))
 #define CDDR(cons) (CDR (CDR ((cons))))
 
-#define IS_NULL(a)((a) == NULL || (a)->type == AST_NIL)
+#define IS_NULL(a) ((a) == NULL || (a)->type == AST_NIL)
 
-void ast_print(AST_Node *node);
+void ast_print (AST *node);
 
 #endif // ODEUS_PARSER_H_

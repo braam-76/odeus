@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "odeus_core_error.h"
 #include "odeus_token.h"
 
 typedef struct
@@ -19,6 +20,8 @@ typedef struct
   size_t line;
   size_t column;
   size_t token_start_column; // special field to fix tokens column value problem
+
+  Error error;
 } Lexer;
 
 Lexer lexer_from_file (char *filename, char *source, size_t source_size);

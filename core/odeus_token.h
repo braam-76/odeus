@@ -17,6 +17,7 @@ typedef enum
   TOKEN_FLOAT,
   TOKEN_STRING,
   TOKEN_SYMBOL,
+
   TOKEN_END_OF_FILE
 } Token_Type;
 
