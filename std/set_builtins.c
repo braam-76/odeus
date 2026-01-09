@@ -1,8 +1,8 @@
 #include "set_builtins.h"
 
-#include "builtins/forms.h"
-#include "builtins/primitives.h"
-#include "builtins/basic_math.h"
+#include "forms.h"
+#include "primitives.h"
+#include "basic_math.h"
 
 #define REGISTER_NORMAL(name, fn)                                                                  \
   environment_set (environment, make_symbol (name), make_builtin (fn, AST_BUILTIN_NORMAL))

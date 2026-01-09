@@ -9,6 +9,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -Wimplicit-fallthrough -Wno-sign-co
 # Core and test includes
 include_directories(
   ${PROJECT_SOURCE_DIR}/core
+  ${PROJECT_SOURCE_DIR}/std
   ${PROJECT_SOURCE_DIR}/tests
   /usr/include
 )
@@ -17,16 +18,17 @@ link_directories(
   /usr/lib
 )
 
-add_library(odeus_core STATIC
-    core/odeus_lexer.c
-    core/odeus_parser.c
-    core/builtins/odeus_basic_math.c
-    core/builtins/odeus_primitives.c
-    core/builtins/forms.c
-    core/builtins/set_builtins.c
+add_library(core STATIC
+    core/lexer.c
+    core/parser.c
     core/environment.c
     core/eval.c
     core/ast.c
+
+    std/basic_math.c
+    std/primitives.c
+    std/forms.c
+    std/set_builtins.c
 )
 
 # REPL executable with readline

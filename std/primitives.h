@@ -1,7 +1,7 @@
 #ifndef PRIMITIVES_H_
 #define PRIMITIVES_H_
 
-#include "../ast.h"
+#include "../core/ast.h"
 
 AST *builtin_quote (AST *environment, AST *arguments);
 AST *builtin_atom (AST *environment, AST *arguments);

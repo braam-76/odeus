@@ -1,7 +1,7 @@
 #ifndef BASIC_MATH_H_
 #define BASIC_MATH_H_
 
-#include "../ast.h"
+#include "../core/ast.h"
 
 AST *builtin_add (AST *environment, AST *arguments);
 AST *builtin_sub (AST *environment, AST *arguments);
