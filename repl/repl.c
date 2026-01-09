@@ -6,7 +6,7 @@
 #include "../core/lexer.h"
 #include "../core/parser.h"
 #include "../core/eval.h"
-#include "../std/set_builtins.h"
+#include "../builtins/set_builtins.h"
 
 int
 main ()

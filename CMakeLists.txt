@@ -25,10 +25,10 @@ add_library(core STATIC
     core/eval.c
     core/ast.c
 
-    std/basic_math.c
-    std/primitives.c
-    std/forms.c
-    std/set_builtins.c
+    builtins/basic_math.c
+    builtins/primitives.c
+    builtins/forms.c
+    builtins/set_builtins.c
 )
 
 # REPL executable with readline
