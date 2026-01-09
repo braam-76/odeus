@@ -35,7 +35,6 @@ main ()
 
       AST *program = parser_parse (parser);
 
-      // Evaluate the BEGIN node in CDR(parser->start_node)
       AST *result = evaluate_expression (global_env, program);
 
       ast_print (result);

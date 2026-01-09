@@ -6,42 +6,23 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(-Wall -Wextra -Wpedantic -Wimplicit-fallthrough -Wno-sign-compare)
 
-# Core and test includes
-include_directories(
-  ${PROJECT_SOURCE_DIR}/core
-  ${PROJECT_SOURCE_DIR}/std
-  ${PROJECT_SOURCE_DIR}/tests
-  /usr/include
-)
+add_subdirectory(core)
+add_subdirectory(builtins)
 
-link_directories(
-  /usr/lib
-)
-
-add_library(core STATIC
-    core/lexer.c
-    core/parser.c
-    core/environment.c
-    core/eval.c
-    core/ast.c
-
-    builtins/basic_math.c
-    builtins/primitives.c
-    builtins/forms.c
-    builtins/set_builtins.c
-)
-
-# REPL executable with readline
+# REPL executable
 add_executable(repl repl/repl.c)
-target_link_libraries(repl PRIVATE core readline)
+target_include_directories(repl PRIVATE ${PROJECT_SOURCE_DIR}/repl)
+target_link_libraries(repl PRIVATE builtins readline)
 
 # Lexer test executable
 add_executable(lexer_test tests/lexer_test.c)
-target_link_libraries(lexer_test PRIVATE core readline)
+target_include_directories(lexer_test PRIVATE ${PROJECT_SOURCE_DIR}/tests)
+target_link_libraries(lexer_test PRIVATE builtins readline)
 
 # Parser test executable
 add_executable(parser_test tests/parser_test.c)
-target_link_libraries(parser_test PRIVATE core readline)
+target_include_directories(parser_test PRIVATE ${PROJECT_SOURCE_DIR}/tests)
+target_link_libraries(parser_test PRIVATE builtins readline)
 
 enable_testing()
 add_test(NAME LexerTest COMMAND lexer_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/lexer_test.ode)
