@@ -1,5 +1,5 @@
-#ifndef ODEUS_CORE_TOKEN_H_
-#define ODEUS_CORE_TOKEN_H_
+#ifndef TOKEN_H_
+#define TOKEN_H_
 
 #include <stddef.h>
 
@@ -50,4 +50,4 @@ token_type_as_str (Token_Type token_type)
     }
 }
 
-#endif // ODEUS_TOKEN_H_
+#endif // TOKEN_H_

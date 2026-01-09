@@ -1,11 +1,11 @@
-#ifndef ODEUS_FORMS_H_
-#define ODEUS_FORMS_H_
+#ifndef FORMS_H_
+#define FORMS_H_
 
-#include "odeus_ast.h"
+#include "ast.h"
 
 AST *builtin_print (AST *environment, AST *arguments);
 AST *builtin_define (AST *environment, AST *arguments);
 AST *builtin_begin (AST *environment, AST *arguments);
 
 
-#endif // ODEUS_FORMS_H_
+#endif // FORMS_H_

@@ -1,4 +1,4 @@
-#include "odeus_ast.h"
+#include "ast.h"
 
 static AST *GLOBAL_NIL = NULL;
 static AST *GLOBAL_T = NULL;
@@ -120,9 +120,6 @@ ast_free (AST *node)
 
   free (node);
 }
-
-#include "odeus_parser.h"
-#include <assert.h>
 
 AST *
 make_integer (long value)

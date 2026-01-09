@@ -1,5 +1,5 @@
-#ifndef ODEUS_CORE_ERROR_H_
-#define ODEUS_CORE_ERROR_H_
+#ifndef CORE_ERROR_H_
+#define CORE_ERROR_H_
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -7,8 +7,8 @@
 #include <string.h>
 
 typedef enum {
-    ODEUS_OK = 0,
-    ODEUS_ERROR
+    OK = 0,
+    ERROR
 } Error_Status;
 
 typedef struct {
@@ -19,4 +19,4 @@ typedef struct {
     long column;
 } Error;
 
-#endif // ODEUS_CORE_ERROR_H_
+#endif // CORE_ERROR_H_

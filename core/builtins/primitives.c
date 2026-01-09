@@ -1,4 +1,4 @@
-#include "odeus_primitives.h"
+#include "primitives.h"
 
 AST *
 builtin_quote (AST *environment, AST *arguments)

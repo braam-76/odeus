@@ -1,5 +1,5 @@
-#include "odeus_forms.h"
-#include "odeus_eval.h"
+#include "forms.h"
+#include "eval.h"
 
 AST *
 builtin_define (AST *environment, AST *arguments)

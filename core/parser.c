@@ -1,4 +1,4 @@
-#include "odeus_parser.h"
+#include "parser.h"
 
 /* expr = literal
  *      | '(' expr '.' expr ')'
@@ -20,7 +20,7 @@ void
 parser_panic (Parser *parser, Token *token, const char *message)
 {
   parser->error.filename = parser->lexer->filename;
-  parser->error.status = ODEUS_ERROR;
+  parser->error.status = ERROR;
   parser->error.message = message;
   parser->error.line = token->line;
   parser->error.column = token->column;

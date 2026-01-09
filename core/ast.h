@@ -1,9 +1,11 @@
 #ifndef ODEUS_AST_H_
 #define ODEUS_AST_H_
 
-#include <stdio.h>
+#include <assert.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef enum
 {
@@ -85,7 +87,7 @@ AST *make_cons (AST *car, AST *cdr);
 AST *make_builtin (Builtin_Function builtin_function, AST_Type kind);
 
 // special AST node builder, only for error messages
-AST* make_error (const char* message);
+AST *make_error (const char *message);
 
 AST *nil (void);
 AST *t (void);

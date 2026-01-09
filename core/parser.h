@@ -1,5 +1,5 @@
-#ifndef ODEUS_PARSER_H_
-#define ODEUS_PARSER_H_
+#ifndef PARSER_H_
+#define PARSER_H_
 
 #include <assert.h>
 #include <errno.h>
@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "odeus_ast.h"
-#include "odeus_lexer.h"
-#include "odeus_token.h"
+#include "ast.h"
+#include "lexer.h"
+#include "token.h"
 
 typedef struct
 {
@@ -23,4 +23,4 @@ Parser *parser_init (Lexer *lexer);
 void parser_parse (Parser *parser);
 void parser_panic (Parser *parser, Token *token, const char *message);
 
-#endif // ODEUS_PARSER_H_
+#endif // PARSER_H_

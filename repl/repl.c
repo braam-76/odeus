@@ -3,10 +3,10 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 
-#include "../core/odeus_lexer.h"
-#include "../core/odeus_parser.h"
-#include "../core/odeus_eval.h"
-#include "../core/builtins/odeus_set_builtins.h"
+#include "../core/lexer.h"
+#include "../core/parser.h"
+#include "../core/eval.h"
+#include "../core/builtins/set_builtins.h"
 int
 main ()
 {

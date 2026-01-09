@@ -22,25 +22,25 @@ add_library(odeus_core STATIC
     core/odeus_parser.c
     core/builtins/odeus_basic_math.c
     core/builtins/odeus_primitives.c
-    core/builtins/odeus_forms.c
-    core/builtins/odeus_set_builtins.c
-    core/odeus_environment.c
-    core/odeus_eval.c
-    core/odeus_ast.c
+    core/builtins/forms.c
+    core/builtins/set_builtins.c
+    core/environment.c
+    core/eval.c
+    core/ast.c
 )
 
 # REPL executable with readline
-add_executable(odeus_repl repl/odeus_repl.c)
-target_link_libraries(odeus_repl PRIVATE odeus_core readline)
+add_executable(repl repl/repl.c)
+target_link_libraries(repl PRIVATE core readline)
 
 # Lexer test executable
-add_executable(lexer_test tests/odeus_lexer_test.c)
-target_link_libraries(lexer_test PRIVATE odeus_core readline)
+add_executable(lexer_test tests/lexer_test.c)
+target_link_libraries(lexer_test PRIVATE core readline)
 
 # Parser test executable
-add_executable(parser_test tests/odeus_parser_test.c)
-target_link_libraries(parser_test PRIVATE odeus_core readline)
+add_executable(parser_test tests/parser_test.c)
+target_link_libraries(parser_test PRIVATE core readline)
 
 enable_testing()
-add_test(NAME LexerTest COMMAND lexer_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/odeus_lexer_test.ode)
-add_test(NAME ParserTest COMMAND parser_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/odeus_parser_test.ode)
+add_test(NAME LexerTest COMMAND lexer_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/lexer_test.ode)
+add_test(NAME ParserTest COMMAND parser_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/parser_test.ode)

@@ -3,19 +3,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../core/odeus_lexer.h"
-#include "../core/odeus_token.h"
+#include "../core/lexer.h"
+#include "../core/token.h"
 #include "utest.h"
 
 static Lexer lexer;
 char *filename = NULL;
 
-UTEST (odeus_lexer, init)
+UTEST (lexer, init)
 {
   FILE *f = fopen (filename, "r");
   if (!f)
     {
-      fprintf (stderr, "ERROR: utest_odeus_lexer_init: could not open file: %s\n", strerror (errno));
+      fprintf (stderr, "ERROR: utest_lexer_init: could not open file: %s\n", strerror (errno));
       exit (1);
     }
 
@@ -37,7 +37,7 @@ UTEST (odeus_lexer, init)
   ASSERT_EQ (source_size, lexer.source_size);
 }
 
-UTEST (odeus_lexer, parenthesis)
+UTEST (lexer, parenthesis)
 {
   Token open_paren = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_OPEN_PAREN, (int)open_paren.type);
@@ -50,7 +50,7 @@ UTEST (odeus_lexer, parenthesis)
   ASSERT_EQ ((size_t)3, close_paren.column);
 }
 
-UTEST (odeus_lexer, strings)
+UTEST (lexer, strings)
 {
   Token string = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_STRING, (int)string.type);
@@ -65,7 +65,7 @@ UTEST (odeus_lexer, strings)
   ASSERT_EQ ((size_t)0, string_with_escapes.column);
 }
 
-UTEST (odeus_lexer, numbers)
+UTEST (lexer, numbers)
 {
   Token positive_number = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_INTEGER, (int)positive_number.type);
@@ -91,7 +91,7 @@ UTEST (odeus_lexer, numbers)
   ASSERT_EQ ((size_t)14, negative_float.line);
   ASSERT_EQ ((size_t)0, negative_float.column);
 }
-UTEST (odeus_lexer, symbols)
+UTEST (lexer, symbols)
 {
   Token symbol = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_SYMBOL, (int)symbol.type);
@@ -113,7 +113,7 @@ UTEST (odeus_lexer, symbols)
   ASSERT_EQ ((size_t)0, all_characters_symbol.column);
 }
 
-UTEST (odeus_lexer, quote_before_parens)
+UTEST (lexer, quote_before_parens)
 {
   Token quote = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_QUOTE, (int)quote.type);
@@ -131,7 +131,7 @@ UTEST (odeus_lexer, quote_before_parens)
   ASSERT_EQ ((size_t)0, close_paren.column);
 }
 
-UTEST (odeus_lexer, quote_before_symbol)
+UTEST (lexer, quote_before_symbol)
 {
   Token quote = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_QUOTE, (int)quote.type);
@@ -144,7 +144,7 @@ UTEST (odeus_lexer, quote_before_symbol)
   ASSERT_EQ ((size_t)25, symbol.line);
   ASSERT_EQ ((size_t)1, symbol.column);
 }
-UTEST (odeus_lexer, end_of_file)
+UTEST (lexer, end_of_file)
 {
   Token end_of_file = lexer_next_token (&lexer);
   ASSERT_EQ (TOKEN_END_OF_FILE, (int)end_of_file.type);
@@ -157,6 +157,6 @@ UTEST_STATE ();
 int
 main (int argc, const char *const argv[])
 {
-  filename = argc == 2 ? argv[1] : "odeus_lexer_test.ode";
+  filename = argc == 2 ? argv[1] : "lexer_test.ode";
   return utest_main (argc, argv);
 }

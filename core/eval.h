@@ -1,8 +1,8 @@
-#ifndef ODEUS_EVAL_H_
-#define ODEUS_EVAL_H_
+#ifndef EVAL_H_
+#define EVAL_H_
 
-#include "odeus_environment.h"
-#include "odeus_ast.h"
+#include "environment.h"
+#include "ast.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,4 +18,4 @@ AST *evaluate_expression (AST *environment, AST *expression);
     }                                                                                              \
   while (0)
 
-#endif // ODEUS_EVAL_H_
+#endif // EVAL_H_

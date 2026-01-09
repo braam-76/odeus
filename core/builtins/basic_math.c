@@ -1,4 +1,4 @@
-#include "odeus_basic_math.h"
+#include "basic_math.h"
 
 static AST *
 get_numeric_value (AST *node, double *out, int *is_float)

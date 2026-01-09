@@ -1,8 +1,8 @@
-#include "odeus_set_builtins.h"
+#include "set_builtins.h"
 
-#include "builtins/odeus_forms.h"
-#include "builtins/odeus_primitives.h"
-#include "builtins/odeus_basic_math.h"
+#include "builtins/forms.h"
+#include "builtins/primitives.h"
+#include "builtins/basic_math.h"
 
 #define REGISTER_NORMAL(name, fn)                                                                  \
   environment_set (environment, make_symbol (name), make_builtin (fn, AST_BUILTIN_NORMAL))

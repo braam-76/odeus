@@ -1,4 +1,4 @@
-#include "odeus_eval.h"
+#include "eval.h"
 
 static AST *evaluate_arguments (AST *environment, AST *arguments);
 AST *evaluate_expression (AST *environment, AST *expression);

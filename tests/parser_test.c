@@ -3,15 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../core/odeus_lexer.h"
-#include "../core/odeus_parser.h"
+#include "../core/lexer.h"
+#include "../core/parser.h"
 
 #include "utest.h"
 
 static Lexer lexer;
 static Parser *parser;
 
-UTEST(odeus_parser, init)
+UTEST(parser, init)
 {
     char *source = "(print t \"Hello, world\" (+ 1 0.2))";
     lexer = lexer_from_string(source, strlen(source));
@@ -22,7 +22,7 @@ UTEST(odeus_parser, init)
     ASSERT_TRUE(parser->start_node->as.CONS.CDR == nil());
 }
 
-UTEST(odeus_parser, parse_program)
+UTEST(parser, parse_program)
 {
     parser_parse(parser);
 
@@ -74,7 +74,7 @@ UTEST(odeus_parser, parse_program)
     ASSERT_EQ(0.2, plus_second->as.FLOAT);
 }
 
-UTEST(odeus_parser, walk_program)
+UTEST(parser, walk_program)
 {
     parser_parse(parser);
 

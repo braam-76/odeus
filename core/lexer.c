@@ -1,6 +1,4 @@
-#include "odeus_lexer.h"
-#include "odeus_core_error.h"
-#include "odeus_token.h"
+#include "lexer.h"
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -171,7 +169,7 @@ advance (Lexer *lexer)
 static void
 panic (Lexer *lexer, const char *message)
 {
-  lexer->error.status = ODEUS_ERROR;
+  lexer->error.status = ERROR;
   lexer->error.message = message;
   lexer->error.filename = lexer->filename;
   lexer->error.line = lexer->line;
