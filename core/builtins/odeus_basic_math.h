@@ -1,7 +1,7 @@
 #ifndef ODEUS_BASIC_MATH_H_
 #define ODEUS_BASIC_MATH_H_
 
-#include "../odeus_parser.h"
+#include "../odeus_ast.h"
 
 AST *builtin_add (AST *environment, AST *arguments);
 AST *builtin_sub (AST *environment, AST *arguments);

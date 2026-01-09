@@ -2,7 +2,7 @@
 #define ODEUS_EVAL_H_
 
 #include "odeus_environment.h"
-#include "odeus_parser.h"
+#include "odeus_ast.h"
 
 #include <stdio.h>
 #include <stdlib.h>

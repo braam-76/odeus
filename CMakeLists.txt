@@ -26,7 +26,7 @@ add_library(odeus_core STATIC
     core/builtins/odeus_set_builtins.c
     core/odeus_environment.c
     core/odeus_eval.c
-    core/odeus_make_asts.c
+    core/odeus_ast.c
 )
 
 # REPL executable with readline

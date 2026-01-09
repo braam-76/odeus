@@ -1,7 +1,7 @@
 #ifndef ODEUS_FORMS_H_
 #define ODEUS_FORMS_H_
 
-#include "odeus_parser.h"
+#include "odeus_ast.h"
 
 AST *builtin_print (AST *environment, AST *arguments);
 AST *builtin_define (AST *environment, AST *arguments);

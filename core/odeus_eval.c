@@ -25,7 +25,7 @@ bind_arguments (AST *environment, AST *params, AST *args)
   if (!IS_NULL (params) || !IS_NULL (args))
     return make_error ("ERROR: argument count mismatch in lambda call\n");
 
-  return nil();
+  return nil ();
 }
 
 static AST *
@@ -57,7 +57,7 @@ apply (AST *function, AST *environment, AST *arguments)
       while (body->type == AST_CONS)
         {
           result = evaluate_expression (lambda_environment, CAR (body));
-          ERROR_OUT(result);
+          ERROR_OUT (result);
           body = CDR (body);
         }
       return result;
@@ -75,7 +75,7 @@ evaluate_arguments (AST *environment, AST *arguments)
   while (arguments->type == AST_CONS)
     {
       AST *value = evaluate_expression (environment, CAR (arguments));
-      ERROR_OUT(value);
+      ERROR_OUT (value);
 
       AST *new_node = make_cons (value, nil ());
 
@@ -116,7 +116,7 @@ evaluate_expression (AST *environment, AST *expression)
                             ? environment_get (environment, operator_node)
                             : evaluate_expression (environment, operator_node);
 
-        ERROR_OUT(function);
+        ERROR_OUT (function);
 
         if (function->type == AST_SYMBOL)
           function = environment_get (environment, function);
