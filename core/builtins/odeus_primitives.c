@@ -1,9 +1,9 @@
 #include "odeus_primitives.h"
-#include "odeus_parser.h"
 
 AST *
 builtin_quote (AST *environment, AST *arguments)
 {
+  (void)environment;
   if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
     return make_error ("ERROR: quote expects one argument\n");
 
@@ -13,6 +13,7 @@ builtin_quote (AST *environment, AST *arguments)
 AST *
 builtin_atom (AST *environment, AST *arguments)
 {
+  (void)environment;
   if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
     return make_error ("ERROR: atom expects one argument\n");
 
@@ -22,6 +23,7 @@ builtin_atom (AST *environment, AST *arguments)
 AST *
 builtin_eq (AST *environment, AST *arguments)
 {
+  (void)environment;
   if (IS_NULL (arguments) || IS_NULL (CADR (arguments)) || !IS_NULL (CDDR (arguments)))
     return make_error ("ERROR: eq expects two argument\n");
 
@@ -34,6 +36,7 @@ builtin_eq (AST *environment, AST *arguments)
 AST *
 builtin_cons (AST *environment, AST *arguments)
 {
+  (void)environment;
   if (IS_NULL (arguments) || IS_NULL (CADR (arguments)) || !IS_NULL (CDDR (arguments)))
     return make_error ("ERROR: cons expects two argument\n");
 
@@ -46,6 +49,7 @@ builtin_cons (AST *environment, AST *arguments)
 AST *
 builtin_null (AST *environment, AST *arguments)
 {
+  (void)environment;
   if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
     return make_error ("ERROR: null expects one argument\n");
 

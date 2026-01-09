@@ -19,5 +19,4 @@ typedef struct {
     long column;
 } Error;
 
-
 #endif // ODEUS_CORE_ERROR_H_

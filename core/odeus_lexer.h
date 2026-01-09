@@ -19,7 +19,7 @@ typedef struct
   size_t position;
   size_t line;
   size_t column;
-  size_t token_start_column; // special field to fix tokens column value problem
+  size_t token_start_column;
 
   Error error;
 } Lexer;

@@ -6,7 +6,7 @@
 #include "../core/odeus_lexer.h"
 #include "../core/odeus_parser.h"
 #include "../core/odeus_eval.h"
-
+#include "../core/builtins/odeus_set_builtins.h"
 int
 main ()
 {
