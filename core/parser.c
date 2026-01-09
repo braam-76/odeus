@@ -37,10 +37,7 @@ parser_init (Lexer *lexer)
     }
 
   parser->lexer = lexer;
-
-  AST *global_environment = make_cons (nil (), nil ());
-  AST *program = nil ();
-  parser->start_node = make_cons (global_environment, program);
+  parser->start_node = nil();
 
   return parser;
 }
@@ -58,7 +55,7 @@ parser_free (Parser *parser)
 /* ----------------------------------------------------------
  *   TOP-LEVEL PARSING
  * ---------------------------------------------------------- */
-void
+AST*
 parser_parse (Parser *parser)
 {
   AST *begin_head = nil ();
@@ -82,7 +79,7 @@ parser_parse (Parser *parser)
   begin_symbol->as.SYMBOL = "begin";
   AST *begin_node = make_cons (begin_symbol, begin_head);
 
-  CDR (parser->start_node) = begin_node;
+  return begin_node;
 }
 
 /* ----------------------------------------------------------

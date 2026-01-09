@@ -20,7 +20,7 @@ typedef struct
 } Parser;
 
 Parser *parser_init (Lexer *lexer);
-void parser_parse (Parser *parser);
+AST* parser_parse (Parser *parser);
 void parser_panic (Parser *parser, Token *token, const char *message);
 
 #endif // PARSER_H_
