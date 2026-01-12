@@ -1,9 +1,0 @@
-#ifndef SET_BUILTINS_H_
-#define SET_BUILTINS_H_
-
-#include "ast.h"
-#include "environment.h"
-
-void set_builtins (AST *environment);
-
-#endif // SET_BUILTINS_H_
