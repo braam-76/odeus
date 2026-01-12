@@ -1,4 +1,4 @@
-#include "eval.h"
+#include "core/environment.h"
 
 void
 environment_set (AST *environment, AST *symbol, AST *value)

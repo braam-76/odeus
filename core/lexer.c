@@ -1,10 +1,4 @@
-#include "lexer.h"
-
-#include <ctype.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "core/lexer.h"
 
 // ───────────────────────────────
 // Internal helpers
@@ -58,15 +52,6 @@ lexer_from_string (char *source, size_t source_size)
   lexer.token_start_column = 0;
 
   return lexer;
-}
-
-
-void
-lexer_free (Lexer *lexer)
-{
-  free (lexer->filename);
-  free (lexer->source);
-  free (lexer);
 }
 
 // ───────────────────────────────

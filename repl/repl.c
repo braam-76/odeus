@@ -3,10 +3,10 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 
-#include "../builtins/set_builtins.h"
-#include "../core/eval.h"
-#include "../core/lexer.h"
-#include "../core/parser.h"
+#include "builtins/set_builtins.h"
+#include "core/eval.h"
+#include "core/lexer.h"
+#include "core/parser.h"
 
 int
 main ()
@@ -40,7 +40,6 @@ main ()
       ast_print (result);
       printf ("\n");
 
-      ast_free (program);
       free (parser);
       free (input);
     }

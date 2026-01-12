@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../core/lexer.h"
-#include "../core/parser.h"
+#include "core/lexer.h"
+#include "core/parser.h"
 
 #include "utest.h"
 

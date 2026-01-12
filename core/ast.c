@@ -1,4 +1,4 @@
-#include "ast.h"
+#include "core/ast.h"
 
 static AST *GLOBAL_NIL = NULL;
 static AST *GLOBAL_T = NULL;
@@ -94,33 +94,6 @@ ast_print (AST *node)
     }
 }
 
-void
-ast_free (AST *node)
-{
-  if (!node)
-    return;
-
-  switch (node->type)
-    {
-    case AST_STRING: free (node->as.STRING); break;
-
-    case AST_SYMBOL: free (node->as.SYMBOL); break;
-
-    case AST_CONS:
-      ast_free (CAR (node));
-      ast_free (CDR (node));
-      break;
-
-    case AST_QUOTE: ast_free (node->as.QUOTE.EXPR); break;
-
-    case AST_ERROR: free (node->as.ERROR.MESSAGE); break;
-
-    default: break;
-    }
-
-  free (node);
-}
-
 AST *
 make_integer (long value)
 {
@@ -163,6 +136,18 @@ make_symbol (const char *symbol)
   node->line = 0;
   node->column = 0;
   return node;
+}
+
+AST *
+make_cons (AST *car, AST *cdr)
+{
+  AST *n = malloc (sizeof (AST));
+  n->type = AST_CONS;
+  CAR (n) = car;
+  CDR (n) = cdr;
+  n->line = car->line;
+  n->column = car->column;
+  return n;
 }
 
 AST *

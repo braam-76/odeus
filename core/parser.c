@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "core/parser.h"
 
 /* expr = literal
  *      | '(' expr '.' expr ')'
@@ -40,16 +40,6 @@ parser_init (Lexer *lexer)
   parser->start_node = nil();
 
   return parser;
-}
-
-void
-parser_free (Parser *parser)
-{
-  if (!parser)
-    return;
-  ast_free (parser->start_node);
-  lexer_free (parser->lexer);
-  free (parser);
 }
 
 /* ----------------------------------------------------------
@@ -162,18 +152,6 @@ parse_list (Parser *parser, Token *token)
 
   *token = lexer_next_token (parser->lexer); // consume ')'
   return head ? head : nil ();
-}
-
-AST *
-make_cons (AST *car, AST *cdr)
-{
-  AST *n = malloc (sizeof (AST));
-  n->type = AST_CONS;
-  CAR (n) = car;
-  CDR (n) = cdr;
-  n->line = car->line;
-  n->column = car->column;
-  return n;
 }
 
 static AST *
