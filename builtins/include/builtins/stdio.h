@@ -1,0 +1,14 @@
+#ifndef STDIO_H_
+#define STDIO_H_
+
+#include "core/ast.h"
+#include "core/eval.h"
+
+AST *builtin_read(AST* environment, AST* arguments);
+AST *builtin_read_file(AST* environment, AST* arguments);
+AST *builtin_write(AST* environment, AST* arguments);
+AST *builtin_display(AST* environment, AST* arguments);
+AST *builtin_newline(AST* environment, AST* arguments);
+
+
+#endif // STDIO_H_
