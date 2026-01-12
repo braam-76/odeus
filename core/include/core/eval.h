@@ -1,8 +1,8 @@
 #ifndef EVAL_H_
 #define EVAL_H_
 
-#include "environment.h"
-#include "ast.h"
+#include "core/environment.h"
+#include "core/ast.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,5 +17,8 @@ AST *evaluate_expression (AST *environment, AST *expression);
         return (x);                                                                                \
     }                                                                                              \
   while (0)
+
+AST *expand_quasiquote (AST *expr, int depth);
+int arguments_length(AST*arguments);
 
 #endif // EVAL_H_

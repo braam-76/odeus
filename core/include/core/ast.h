@@ -93,6 +93,5 @@ AST *nil (void);
 AST *t (void);
 
 void ast_print (AST *node);
-void ast_free (AST *node);
 
 #endif // ODEUS_AST_H_

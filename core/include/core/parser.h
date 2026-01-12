@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ast.h"
-#include "lexer.h"
-#include "token.h"
+#include "core/ast.h"
+#include "core/lexer.h"
+#include "core/token.h"
 
 typedef struct
 {
