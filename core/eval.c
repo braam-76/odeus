@@ -1,7 +1,6 @@
 #include "core/eval.h"
 
 static AST *bind_arguments (AST *environment, AST *params, AST *args);
-static AST *apply (AST *function, AST *environment, AST *arguments);
 
 static AST *expand_quasiquote_list (AST *list, int depth);
 
@@ -174,7 +173,7 @@ bind_arguments (AST *environment, AST *params, AST *args)
   return nil ();
 }
 
-static AST *
+AST *
 apply (AST *function, AST *environment, AST *arguments)
 {
   if (function->type == AST_BUILTIN_SPECIAL)

@@ -28,23 +28,22 @@ set_builtins (AST *environment)
   REGISTER_NORMAL ("eq", builtin_eq);
   REGISTER_NORMAL ("null", builtin_null); // lisper's not operator
   REGISTER_NORMAL ("not", builtin_null);  // human readable not operator
-  REGISTER_NORMAL("if", builtin_if);
-  REGISTER_NORMAL("and", builtin_and);
-  REGISTER_NORMAL("or", builtin_or);
+  REGISTER_NORMAL ("if", builtin_if);
+  REGISTER_NORMAL ("and", builtin_and);
+  REGISTER_NORMAL ("or", builtin_or);
 
   // List operations
   REGISTER_NORMAL ("cons", builtin_cons);
   REGISTER_NORMAL ("list", builtin_list);
   REGISTER_NORMAL ("append", builtin_append);
-  // car
-  // cdr
-  // set-car!
-  // set-cdr!
-  // length
-  // reverse
-  // map
-  // filder
-  // foldr
+  REGISTER_NORMAL ("car", builtin_car);
+  REGISTER_NORMAL ("cdr", builtin_cdr);
+  REGISTER_NORMAL ("set-car!", builtin_set_car);
+  REGISTER_NORMAL ("set-cdr!", builtin_set_cdr);
+  REGISTER_NORMAL ("length", builtin_length);
+  REGISTER_NORMAL ("reverse", builtin_reverse);
+  REGISTER_NORMAL ("map", builtin_map);
+  REGISTER_NORMAL ("filter", builtin_filter);
 
   // Comparison operators
   // = (numeric equality)

@@ -15,7 +15,7 @@ AST *builtin_set_cdr(AST* environment, AST* arguments);
 AST *builtin_length(AST* environment, AST* arguments);
 AST *builtin_reverse(AST* environment, AST* arguments);
 AST *builtin_map(AST* environment, AST* arguments);
-AST *builtin_filder(AST* environment, AST* arguments);
+AST *builtin_filter(AST* environment, AST* arguments);
 AST *builtin_foldr(AST* environment, AST* arguments);
 
 
