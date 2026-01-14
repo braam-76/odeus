@@ -8,7 +8,6 @@
 #include "builtins/strings.h"
 #include "builtins/typep.h"
 
-
 #define REGISTER_NORMAL(name, fn)                                                                  \
   environment_set (environment, make_symbol (name), make_builtin (fn, AST_BUILTIN_NORMAL))
 
@@ -22,7 +21,7 @@ set_builtins (AST *environment)
   environment_set (environment, make_symbol ("nil"), nil ());
 
   REGISTER_SPECIAL ("begin", builtin_begin);
-  REGISTER_NORMAL("eval", builtin_eval);
+  REGISTER_NORMAL ("eval", builtin_eval);
 
   // Control flow
   REGISTER_NORMAL ("eq", builtin_eq);
@@ -45,24 +44,22 @@ set_builtins (AST *environment)
   REGISTER_NORMAL ("map", builtin_map);
   REGISTER_NORMAL ("filter", builtin_filter);
 
-
   // Comparison operators
-  REGISTER_NORMAL("=", builtin_num_eq);
-  REGISTER_NORMAL(">", builtin_num_gt);
-  REGISTER_NORMAL("<", builtin_num_lt);
-  REGISTER_NORMAL(">=", builtin_num_gte);
-  REGISTER_NORMAL("<=", builtin_num_lte);
+  REGISTER_NORMAL ("=", builtin_num_eq);
+  REGISTER_NORMAL (">", builtin_num_gt);
+  REGISTER_NORMAL ("<", builtin_num_lt);
+  REGISTER_NORMAL (">=", builtin_num_gte);
+  REGISTER_NORMAL ("<=", builtin_num_lte);
 
   // Type predicates
   REGISTER_NORMAL ("atom?", builtin_is_atom);
-  // symbol?
-  // string?
-  // number?
-  // integer?
-  // float?
-  // list?
-  // cons?
-  // function?
+  REGISTER_NORMAL ("symbol?", builtin_is_symbol);
+  REGISTER_NORMAL ("string?", builtin_is_string);
+  REGISTER_NORMAL ("number?", builtin_is_number);
+  REGISTER_NORMAL ("integer?", builtin_is_integer);
+  REGISTER_NORMAL ("float?", builtin_is_float);
+  REGISTER_NORMAL ("cons?", builtin_is_cons);
+  REGISTER_NORMAL ("function?", builtin_is_function);
 
   // String operations
   // concat
@@ -102,5 +99,4 @@ set_builtins (AST *environment)
   REGISTER_SPECIAL ("quote", builtin_quote);
   REGISTER_SPECIAL ("lambda", builtin_lambda);
   REGISTER_SPECIAL ("quasiquote", builtin_quasiquote);
-
 }
