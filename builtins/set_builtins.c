@@ -45,12 +45,13 @@ set_builtins (AST *environment)
   REGISTER_NORMAL ("map", builtin_map);
   REGISTER_NORMAL ("filter", builtin_filter);
 
+
   // Comparison operators
-  // = (numeric equality)
-  // >
-  // <
-  // >=
-  // <=
+  REGISTER_NORMAL("=", builtin_num_eq);
+  REGISTER_NORMAL(">", builtin_num_gt);
+  REGISTER_NORMAL("<", builtin_num_lt);
+  REGISTER_NORMAL(">=", builtin_num_gte);
+  REGISTER_NORMAL("<=", builtin_num_lte);
 
   // Type predicates
   REGISTER_NORMAL ("atom?", builtin_is_atom);
@@ -83,14 +84,13 @@ set_builtins (AST *environment)
   REGISTER_NORMAL ("-", builtin_sub);
   REGISTER_NORMAL ("*", builtin_mul);
   REGISTER_NORMAL ("/", builtin_div);
-  // %
-  // mod
-  // expt
-  // sqrt
-  // abs
-  // floor
-  // ceil
-  // round
+  REGISTER_NORMAL ("mod", builtin_mod);
+  REGISTER_NORMAL ("expt", builtin_expt);
+  REGISTER_NORMAL ("sqrt", builtin_sqrt);
+  REGISTER_NORMAL ("abs", builtin_abs);
+  REGISTER_NORMAL ("floor", builtin_floor);
+  REGISTER_NORMAL ("ceil", builtin_ceil);
+  REGISTER_NORMAL ("round", builtin_round);
 
   // Variable managment
   REGISTER_SPECIAL ("define", builtin_define);

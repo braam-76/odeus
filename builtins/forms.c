@@ -74,6 +74,7 @@ builtin_quote (AST *environment, AST *arguments)
 AST *
 builtin_quasiquote (AST *environment, AST *arguments)
 {
+  (void)environment;
   if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
     return make_error ("quasiquote expects exactly one argument");
 

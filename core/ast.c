@@ -51,7 +51,15 @@ ast_print (AST *node)
 
     case AST_INTEGER: printf ("%ld", node->as.INTEGER); break;
 
-    case AST_FLOAT: printf ("%f", node->as.FLOAT); break;
+    case AST_FLOAT:
+      {
+        double value = node->as.FLOAT;
+        if (value == (long)value)
+          printf ("%.1f", value);
+        else
+          printf ("%.10g", value);
+      }
+      break;
 
     case AST_STRING: printf ("\"%s\"", node->as.STRING); break;
 
@@ -84,13 +92,13 @@ ast_print (AST *node)
         break;
       }
 
-    case AST_BUILTIN_NORMAL:
-    case AST_BUILTIN_SPECIAL: printf ("#<BUILTIN:%p>", node->as.BUILTIN); break;
+    case AST_BUILTIN_NORMAL: printf ("#<builtin function>"); break;
+    case AST_BUILTIN_SPECIAL: printf ("#<special form>"); break;
 
     case AST_ERROR: printf ("%s", node->as.ERROR.MESSAGE); break;
     case AST_END_OF_FILE: printf ("#<EOF>"); break;
 
-    default: printf ("#<UNKNOWN>"); break;
+    default: printf ("#<UNKNOWN:%d>", node->type); break;
     }
 }
 

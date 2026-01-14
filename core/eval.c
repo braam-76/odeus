@@ -1,4 +1,5 @@
 #include "core/eval.h"
+#include "core/ast.h"
 
 static AST *bind_arguments (AST *environment, AST *params, AST *args);
 
