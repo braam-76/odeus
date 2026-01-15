@@ -6,6 +6,7 @@ add_library(
   math.c
   stdio.c
   typep.c
+  strings.c
   set_builtins.c)
 
 target_link_libraries(builtins PUBLIC core)

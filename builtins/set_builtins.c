@@ -62,11 +62,11 @@ set_builtins (AST *environment)
   REGISTER_NORMAL ("function?", builtin_is_function);
 
   // String operations
-  // concat
-  // string-length
-  // substring
-  // string->symbol
-  // symbol->string
+  REGISTER_NORMAL ("concat", builtin_concat);
+  REGISTER_NORMAL ("string-length", builtin_string_length);
+  REGISTER_NORMAL ("substring", builtin_substring);
+  REGISTER_NORMAL ("string->symbol", builtin_string_to_symbol);
+  REGISTER_NORMAL ("symbol->string", builtin_symbol_to_string);
 
   // I/O operations
   // REGISTER_NORMAL ("dump", builtin_dump);
