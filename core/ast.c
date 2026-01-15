@@ -20,13 +20,7 @@ AST *
 t (void)
 {
   if (!GLOBAL_T)
-    {
-      GLOBAL_T = malloc (sizeof (AST));
-      GLOBAL_T->type = AST_SYMBOL;
-      GLOBAL_T->as.SYMBOL = "t";
-      GLOBAL_T->line = 0;
-      GLOBAL_T->column = 0;
-    }
+      GLOBAL_T = make_symbol("t");
   return GLOBAL_T;
 }
 
@@ -124,23 +118,25 @@ make_float (double value)
   return node;
 }
 
+
+AST *
+make_quote (AST* expression)
+{
+  AST *node = (AST *)malloc (sizeof (AST));
+  node->type = AST_QUOTE;
+  node->as.QUOTE.EXPR = expression;
+  node->line = 0;
+  node->column = 0;
+  return node;
+}
+
+
 AST *
 make_string (const char *string)
 {
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_STRING;
   node->as.STRING = strdup (string);
-  node->line = 0;
-  node->column = 0;
-  return node;
-}
-
-AST *
-make_symbol (const char *symbol)
-{
-  AST *node = (AST *)malloc (sizeof (AST));
-  node->type = AST_SYMBOL;
-  node->as.SYMBOL = strdup (symbol);
   node->line = 0;
   node->column = 0;
   return node;
@@ -177,6 +173,17 @@ make_error (const char *message)
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_ERROR;
   node->as.ERROR.MESSAGE = strdup (message);
+  node->line = 0;
+  node->column = 0;
+  return node;
+}
+
+AST *
+make_symbol (const char *symbol)
+{
+  AST *node = (AST *)malloc (sizeof (AST));
+  node->type = AST_SYMBOL;
+  node->as.SYMBOL = strdup (symbol);
   node->line = 0;
   node->column = 0;
   return node;

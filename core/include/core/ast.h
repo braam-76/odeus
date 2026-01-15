@@ -82,6 +82,7 @@ AST *make_float (double value);
 AST *make_string (const char *string);
 AST *make_symbol (const char *symbol);
 AST *make_cons (AST *car, AST *cdr);
+AST *make_quote (AST *expression);
 
 // 'kind' should be either AST_BUILTIN_NORMAL or AST_BUILTIN_SPECIAL
 AST *make_builtin (Builtin_Function builtin_function, AST_Type kind);
