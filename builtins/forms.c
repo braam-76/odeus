@@ -1,34 +1,161 @@
 #include "builtins/forms.h"
 #include "core/ast.h"
+#include "core/eval.h"
 
 static AST *expand_quasiquote (AST *expr, int depth);
-static AST *qq_symbol (const char *name, int depth);
-
-static int
-is_reserved_symbol (const char *name)
-{
-  return strcmp (name, "unquote") == 0 || strcmp (name, "unquote-splicing") == 0
-         || strcmp (name, "quasiquote") == 0;
-}
 
 AST *
 builtin_define (AST *environment, AST *arguments)
 {
   if (IS_NULL (arguments) || IS_NULL (CDR (arguments)))
-    return make_error ("ERROR: define expects (symbol value_expression)\n");
+    return make_error ("define expects (symbol expr)");
 
   AST *symbol = CAR (arguments);
   if (symbol->type != AST_SYMBOL)
-    return make_error ("ERROR: define: first argument must be symbol\n");
+    return make_error ("define: first argument must be a symbol");
 
-  if (is_reserved_symbol (symbol->as.SYMBOL))
-    return make_error ("ERROR: cannot redefine reserved syntax\n");
+  AST *current = environment_get (environment, symbol);
+  if (current->type != AST_ERROR)
+    return make_error ("define: symbol already defined");
+
+  environment_set (environment, symbol, nil ());
 
   AST *value = evaluate_expression (environment, CADR (arguments));
   ERROR_OUT (value);
 
-  environment_set (environment, symbol, value);
+  environment_update (environment, symbol, value);
+
   return symbol;
+}
+
+AST *
+builtin_set (AST *environment, AST *arguments)
+{
+  if (IS_NULL (arguments) || IS_NULL (CDR (arguments)))
+    return make_error ("set!: expects (symbol expr)");
+
+  AST *symbol = CAR (arguments);
+  if (symbol->type != AST_SYMBOL)
+    return make_error ("set!: first argument must be a symbol");
+
+  AST *current = environment_get (environment, symbol);
+  if (current->type == AST_ERROR)
+    return make_error ("set!: cannot set! undefined symbol");
+
+  AST *value = evaluate_expression (environment, CADR (arguments));
+  ERROR_OUT (value);
+
+  environment_update (environment, symbol, value);
+
+  return symbol;
+}
+
+AST *
+builtin_let (AST *environment, AST *arguments)
+{
+  if (IS_NULL (arguments))
+    return make_error ("let: expects at least bindings and body");
+
+  AST *bindings = CAR (arguments);
+  AST *body = CDR (arguments);
+
+  if (bindings->type != AST_CONS && bindings->type != AST_NIL)
+    return make_error ("let: first argument must be a list of bindings");
+
+  // Create a new lexical frame
+  AST *inner_environment = make_cons (environment, nil ()); // parent + empty bindings
+
+  AST *current = bindings;
+  while (current->type == AST_CONS)
+    {
+      AST *binding = CAR (current);
+      if (binding->type != AST_CONS || IS_NULL (binding) || IS_NULL (CDR (binding)))
+        return make_error ("let: each binding must be (symbol value)");
+
+      AST *key = CAR (binding);
+      AST *value_expression = CADR (binding);
+
+      if (key->type != AST_SYMBOL)
+        return make_error ("let: binding first element must be symbol");
+
+      // Initialize with nil first
+      environment_set (inner_environment, key, nil ());
+
+      // Evaluate value in parent environment
+      AST *value = evaluate_expression (environment, value_expression);
+      ERROR_OUT (value);
+
+      // Update binding
+      environment_update (inner_environment, key, value);
+
+      current = CDR (current);
+    }
+
+  // Evaluate body expressions in the new environment
+  AST *result = nil ();
+  current = body;
+  while (current->type == AST_CONS)
+    {
+      result = evaluate_expression (inner_environment, CAR (current));
+      ERROR_OUT (result);
+      current = CDR (current);
+    }
+
+  return result;
+}
+
+AST *
+builtin_let_star (AST *environment, AST *arguments)
+{
+  if (IS_NULL (arguments))
+    return make_error ("let*: expects at least bindings and body");
+
+  AST *bindings = CAR (arguments);
+  AST *body = CDR (arguments);
+
+  if (bindings->type != AST_CONS && bindings->type != AST_NIL)
+    return make_error ("let*: first argument must be a list of bindings");
+
+  // Create a new lexical frame
+  AST *inner_environment = make_cons (environment, nil ()); // parent + empty bindings
+
+  AST *current = bindings;
+  while (current->type == AST_CONS)
+    {
+      AST *binding = CAR (current);
+      if (binding->type != AST_CONS || IS_NULL (binding) || IS_NULL (CDR (binding)))
+        return make_error ("let: each binding must be (symbol value)");
+
+      AST *key = CAR (binding);
+      AST *value_expression = CADR (binding);
+
+      if (key->type != AST_SYMBOL)
+        return make_error ("let: binding first element must be symbol");
+
+      // Initialize with nil first
+      environment_set (inner_environment, key, nil ());
+
+      // Evaluate value in parent environment
+      AST *value = evaluate_expression (inner_environment, value_expression);
+      ERROR_OUT (value);
+
+      // Update binding
+      environment_update (inner_environment, key, value);
+
+      current = CDR (current);
+    }
+
+  // Evaluate body expressions in the new environment
+  AST *result = nil ();
+  current = body;
+  while (current->type == AST_CONS)
+    {
+      result = evaluate_expression (inner_environment, CAR (current));
+      ERROR_OUT (result);
+      current = CDR (current);
+    }
+
+  return result;
 }
 
 AST *
@@ -79,16 +206,11 @@ AST *
 builtin_quasiquote (AST *environment, AST *arguments)
 {
   (void)environment;
+
   if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
     return make_error ("quasiquote expects exactly one argument");
 
-  AST *res = expand_quasiquote (CAR (arguments), 1);
-
-  printf ("Quasiquote expanded to: ");
-  ast_print (res);
-  printf ("\n");
-
-  return res;
+  return expand_quasiquote (CAR (arguments), 1);
 }
 
 AST *
@@ -125,25 +247,21 @@ expand_quasiquote (AST *expr, int depth)
   if (!expr)
     return nil ();
 
-  /* atoms evaluate to themselves */
   if (expr->type != AST_CONS)
-    return expr;
+    return (depth == 1) ? make_quote (expr) : expr;
 
-  /* (unquote x) */
   if (is_unquote (expr))
     {
       if (depth == 1)
-        return CADR (expr); /* splice value */
+        return CADR (expr);
       else
         return make_cons (make_quote (make_symbol ("unquote")),
                           make_cons (expand_quasiquote (CADR (expr), depth - 1), nil ()));
     }
 
-  /* illegal splice outside list at active depth */
   if (is_unquote_splicing (expr) && depth == 1)
     return make_error ("unquote-splicing not in list context");
 
-  /* nested quasiquote */
   if (is_symbol_named (CAR (expr), "quasiquote"))
     {
       if (depth == 1)
@@ -154,82 +272,80 @@ expand_quasiquote (AST *expr, int depth)
                           make_cons (expand_quasiquote (CADR (expr), depth + 1), nil ()));
     }
 
-  /* general list */
   return expand_quasiquote_list (expr, depth);
 }
 
 static AST *
 expand_quasiquote_list (AST *list, int depth)
 {
-  /* empty list => '() */
   if (IS_NULL (list))
     return make_quote (nil ());
 
-  AST *before = nil ();
+  AST *elements = nil ();
   AST *last = NULL;
-  AST *curr = list;
+  AST *current = list;
 
-  while (curr->type == AST_CONS)
+  while (current->type == AST_CONS)
     {
-      AST *head = CAR (curr);
+      AST *head = CAR (current);
 
-      /* handle (unquote-splicing x) */
       if (is_unquote_splicing (head) && depth == 1)
         {
-          AST *splice = CADR (head);
-          AST *rest = expand_quasiquote_list (CDR (curr), depth);
+          AST *splice_expression = CADR (head);
+          AST *rest = expand_quasiquote_list (CDR (current), depth);
 
-          if (IS_NULL (before))
-            return make_cons (qq_symbol ("append", depth),
-                              make_cons (splice, make_cons (rest, nil ())));
+          // Wrap elements before the splice
+          AST *list_before
+              = IS_NULL (elements) ? nil () : make_cons (make_symbol ("list"), elements);
 
-          AST *list_expr = make_cons (qq_symbol ("list", depth), before);
+          // Build append: (append <list-before> <splice-expr> <rest>)
+          AST *append_expression = NULL;
 
-          return make_cons (
-              qq_symbol ("append", depth),
-              make_cons (list_expr,
-                         make_cons (make_cons (qq_symbol ("append", depth),
-                                               make_cons (splice, make_cons (rest, nil ()))),
-                                    nil ())));
+          if (IS_NULL (list_before))
+            append_expression
+                = make_cons (make_symbol ("append"),
+                             make_cons (make_cons (make_symbol ("list"), splice_expression),
+                                        make_cons (rest, nil ())));
+          else
+            append_expression = make_cons (
+                make_symbol ("append"),
+                make_cons (list_before,
+                           make_cons (make_cons (make_symbol ("list"), splice_expression),
+                                      make_cons (rest, nil ()))));
+
+          return append_expression;
         }
 
-      /* normal element */
       AST *expanded = expand_quasiquote (head, depth);
       AST *cell = make_cons (expanded, nil ());
 
-      if (IS_NULL (before))
-        before = cell;
+      if (IS_NULL (elements))
+        elements = cell;
       else
         last->as.CONS.CDR = cell;
 
       last = cell;
-      curr = CDR (curr);
+      current = CDR (current);
     }
 
-  /* no splicing encountered */
-  return make_cons (qq_symbol ("list", depth), before);
+  // no splices found, just wrap elements in list
+  return make_cons (make_symbol ("list"), elements);
 }
 
-static AST *
-qq_symbol (const char *name, int depth)
-{
-  AST *sym = make_symbol (name);
-  return (depth == 1) ? sym : make_quote (sym);
-}
-
-int
+static int
 is_symbol_named (AST *node, const char *name)
 {
   return node->type == AST_SYMBOL && strcmp (node->as.SYMBOL, name) == 0;
 }
 
-int
+static int
 is_unquote (AST *node)
 {
-  return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote");
+  return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote") && !IS_NULL (CDR (node))
+         && IS_NULL (CDDR (node));
 }
 
-int
+static int
 is_unquote_splicing (AST *node)
 {
   return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote-splicing")
