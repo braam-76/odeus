@@ -24,19 +24,18 @@ builtin_null (AST *environment, AST *arguments)
 }
 
 AST *
-builtin_if (AST *environment, AST *arguments)
+builtin_if (AST *env, AST *args)
 {
-  if (IS_NULL (arguments) || arguments_length (arguments) != 3)
-    return make_error ("ERROR: if expects 3 arguments: (if <cond> <then_clause> <else_clause>)\n");
+  if (arguments_length (args) != 3)
+    return make_error ("if: expects exactly 3 arguments (if [condition] [then] [else])");
 
-  AST *condition = evaluate_expression (environment, CAR (arguments));
-  AST *then_clause = CADR (arguments);
-  AST *else_clause = CADR (CDR (arguments));
+  AST *cond = evaluate_expression (env, CAR (args));
+  ERROR_OUT (cond);
 
-  if (IS_NULL (condition))
-    return evaluate_expression (environment, else_clause);
+  if (!IS_NULL (cond))
+    return evaluate_expression (env, CADR (args));
   else
-    return evaluate_expression (environment, then_clause);
+    return evaluate_expression (env, CADR (CDR (args)));
 }
 
 AST *
