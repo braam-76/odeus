@@ -27,7 +27,7 @@ set_builtins (AST *environment)
   REGISTER_NORMAL ("eq", builtin_eq);
   REGISTER_NORMAL ("null", builtin_null); // lisper's not operator
   REGISTER_NORMAL ("not", builtin_null);  // human readable not operator
-  REGISTER_NORMAL ("if", builtin_if);
+  REGISTER_SPECIAL ("if", builtin_if);
   REGISTER_NORMAL ("and", builtin_and);
   REGISTER_NORMAL ("or", builtin_or);
 
@@ -69,11 +69,12 @@ set_builtins (AST *environment)
   REGISTER_NORMAL ("symbol->string", builtin_symbol_to_string);
 
   // I/O operations
-  // REGISTER_NORMAL ("dump", builtin_dump);
-  // read
-  // read-file
-  // write
-  // display
+  REGISTER_NORMAL ("dump", builtin_dump);
+  REGISTER_NORMAL ("read", builtin_read);
+  REGISTER_NORMAL ("read-file", builtin_read_file);         // expects lisp code
+  REGISTER_NORMAL ("file->string", builtin_file_to_string); // just reads file as string
+  REGISTER_NORMAL ("write", builtin_write);
+  REGISTER_NORMAL ("display", builtin_display);
   // newline
 
   // Math functions
@@ -91,10 +92,9 @@ set_builtins (AST *environment)
 
   // Variable managment
   REGISTER_SPECIAL ("define", builtin_define);
-  // set!
-  // let
-  // let*
-  // letrec
+  REGISTER_SPECIAL ("set!", builtin_set);
+  REGISTER_SPECIAL ("let", builtin_let);
+  REGISTER_SPECIAL ("let*", builtin_let_star);
 
   REGISTER_SPECIAL ("quote", builtin_quote);
   REGISTER_SPECIAL ("lambda", builtin_lambda);
