@@ -10,9 +10,9 @@ add_subdirectory(core)
 add_subdirectory(builtins)
 
 # REPL executable
-add_executable(repl repl/repl.c)
-target_include_directories(repl PRIVATE ${PROJECT_SOURCE_DIR}/repl)
-target_link_libraries(repl PRIVATE builtins readline)
+add_executable(odeus bin/odeus.c)
+target_include_directories(odeus PRIVATE ${PROJECT_SOURCE_DIR}/bin)
+target_link_libraries(odeus PRIVATE builtins readline)
 
 # Lexer test executable
 add_executable(lexer_test tests/lexer_test.c)
