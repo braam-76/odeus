@@ -4,6 +4,7 @@ add_library(core STATIC
     environment.c
     eval.c
     ast.c
+    ast_to_string.c
 )
 
 target_include_directories(core PUBLIC

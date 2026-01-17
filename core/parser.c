@@ -37,44 +37,31 @@ parser_init (Lexer *lexer)
     }
 
   parser->lexer = lexer;
-  parser->start_node = nil();
+  parser->start_node = nil ();
 
   return parser;
 }
 
-/* ----------------------------------------------------------
- *   TOP-LEVEL PARSING
- * ---------------------------------------------------------- */
-AST*
+AST *
 parser_parse (Parser *parser)
 {
   AST *begin_head = nil ();
   AST **begin_tail = &begin_head;
 
-  // initial token
   Token token = lexer_next_token (parser->lexer);
 
   while (token.type != TOKEN_END_OF_FILE)
     {
-      AST *expr = parse_expr (parser, &token); // token is updated internally
-
+      AST *expr = parse_expr (parser, &token);
       if (expr)
         {
           *begin_tail = make_cons (expr, nil ());
           begin_tail = &CDR (*begin_tail);
         }
     }
-  AST *begin_symbol = (AST *)malloc (sizeof (AST));
-  begin_symbol->type = AST_SYMBOL;
-  begin_symbol->as.SYMBOL = "begin";
-  AST *begin_node = make_cons (begin_symbol, begin_head);
 
-  return begin_node;
+  return make_cons (make_symbol ("begin"), begin_head);
 }
-
-/* ----------------------------------------------------------
- *   PARSER HELPERS
- * ---------------------------------------------------------- */
 
 static AST *
 parse_expr (Parser *parser, Token *token)
@@ -157,43 +144,22 @@ parse_list (Parser *parser, Token *token)
 static AST *
 parse_literal (Parser *parser, Token *token)
 {
-  AST *n = malloc (sizeof (AST));
-  n->line = token->line;
-  n->column = token->column;
+  AST *n = NULL;
 
   switch (token->type)
     {
-    case TOKEN_INTEGER:
-      n->type = AST_INTEGER;
-      n->as.INTEGER = strtol (token->value, NULL, 10);
-      break;
+    case TOKEN_INTEGER: n = make_integer (strtol (token->value, NULL, 10)); break;
+    case TOKEN_FLOAT: n = make_float (strtod (token->value, NULL)); break;
+    case TOKEN_STRING: n = make_string (token->value); break;
+    case TOKEN_SYMBOL: n = make_symbol (token->value); break;
 
-    case TOKEN_FLOAT:
-      n->type = AST_FLOAT;
-      n->as.FLOAT = strtod (token->value, NULL);
-      break;
-
-    case TOKEN_STRING:
-      n->type = AST_STRING;
-      n->as.STRING = strdup (token->value);
-      break;
-
-    case TOKEN_SYMBOL:
-      n->type = AST_SYMBOL;
-      n->as.SYMBOL = strdup (token->value);
-      break;
-
-    default:
-      {
-        char msg[256];
-        snprintf (msg, sizeof (msg), "Unexpected literal token '%s'", token->value);
-        free (n);
-        parser_panic (parser, token, msg);
-      }
+    default: parser_panic (parser, token, "Unexpected literal"); return nil ();
     }
 
-  *token = lexer_next_token (parser->lexer);
+  n->line = token->line;
+  n->column = token->column;
 
+  *token = lexer_next_token (parser->lexer);
   return n;
 }
 

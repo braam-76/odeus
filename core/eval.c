@@ -1,7 +1,6 @@
 #include "core/eval.h"
-#include "core/ast.h"
 
-static AST *bind_arguments (AST *environment, AST *params, AST *args);
+static AST *bind_arguments (AST *frame, AST *caller_environment, AST *parameters, AST *arguments);
 
 AST *
 evaluate_expression (AST *environment, AST *expression)
@@ -22,15 +21,12 @@ evaluate_expression (AST *environment, AST *expression)
         AST *operator_node = CAR (expression);
         AST *arguments = CDR (expression);
 
-        // evaluate operator (may be a symbol or lambda)
+        /* Evaluate operator */
         AST *function = (operator_node->type == AST_SYMBOL)
                             ? environment_get (environment, operator_node)
                             : evaluate_expression (environment, operator_node);
 
         ERROR_OUT (function);
-
-        if (function->type == AST_SYMBOL)
-          function = environment_get (environment, function);
 
         return apply (function, environment, arguments);
       }
@@ -38,7 +34,7 @@ evaluate_expression (AST *environment, AST *expression)
     case AST_END_OF_FILE:
     case AST_ERROR: return expression;
 
-    default: return make_error ("ERROR: evaluate_expression: unknown AST type\n");
+    default: return make_error ("evaluate_expression: unknown AST type");
     }
 }
 
@@ -46,6 +42,7 @@ int
 arguments_length (AST *arguments)
 {
   int count = 0;
+
   while (arguments->type == AST_CONS)
     {
       count++;
@@ -56,26 +53,45 @@ arguments_length (AST *arguments)
 }
 
 static AST *
-bind_arguments (AST *environment, AST *params, AST *args)
+bind_arguments (AST *frame, AST *caller_environment, AST *parameters, AST *arguments)
 {
-  while (params->type == AST_CONS && args->type == AST_CONS)
+  AST *params = parameters;
+  AST *args = arguments;
+
+  /* Bind fixed parameters */
+  while (params->type == AST_CONS)
     {
+      if (args->type != AST_CONS)
+        return make_error ("lambda: too few arguments");
+
       AST *param = CAR (params);
-      AST *arg_value = evaluate_expression (environment, CAR (args));
-
       if (param->type != AST_SYMBOL)
-        return make_error ("ERROR: lambda parameter must be symbol\n");
+        return make_error ("lambda parameter must be symbol");
 
-      // Add new binding to the front of environment list
-      AST *binding = make_cons (param, arg_value);
-      environment->as.CONS.CDR = make_cons (binding, environment->as.CONS.CDR);
+      AST *value = evaluate_expression (caller_environment, CAR (args));
+      ERROR_OUT (value);
+
+      environment_set (frame, param, value);
 
       params = CDR (params);
       args = CDR (args);
     }
 
-  if (!IS_NULL (params) || !IS_NULL (args))
-    return make_error ("ERROR: argument count mismatch in lambda call\n");
+  /* params is now either NIL or a SYMBOL (rest parameter) */
+
+  if (params->type == AST_SYMBOL)
+    {
+      /* rest parameter */
+      environment_set (frame, params, args);
+      return nil ();
+    }
+
+  if (params->type != AST_NIL)
+    return make_error ("lambda: invalid parameter list");
+
+  /* No rest param: ensure no extra arguments */
+  if (args->type != AST_NIL)
+    return make_error ("lambda: too many arguments");
 
   return nil ();
 }
@@ -83,51 +99,38 @@ bind_arguments (AST *environment, AST *params, AST *args)
 AST *
 apply (AST *function, AST *environment, AST *arguments)
 {
+  /* Special forms */
   if (function->type == AST_BUILTIN_SPECIAL)
     {
-      AST *expanded = function->as.BUILTIN (environment, arguments);
-      ERROR_OUT (expanded);
-      return expanded;
+      AST *result = function->as.BUILTIN (environment, arguments);
+      ERROR_OUT (result);
+      return result;
     }
 
+  /* Normal builtins */
   if (function->type == AST_BUILTIN_NORMAL)
     return function->as.BUILTIN (environment, arguments);
 
+  /* Lambda */
   if (function->type == AST_LAMBDA)
     {
-      AST *lambda_environment = make_cons (function->as.LAMBDA.environment, nil ());
-      AST *err = bind_arguments (lambda_environment, function->as.LAMBDA.parameters, arguments);
+      AST *frame = make_cons (function->as.LAMBDA.environment, nil ());
+
+      AST *err = bind_arguments (frame, environment, function->as.LAMBDA.parameters, arguments);
       ERROR_OUT (err);
 
       AST *result = nil ();
       AST *body = function->as.LAMBDA.body;
+
       while (body->type == AST_CONS)
         {
-          result = evaluate_expression (lambda_environment, CAR (body));
+          result = evaluate_expression (frame, CAR (body));
           ERROR_OUT (result);
           body = CDR (body);
         }
+
       return result;
     }
 
-  return make_error ("ERROR: apply: tried to apply non-function\n");
-}
-
-int
-is_symbol_named (AST *node, const char *name)
-{
-  return node->type == AST_SYMBOL && node->as.SYMBOL == name;
-}
-
-int
-is_unquote (AST *node)
-{
-  return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote");
-}
-
-int
-is_unquote_splicing (AST *node)
-{
-  return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote-splicing")
-         && !IS_NULL (CDR (node)) && IS_NULL (CDDR (node));
+  return make_error ("attempt to call non-function");
 }

@@ -5,23 +5,43 @@ environment_set (AST *environment, AST *symbol, AST *value)
 {
   AST *variables = CDR (environment);
 
-  while (variables->type != AST_NIL)
+  while (variables->type == AST_CONS)
     {
-      AST *pair = CAR (variables); /* (symbol . value) */
+      AST *pair = CAR (variables);
       AST *key_symbol = CAR (pair);
 
       if (key_symbol == symbol)
         {
-          CDR (pair) = value;
+          pair->as.CONS.CDR = value;
           return;
         }
 
       variables = CDR (variables);
     }
 
-  /* Add new (symbol . value) pair at beginning */
   AST *pair = make_cons (symbol, value);
-  CDR (environment) = make_cons (pair, CDR (environment));
+  environment->as.CONS.CDR = make_cons (pair, CDR (environment));
+}
+
+void
+environment_update (AST *env, AST *symbol, AST *value)
+{
+  AST *bindings = env->as.CONS.CDR;
+
+  while (bindings->type == AST_CONS)
+    {
+      AST *binding = CAR (bindings);
+
+      if (CAR(binding) == symbol)
+        {
+          binding->as.CONS.CDR = value;
+          return;
+        }
+
+      bindings = CDR (bindings);
+    }
+
+  environment_set (env, symbol, value);
 }
 
 AST *
@@ -35,7 +55,7 @@ environment_get (AST *environment, AST *symbol)
       AST *pair = CAR (variables);
       AST *key_symbol = CAR (pair);
 
-      if (strcmp (key_symbol->as.SYMBOL, symbol->as.SYMBOL) == 0)
+      if (key_symbol == symbol)
         return CDR (pair);
 
       variables = CDR (variables);

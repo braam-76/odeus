@@ -93,7 +93,7 @@ AST *make_error (const char *message);
 AST *nil (void);
 AST *t (void);
 
-char *ast_to_string(AST *node);
+char *ast_to_string (AST *node);
 void ast_print (AST *node);
 
 #endif // ODEUS_AST_H_

@@ -3,6 +3,11 @@
 static AST *GLOBAL_NIL = NULL;
 static AST *GLOBAL_T = NULL;
 
+// symbol table used for interning symbols
+#define MAX_SYMBOLS 4096
+static AST *symbol_table[MAX_SYMBOLS];
+static int symbol_count = 0;
+
 AST *
 nil (void)
 {
@@ -20,80 +25,8 @@ AST *
 t (void)
 {
   if (!GLOBAL_T)
-      GLOBAL_T = make_symbol("t");
+    GLOBAL_T = make_symbol ("t");
   return GLOBAL_T;
-}
-
-/* ----------------------------------------------------------
- *   PRINTING
- * ---------------------------------------------------------- */
-
-void
-ast_print (AST *node)
-{
-  if (!node)
-    {
-      printf ("()");
-      return;
-    }
-
-  switch (node->type)
-    {
-    case AST_NIL: printf ("nil"); break;
-
-    case AST_SYMBOL: printf ("%s", node->as.SYMBOL); break;
-
-    case AST_INTEGER: printf ("%ld", node->as.INTEGER); break;
-
-    case AST_FLOAT:
-      {
-        double value = node->as.FLOAT;
-        if (value == (long)value)
-          printf ("%.1f", value);
-        else
-          printf ("%.10g", value);
-      }
-      break;
-
-    case AST_STRING: printf ("\"%s\"", node->as.STRING); break;
-
-    case AST_QUOTE:
-      printf ("'");
-      ast_print (node->as.QUOTE.EXPR);
-      break;
-
-    case AST_CONS:
-      {
-        printf ("(");
-        AST *cur = node;
-
-        while (cur->type == AST_CONS)
-          {
-            ast_print (CAR (cur));
-            cur = CDR (cur);
-
-            if (cur->type == AST_CONS)
-              printf (" ");
-          }
-
-        if (cur->type != AST_NIL)
-          {
-
-            printf (" . ");
-            ast_print (cur);
-          }
-        printf (")");
-        break;
-      }
-
-    case AST_BUILTIN_NORMAL: printf ("#<builtin function>"); break;
-    case AST_BUILTIN_SPECIAL: printf ("#<special form>"); break;
-
-    case AST_ERROR: printf ("%s", node->as.ERROR.MESSAGE); break;
-    case AST_END_OF_FILE: printf ("#<EOF>"); break;
-
-    default: printf ("#<UNKNOWN:%d>", node->type); break;
-    }
 }
 
 AST *
@@ -118,9 +51,8 @@ make_float (double value)
   return node;
 }
 
-
 AST *
-make_quote (AST* expression)
+make_quote (AST *expression)
 {
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_QUOTE;
@@ -129,7 +61,6 @@ make_quote (AST* expression)
   node->column = 0;
   return node;
 }
-
 
 AST *
 make_string (const char *string)
@@ -181,10 +112,73 @@ make_error (const char *message)
 AST *
 make_symbol (const char *symbol)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
-  node->type = AST_SYMBOL;
-  node->as.SYMBOL = strdup (symbol);
-  node->line = 0;
-  node->column = 0;
-  return node;
+  for (int i = 0; i < symbol_count; i++)
+    if (strcmp (symbol_table[i]->as.SYMBOL, symbol) == 0)
+      return symbol_table[i];
+
+  if (symbol_count >= MAX_SYMBOLS)
+    return make_error ("FATAL ERROR: can't create more symbols. symbol_table is full");
+
+  AST *sym = malloc (sizeof (AST));
+  sym->type = AST_SYMBOL;
+  sym->as.SYMBOL = strdup (symbol);
+
+  symbol_table[symbol_count++] = sym;
+  return sym;
+}
+
+void
+ast_print (AST *node)
+{
+  if (!node)
+    {
+      printf ("()");
+      return;
+    }
+
+  switch (node->type)
+    {
+    case AST_NIL: printf ("nil"); break;
+    case AST_SYMBOL: printf ("%s", node->as.SYMBOL); break;
+    case AST_INTEGER: printf ("%ld", node->as.INTEGER); break;
+    case AST_FLOAT: printf ("%g", node->as.FLOAT); break;
+    case AST_STRING: printf ("\"%s\"", node->as.STRING); break;
+
+    case AST_QUOTE:
+      printf ("'");
+      ast_print (node->as.QUOTE.EXPR);
+      break;
+
+    case AST_CONS:
+      {
+        printf ("(");
+        AST *cur = node;
+
+        while (cur->type == AST_CONS)
+          {
+            ast_print (CAR (cur));
+            cur = CDR (cur);
+
+            if (cur->type == AST_CONS)
+              printf (" ");
+          }
+
+        if (cur->type != AST_NIL)
+          {
+
+            printf (" . ");
+            ast_print (cur);
+          }
+        printf (")");
+        break;
+      }
+
+    case AST_BUILTIN_NORMAL: printf ("#<builtin function>"); break;
+    case AST_BUILTIN_SPECIAL: printf ("#<special form>"); break;
+
+    case AST_ERROR: printf ("%s", node->as.ERROR.MESSAGE); break;
+    case AST_END_OF_FILE: printf ("#<EOF>"); break;
+
+    default: printf ("#<UNKNOWN:%d>", node->type); break;
+    }
 }
