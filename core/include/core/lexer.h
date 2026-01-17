@@ -25,7 +25,7 @@ typedef struct
 } Lexer;
 
 Lexer lexer_from_file (char *filename, char *source, size_t source_size);
-Lexer lexer_from_string (char* source, size_t source_size);
+Lexer lexer_from_string (char *source, size_t source_size);
 Token lexer_next_token (Lexer *lexer);
 
 #endif // LEXER_H_

@@ -45,7 +45,8 @@ append_string (char **buffer, size_t *capacity, size_t *length, const char *form
 }
 
 // Helper: Escape special characters in strings
-static char *escape_string(const char *str)
+static char *
+escape_string (const char *str)
 {
   // Count how many characters need escaping
   size_t len = strlen (str);
@@ -58,28 +59,46 @@ static char *escape_string(const char *str)
         escaped_len++; // Need backslash for these
     }
 
-    char *escaped = malloc(escaped_len + 1);
-    if (!escaped) return NULL;
+  char *escaped = malloc (escaped_len + 1);
+  if (!escaped)
+    return NULL;
 
-    char *dest = escaped;
-    *dest++ = '"';
+  char *dest = escaped;
+  *dest++ = '"';
 
-    for (size_t i = 0; i < len; i++) {
-        char c = str[i];
-        switch (c) {
-            case '"':  *dest++ = '\\'; *dest++ = '"'; break;
-            case '\\': *dest++ = '\\'; *dest++ = '\\'; break;
-            case '\n': *dest++ = '\\'; *dest++ = 'n'; break;
-            case '\t': *dest++ = '\\'; *dest++ = 't'; break;
-            case '\r': *dest++ = '\\'; *dest++ = 'r'; break;
-            default:   *dest++ = c; break;
+  for (size_t i = 0; i < len; i++)
+    {
+      char c = str[i];
+      switch (c)
+        {
+        case '"':
+          *dest++ = '\\';
+          *dest++ = '"';
+          break;
+        case '\\':
+          *dest++ = '\\';
+          *dest++ = '\\';
+          break;
+        case '\n':
+          *dest++ = '\\';
+          *dest++ = 'n';
+          break;
+        case '\t':
+          *dest++ = '\\';
+          *dest++ = 't';
+          break;
+        case '\r':
+          *dest++ = '\\';
+          *dest++ = 'r';
+          break;
+        default: *dest++ = c; break;
         }
     }
 
-    *dest++ = '"';
-    *dest = '\0';
+  *dest++ = '"';
+  *dest = '\0';
 
-    return escaped;
+  return escaped;
 }
 
 // Recursive function to convert AST to string

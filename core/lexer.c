@@ -113,7 +113,7 @@ lexer_next_token (Lexer *lexer)
               char buf[64];
               snprintf (buf, sizeof (buf), "Unknown character: '%c'", peek (lexer));
               panic (lexer, buf);
-              return (Token){.type = TOKEN_NONE};
+              return (Token){ .type = TOKEN_NONE };
             }
         }
 

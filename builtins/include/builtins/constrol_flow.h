@@ -6,9 +6,8 @@
 
 AST *builtin_eq (AST *environment, AST *arguments);
 AST *builtin_null (AST *environment, AST *arguments);
-AST* builtin_if(AST* environment, AST* arguments);
-AST* builtin_and(AST* environment, AST* arguments);
-AST* builtin_or(AST* environment, AST* arguments);
-
+AST *builtin_if (AST *environment, AST *arguments);
+AST *builtin_and (AST *environment, AST *arguments);
+AST *builtin_or (AST *environment, AST *arguments);
 
 #endif // CONSTROL_FLOW_H_

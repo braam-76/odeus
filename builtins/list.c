@@ -211,7 +211,7 @@ builtin_filter (AST *environment, AST *arguments)
       AST *current_element = CAR (list);
       AST *function_arguments = make_cons (current_element, nil ());
       AST *predicate_result = apply (func, environment, function_arguments);
-      ERROR_OUT(predicate_result);
+      ERROR_OUT (predicate_result);
 
       // If predicate returns true (non-nil), include the original element
       if (!IS_NULL (predicate_result))

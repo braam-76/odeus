@@ -32,7 +32,7 @@ environment_update (AST *env, AST *symbol, AST *value)
     {
       AST *binding = CAR (bindings);
 
-      if (CAR(binding) == symbol)
+      if (CAR (binding) == symbol)
         {
           binding->as.CONS.CDR = value;
           return;

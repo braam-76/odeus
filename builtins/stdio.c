@@ -146,7 +146,7 @@ builtin_display (AST *environment, AST *arguments)
     default: printf ("<unknown>"); break;
     }
 
-  return nil();
+  return nil ();
 }
 
 AST *builtin_newline (AST *environment, AST *arguments);
