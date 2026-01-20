@@ -1,9 +1,11 @@
 #include "builtins/stdio.h"
+
+#include <stdio.h>
+
 #include "core/ast.h"
 #include "core/eval.h"
 #include "core/lexer.h"
 #include "core/parser.h"
-#include <stdio.h>
 
 AST *
 builtin_dump (AST *environment, AST *arguments)
@@ -110,7 +112,6 @@ builtin_write (AST *environment, AST *arguments)
   AST *expr = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (expr);
 
-  // Convert AST to string
   char *str = ast_to_string (expr);
   if (!str)
     return make_error ("write: memory allocation failed");
@@ -121,6 +122,8 @@ builtin_write (AST *environment, AST *arguments)
   return result;
 }
 
+static void display_value (AST *value);
+
 AST *
 builtin_display (AST *environment, AST *arguments)
 {
@@ -130,23 +133,62 @@ builtin_display (AST *environment, AST *arguments)
   AST *value = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (value);
 
-  switch (value->type)
-    {
-    case AST_INTEGER: printf ("%ld", value->as.INTEGER); break;
-    case AST_FLOAT: printf ("%g", value->as.FLOAT); break;
-    case AST_STRING: printf ("%s", value->as.STRING); break;
-    case AST_SYMBOL: printf ("%s", value->as.SYMBOL); break;
-    case AST_NIL: printf ("nil"); break;
-    case AST_CONS:
-      printf ("<list>"); // or recursively print contents
-      break;
-    case AST_LAMBDA: printf ("<lambda>"); break;
-    case AST_BUILTIN_NORMAL:
-    case AST_BUILTIN_SPECIAL: printf ("<builtin>"); break;
-    default: printf ("<unknown>"); break;
-    }
+  display_value (value);
 
   return nil ();
 }
 
-AST *builtin_newline (AST *environment, AST *arguments);
+static void
+display_value (AST *value)
+{
+  switch (value->type)
+    {
+    case AST_NIL:
+      printf ("nil");
+      break;
+    case AST_INTEGER:
+      printf ("%ld", value->as.INTEGER);
+      break;
+    case AST_FLOAT:
+      printf ("%g", value->as.FLOAT);
+      break;
+    case AST_STRING:
+      printf ("%s", value->as.STRING);
+      break;
+    case AST_SYMBOL:
+      printf ("%s", value->as.SYMBOL);
+      break;
+
+    case AST_CONS:
+      {
+        printf ("(");
+        AST *cur = value;
+        while (cur->type == AST_CONS)
+          {
+            display_value (CAR (cur));
+            cur = CDR (cur);
+            if (cur->type == AST_CONS)
+              printf (" ");
+          }
+        if (cur->type != AST_NIL)
+          {
+            printf (" . ");
+            display_value (cur);
+          }
+        printf (")");
+      }
+      break;
+
+    case AST_LAMBDA:
+      printf ("<lambda>");
+      break;
+    case AST_BUILTIN_NORMAL:
+    case AST_BUILTIN_SPECIAL:
+      printf ("<builtin>");
+      break;
+
+    default:
+      printf ("<unknown>");
+      break;
+    }
+}
