@@ -227,6 +227,24 @@ builtin_lambda (AST *environment, AST *arguments)
   return lambda;
 }
 
+AST *
+builtin_macro(AST *environment, AST *arguments)
+{
+  if (IS_NULL(arguments))
+    return make_error("macro: expects parameter list");
+
+  AST *parameters = CAR(arguments);
+  AST *body = CDR(arguments);
+
+  AST *macro = malloc(sizeof(AST));
+  macro->type = AST_MACRO;
+  macro->as.MACRO.parameters = parameters;
+  macro->as.MACRO.body = body;
+
+  return macro;
+}
+
+
 //
 // Quasiquote helpers
 //

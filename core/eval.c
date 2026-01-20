@@ -1,7 +1,9 @@
 #include "core/eval.h"
+#include "core/ast.h"
 
 static AST *bind_arguments (AST *frame, AST *caller_environment,
                             AST *parameters, AST *arguments);
+static AST *bind_macro_arguments (AST *frame, AST *parameters, AST *arguments);
 
 AST *
 evaluate_expression (AST *environment, AST *expression)
@@ -15,6 +17,8 @@ evaluate_expression (AST *environment, AST *expression)
     case AST_FLOAT:
     case AST_STRING:
     case AST_NIL:
+    case AST_LAMBDA:
+    case AST_MACRO:
       return expression;
     case AST_QUOTE:
       return expression->as.QUOTE.EXPR;
@@ -100,24 +104,33 @@ bind_arguments (AST *frame, AST *caller_environment, AST *parameters,
   return nil ();
 }
 
+static AST *substitute_macro_parameters (AST *expr, AST *frame);
+
 AST *
-apply (AST *function, AST *environment, AST *arguments)
+apply (AST *function, AST *caller_environment, AST *arguments)
 {
+  // Builtin special forms
   if (function->type == AST_BUILTIN_SPECIAL)
     {
-      AST *result = function->as.BUILTIN (environment, arguments);
+      AST *result = function->as.BUILTIN (caller_environment, arguments);
       ERROR_OUT (result);
       return result;
     }
 
+  // Normal builtins
   if (function->type == AST_BUILTIN_NORMAL)
-    return function->as.BUILTIN (environment, arguments);
+    {
+      AST *result = function->as.BUILTIN (caller_environment, arguments);
+      ERROR_OUT (result);
+      return result;
+    }
 
+  // Lambda
   if (function->type == AST_LAMBDA)
     {
       AST *frame = make_cons (function->as.LAMBDA.environment, nil ());
 
-      AST *err = bind_arguments (frame, environment,
+      AST *err = bind_arguments (frame, caller_environment,
                                  function->as.LAMBDA.parameters, arguments);
       ERROR_OUT (err);
 
@@ -134,5 +147,93 @@ apply (AST *function, AST *environment, AST *arguments)
       return result;
     }
 
+  // Macro
+  if (function->type == AST_MACRO)
+    {
+      AST *frame = make_cons (nil (), nil ());
+
+      AST *err = bind_macro_arguments (frame, function->as.MACRO.parameters,
+                                       arguments);
+      ERROR_OUT (err);
+
+      AST *expanded_body = nil ();
+      AST *current = function->as.MACRO.body;
+
+      // Macros return the last expression after substitution
+      while (current->type == AST_CONS)
+        {
+          expanded_body = substitute_macro_parameters (CAR (current), frame);
+          current = CDR (current);
+        }
+
+      // Evaluate expanded AST in the caller environment
+      return evaluate_expression (caller_environment, expanded_body);
+    }
+
   return make_error ("attempt to call non-function");
+}
+
+static AST *
+bind_macro_arguments (AST *frame, AST *parameters, AST *arguments)
+{
+  AST *params = parameters;
+  AST *args = arguments;
+
+  while (params->type == AST_CONS)
+    {
+      if (args->type != AST_CONS)
+        return make_error ("macro: too few arguments");
+
+      AST *param = CAR (params);
+      if (param->type != AST_SYMBOL)
+        return make_error ("macro parameter must be symbol");
+
+      environment_set (frame, param, CAR (args)); // raw AST
+      params = CDR (params);
+      args = CDR (args);
+    }
+
+  // If the last parameter is a symbol, treat it as "rest"
+  if (params->type == AST_SYMBOL)
+    {
+      environment_set (frame, params, args); // bind all remaining args
+      return nil ();
+    }
+
+  if (params->type != AST_NIL)
+    return make_error ("macro: invalid parameter list");
+
+  if (args->type != AST_NIL)
+    return make_error ("macro: too many arguments");
+
+  return nil ();
+}
+
+// Recursively walk AST and replace symbols that match macro parameters
+static AST *
+substitute_macro_parameters (AST *expr, AST *frame)
+{
+  if (!expr)
+    return nil ();
+
+  switch (expr->type)
+    {
+    case AST_SYMBOL:
+      {
+        AST *val = environment_get (frame, expr);
+        if (val->type != AST_ERROR)
+          return val; // replace with AST argument
+        return expr;  // not a macro parameter, keep as-is
+      }
+
+    case AST_CONS:
+      {
+        AST *new_car = substitute_macro_parameters (CAR (expr), frame);
+        AST *new_cdr = substitute_macro_parameters (CDR (expr), frame);
+        return make_cons (new_car, new_cdr);
+      }
+
+    default:
+      return expr; // numbers, strings, nil, etc.
+    }
 }

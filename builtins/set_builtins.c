@@ -99,5 +99,6 @@ set_builtins (AST *environment)
 
   SPECIAL ("quote", builtin_quote);
   SPECIAL ("lambda", builtin_lambda);
+  SPECIAL ("macro", builtin_macro);
   SPECIAL ("quasiquote", builtin_quasiquote);
 }

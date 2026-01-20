@@ -17,5 +17,6 @@ AST *builtin_quote (AST *environment, AST *arguments);
 AST *builtin_quasiquote (AST *environment, AST *arguments);
 
 AST *builtin_lambda (AST *environment, AST *arguments);
+AST *builtin_macro (AST *environment, AST *arguments);
 
 #endif // FORMS_H_

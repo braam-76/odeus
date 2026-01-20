@@ -20,6 +20,7 @@ typedef enum
   AST_BUILTIN_NORMAL,
   AST_BUILTIN_SPECIAL,
   AST_LAMBDA,
+  AST_MACRO,
 
   AST_ERROR,
   AST_END_OF_FILE,
@@ -62,6 +63,12 @@ struct AST_Node
       AST *parameters;
       AST *body;
     } LAMBDA;
+
+    struct
+    {
+      AST *parameters;
+      AST *body;
+    } MACRO;
   } as;
   size_t line;
   size_t column;
