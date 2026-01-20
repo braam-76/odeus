@@ -1,5 +1,7 @@
 # Odeus documentation
 
+---
+
 ## Primitives
 
 Odeus programming language has 5 atomic types:
@@ -15,6 +17,8 @@ Odeus does not have native booleans.
 - t represents true.
 - Any other value is considered truthy in conditionals.
 
+---
+
 ## Complex constructs
 
 Odeus programming language has only 1 complex type: *cons* which is pair of values (*car* . *cdr*),
@@ -27,6 +31,8 @@ To understand, those 2 lists are equal in this language
 ```
 
 and in fact, builtin function *list* produces that pair of pairs. This builtin is just easier and faster way to write same thing on the right of *==*
+
+---
 
 ## Quote
 
@@ -45,6 +51,29 @@ and quote can be used as the way to represent list (just like *list* function), 
 (cdr '(display "some string")) ; retuns ("some string") 
 ```
 
+---
+
+## Quasiquote, unquote and unquote-splicing
+
+Quasiquote works like *quote*, except you can control what to evaluate and what not.
+
+```scheme
+;; next 2 lines are similar
+`(1 2 3 ,(+ 1 3))                      ;; => (1 2 3 4)_ 
+(quasiquote (1 2 3 (unquote (+ 1 3)))) ;; => (1 2 3 4)
+
+;; those 2 lines too
+`(1 2 3 ,@(4 5 6 7))                              ;; => (1 2 3 4 5 6 7)
+(quasiquote (1 2 3 (unquote-splicing (4 5 6 7)))) ;; => (1 2 3 4 5 6 7)
+```
+
+As you can see, *unquote* (comma character) denotes what's needs to be evaluated, then result is inserted in list.
+And *unquote-splicing* (comma with at symbol) denotes what's needs to be spliced/emplaced inside list.
+
+*Unquote* and *unquote-splicing* does not have meaning outside of quasiquote, and leads to error. Also, user cannot assing anything to symbols named *unquote* and *unquote-splicing*, since it would lead to expansion error. 
+
+---
+
 ## Function call
 
 Function call created by putting symbol as first element in list. Then evaluator searches for that symbol in environment, and if it finds symbol binding, then it executes function assigned to symbol.
@@ -54,6 +83,8 @@ Function call created by putting symbol as first element in list. Then evaluator
 (car (list 1 2 3 4)) ;; => 1
 (cdr (list 1 2 3 4)) ;; => (2 3 4)
 ```
+
+---
 
 ## Special forms
 
@@ -66,6 +97,7 @@ Special forms control evaluation; their arguments may **not be evaluated automat
 | `define`     | `(define symbol expr)` defines a new variable with the evaluated value of `expr`. Cannot redefine existing symbols | `(define x 10)`                                    |
 | `set!`       | `(set! symbol expr)` updates an existing variable                                                                  | `(set! x 20)`                                      |
 | `lambda`     | `(lambda (params ...) body ...)` creates an anonymous function                                                     | `((lambda (x) (+ x 1)) 5)` → `6`                   |
+| `macro`      | `(macro (params ...) body ...)` creates an anonymous macro                                                         | `((macro (x) (quasiquote (+ x 1))) 5)` → `(list '+ '6 '5)`                   |
 | `let`        | `(let ((var val) ...) body ...)` creates a new environment and evaluates body                                      | `(let ((x 2) (y 3)) (+ x y))` → `5`                |
 | `let*`       | `(let* ((var val) ...) body ...)` like `let` but sequential bindings (supports recursion)                          | `(let* ((x 2) (y x)) (+ x y))` → `4`               |
 | `quasiquote` | `(quasiquote expr)` allows unquoting and splicing inside `expr`                                                    | `(quasiquote (1 2 (unquote (+ 1 1))))` → `(1 2 2)` |
@@ -137,11 +169,11 @@ Special forms control evaluation; their arguments may **not be evaluated automat
 
 | Function       | Description                             | Example                              |
 | -------------- | --------------------------------------- | ------------------------------------ |
-| `display`      | Prints value to stdout                  | `(display "hello")` → prints `hello` |
-| `dump`         | Prints internal AST representation      | `(dump '(1 2 3))` → `(1 2 3)`        |
-| `read`         | Reads a Lisp expression from input      | `(read)` → user input expression     |
+| `display`      | Prints value to stdout                  | `(display "hello")` → prints `hello`|
+| `dump`         | Prints internal AST representation      | `(dump '(1 2 3))` → `(1 2 3)`       |
+| `read`         | Reads a Lisp expression from input      | `(read)` → user input expression    |
 | `read-file`    | Reads a file and returns content as AST | `(read-file "file.odeus")`           |
-| `write`        | Turns expression into string | `(write "file.odeus" '(1 2 3))`      |
+| `write`        | Turns expression into string            | `(write "file.odeus" '(1 2 3))`      |
 | `file->string` | Reads file content as string            | `(file->string "file.txt")`          |
 
 ## Example Programs
@@ -156,4 +188,3 @@ Special forms control evaluation; their arguments may **not be evaluated automat
         (* n (factorial (- n 1))))))
 (factorial 5) ; => 120
 ```
-
