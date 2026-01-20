@@ -1,4 +1,5 @@
 #include "core/lexer.h"
+#include "core/token.h"
 
 static char peek (Lexer *lexer);
 static char peek_next (Lexer *lexer, int n);
@@ -77,7 +78,15 @@ lexer_next_token (Lexer *lexer)
           token_to_return = create_token (lexer, TOKEN_CLOSE_PAREN);
           break;
         case ',':
-          token_to_return = create_token (lexer, TOKEN_COMMA);
+          if (peek_next (lexer, 1) == '@')
+            {
+              token_to_return = create_token (lexer, TOKEN_UNQUOTE_SPLICING);
+              break;
+            }
+          token_to_return = create_token (lexer, TOKEN_UNQUOTE);
+          break;
+        case '`':
+          token_to_return = create_token (lexer, TOKEN_QUASIQUOTE);
           break;
         case '\'':
           token_to_return = create_token (lexer, TOKEN_QUOTE);
@@ -314,6 +323,6 @@ is_allowed_for_symbol (char ch)
 {
   if (ch == '\0')
     return false;
-  const char *not_allowed = " \t\n\r()[]\";,\'|\\#";
+  const char *not_allowed = " \t\n\r()[]\";,\'`|\\@";
   return strchr (not_allowed, ch) == NULL;
 }

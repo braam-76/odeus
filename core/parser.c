@@ -4,6 +4,7 @@
  *      | '(' expr '.' expr ')'
  *      | list
  *      | quote
+ *      | quasiquote
  */
 static AST *parse_expr (Parser *parser, Token *token);
 
@@ -15,6 +16,10 @@ static AST *parse_literal (Parser *parser, Token *token);
 
 /* quote = '\'' expr  */
 static AST *parse_quote (Parser *parser, Token *token);
+
+static AST *parse_quasiquote (Parser *parser, Token *token);
+static AST *parse_unquote (Parser *parser, Token *token);
+static AST *parse_unquote_splicing (Parser *parser, Token *token);
 
 void
 parser_panic (Parser *parser, Token *token, const char *message)
@@ -80,10 +85,18 @@ parse_expr (Parser *parser, Token *token)
     case TOKEN_QUOTE:
       return parse_quote (parser, token);
 
+    case TOKEN_QUASIQUOTE:
+      return parse_quasiquote (parser, token);
+
+    case TOKEN_UNQUOTE:
+      return parse_unquote (parser, token);
+
+    case TOKEN_UNQUOTE_SPLICING:
+      return parse_unquote_splicing (parser, token);
+
     case TOKEN_NONE:
     case TOKEN_CLOSE_PAREN:
     case TOKEN_PERIOD:
-    case TOKEN_COMMA:
       {
         char message[256];
         snprintf (message, sizeof (message), "Unexpected token '%s'",
@@ -180,14 +193,44 @@ parse_literal (Parser *parser, Token *token)
 static AST *
 parse_quote (Parser *parser, Token *token)
 {
-  AST *n = malloc (sizeof (AST));
-  n->type = AST_QUOTE;
-  n->line = token->line;
-  n->column = token->column;
-
+  // consume '
   *token = lexer_next_token (parser->lexer);
 
-  n->as.QUOTE.EXPR = parse_expr (parser, token);
+  AST *expr = parse_expr (parser, token);
 
-  return n;
+  return make_cons (make_symbol ("quote"), make_cons (expr, nil ()));
+}
+
+static AST *
+parse_quasiquote (Parser *parser, Token *token)
+{
+  // consume `
+  *token = lexer_next_token (parser->lexer);
+
+  AST *expr = parse_expr (parser, token);
+
+  return make_cons (make_symbol ("quasiquote"), make_cons (expr, nil ()));
+}
+
+static AST *
+parse_unquote (Parser *parser, Token *token)
+{
+  // consume ,
+  *token = lexer_next_token (parser->lexer);
+
+  AST *expr = parse_expr (parser, token);
+
+  return make_cons (make_symbol ("unquote"), make_cons (expr, nil ()));
+}
+
+static AST *
+parse_unquote_splicing (Parser *parser, Token *token)
+{
+  // consume ,@
+  *token = lexer_next_token (parser->lexer);
+
+  AST *expr = parse_expr (parser, token);
+
+  return make_cons (make_symbol ("unquote-splicing"),
+                    make_cons (expr, nil ()));
 }
