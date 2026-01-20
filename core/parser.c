@@ -71,11 +71,14 @@ parse_expr (Parser *parser, Token *token)
     case TOKEN_INTEGER:
     case TOKEN_FLOAT:
     case TOKEN_STRING:
-    case TOKEN_SYMBOL: return parse_literal (parser, token);
+    case TOKEN_SYMBOL:
+      return parse_literal (parser, token);
 
-    case TOKEN_OPEN_PAREN: return parse_list (parser, token);
+    case TOKEN_OPEN_PAREN:
+      return parse_list (parser, token);
 
-    case TOKEN_QUOTE: return parse_quote (parser, token);
+    case TOKEN_QUOTE:
+      return parse_quote (parser, token);
 
     case TOKEN_NONE:
     case TOKEN_CLOSE_PAREN:
@@ -83,7 +86,8 @@ parse_expr (Parser *parser, Token *token)
     case TOKEN_COMMA:
       {
         char message[256];
-        snprintf (message, sizeof (message), "Unexpected token '%s'", token->value);
+        snprintf (message, sizeof (message), "Unexpected token '%s'",
+                  token->value);
         parser_panic (parser, token, message);
       }
       break;
@@ -148,12 +152,22 @@ parse_literal (Parser *parser, Token *token)
 
   switch (token->type)
     {
-    case TOKEN_INTEGER: n = make_integer (strtol (token->value, NULL, 10)); break;
-    case TOKEN_FLOAT: n = make_float (strtod (token->value, NULL)); break;
-    case TOKEN_STRING: n = make_string (token->value); break;
-    case TOKEN_SYMBOL: n = make_symbol (token->value); break;
+    case TOKEN_INTEGER:
+      n = make_integer (strtol (token->value, NULL, 10));
+      break;
+    case TOKEN_FLOAT:
+      n = make_float (strtod (token->value, NULL));
+      break;
+    case TOKEN_STRING:
+      n = make_string (token->value);
+      break;
+    case TOKEN_SYMBOL:
+      n = make_symbol (token->value);
+      break;
 
-    default: parser_panic (parser, token, "Unexpected literal"); return nil ();
+    default:
+      parser_panic (parser, token, "Unexpected literal");
+      return nil ();
     }
 
   n->line = token->line;

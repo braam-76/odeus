@@ -117,7 +117,8 @@ make_symbol (const char *symbol)
       return symbol_table[i];
 
   if (symbol_count >= MAX_SYMBOLS)
-    return make_error ("FATAL ERROR: can't create more symbols. symbol_table is full");
+    return make_error (
+        "FATAL ERROR: can't create more symbols. symbol_table is full");
 
   AST *sym = malloc (sizeof (AST));
   sym->type = AST_SYMBOL;
@@ -138,11 +139,21 @@ ast_print (AST *node)
 
   switch (node->type)
     {
-    case AST_NIL: printf ("nil"); break;
-    case AST_SYMBOL: printf ("%s", node->as.SYMBOL); break;
-    case AST_INTEGER: printf ("%ld", node->as.INTEGER); break;
-    case AST_FLOAT: printf ("%g", node->as.FLOAT); break;
-    case AST_STRING: printf ("\"%s\"", node->as.STRING); break;
+    case AST_NIL:
+      printf ("nil");
+      break;
+    case AST_SYMBOL:
+      printf ("%s", node->as.SYMBOL);
+      break;
+    case AST_INTEGER:
+      printf ("%ld", node->as.INTEGER);
+      break;
+    case AST_FLOAT:
+      printf ("%g", node->as.FLOAT);
+      break;
+    case AST_STRING:
+      printf ("\"%s\"", node->as.STRING);
+      break;
 
     case AST_QUOTE:
       printf ("'");
@@ -165,7 +176,6 @@ ast_print (AST *node)
 
         if (cur->type != AST_NIL)
           {
-
             printf (" . ");
             ast_print (cur);
           }
@@ -173,12 +183,22 @@ ast_print (AST *node)
         break;
       }
 
-    case AST_BUILTIN_NORMAL: printf ("#<builtin function>"); break;
-    case AST_BUILTIN_SPECIAL: printf ("#<special form>"); break;
+    case AST_BUILTIN_NORMAL:
+      printf ("#<builtin function>");
+      break;
+    case AST_BUILTIN_SPECIAL:
+      printf ("#<special form>");
+      break;
 
-    case AST_ERROR: printf ("%s", node->as.ERROR.MESSAGE); break;
-    case AST_END_OF_FILE: printf ("#<EOF>"); break;
+    case AST_ERROR:
+      printf ("%s", node->as.ERROR.MESSAGE);
+      break;
+    case AST_END_OF_FILE:
+      printf ("#<EOF>");
+      break;
 
-    default: printf ("#<UNKNOWN:%d>", node->type); break;
+    default:
+      printf ("#<UNKNOWN:%d>", node->type);
+      break;
     }
 }

@@ -1,9 +1,5 @@
 #include "core/lexer.h"
 
-// ───────────────────────────────
-// Internal helpers
-// ───────────────────────────────
-
 static char peek (Lexer *lexer);
 static char peek_next (Lexer *lexer, int n);
 static void advance (Lexer *lexer);
@@ -16,11 +12,8 @@ static Token number_token (Lexer *lexer);
 static Token symbol_token (Lexer *lexer);
 
 static Token create_token (Lexer *lexer, Token_Type type);
-static Token create_token_with_value (Lexer *lexer, Token_Type type, char *value);
-
-// ───────────────────────────────
-// Lexer
-// ───────────────────────────────
+static Token create_token_with_value (Lexer *lexer, Token_Type type,
+                                      char *value);
 
 Lexer
 lexer_from_file (char *filename, char *source, size_t source_size)
@@ -54,10 +47,6 @@ lexer_from_string (char *source, size_t source_size)
   return lexer;
 }
 
-// ───────────────────────────────
-// Tokenization core
-// ───────────────────────────────
-
 Token
 lexer_next_token (Lexer *lexer)
 {
@@ -70,7 +59,9 @@ lexer_next_token (Lexer *lexer)
         // Whitespace
         case ' ':
         case '\t':
-        case '\r': advance (lexer); break;
+        case '\r':
+          advance (lexer);
+          break;
 
         case '\n':
           lexer->line++;
@@ -79,10 +70,18 @@ lexer_next_token (Lexer *lexer)
           break;
 
         // Single-character tokens
-        case '(': token_to_return = create_token (lexer, TOKEN_OPEN_PAREN); break;
-        case ')': token_to_return = create_token (lexer, TOKEN_CLOSE_PAREN); break;
-        case ',': token_to_return = create_token (lexer, TOKEN_COMMA); break;
-        case '\'': token_to_return = create_token (lexer, TOKEN_QUOTE); break;
+        case '(':
+          token_to_return = create_token (lexer, TOKEN_OPEN_PAREN);
+          break;
+        case ')':
+          token_to_return = create_token (lexer, TOKEN_CLOSE_PAREN);
+          break;
+        case ',':
+          token_to_return = create_token (lexer, TOKEN_COMMA);
+          break;
+        case '\'':
+          token_to_return = create_token (lexer, TOKEN_QUOTE);
+          break;
 
         case '.':
           if (is_allowed_for_symbol (peek_next (lexer, 1)))
@@ -97,21 +96,26 @@ lexer_next_token (Lexer *lexer)
           continue;
 
         // Strings
-        case '"': return string_token (lexer);
+        case '"':
+          return string_token (lexer);
 
         // End of file
-        case '\0': token_to_return = create_token (lexer, TOKEN_END_OF_FILE); break;
+        case '\0':
+          token_to_return = create_token (lexer, TOKEN_END_OF_FILE);
+          break;
 
         // Numbers or symbols
         default:
-          if (isdigit (peek (lexer)) || (peek (lexer) == '-' && isdigit (peek_next (lexer, 1))))
+          if (isdigit (peek (lexer))
+              || (peek (lexer) == '-' && isdigit (peek_next (lexer, 1))))
             return number_token (lexer);
           else if (is_allowed_for_symbol (peek (lexer)))
             return symbol_token (lexer);
           else
             {
               char buf[64];
-              snprintf (buf, sizeof (buf), "Unknown character: '%c'", peek (lexer));
+              snprintf (buf, sizeof (buf), "Unknown character: '%c'",
+                        peek (lexer));
               panic (lexer, buf);
               return (Token){ .type = TOKEN_NONE };
             }
@@ -124,10 +128,6 @@ lexer_next_token (Lexer *lexer)
   advance (lexer);
   return token_to_return;
 }
-
-// ───────────────────────────────
-// Helper functions
-// ───────────────────────────────
 
 static inline char
 peek (Lexer *lexer)
@@ -195,10 +195,6 @@ create_token_with_value (Lexer *lexer, Token_Type type, char *value)
   return token;
 }
 
-// ───────────────────────────────
-// Token parsing functions
-// ───────────────────────────────
-
 static Token
 string_token (Lexer *lexer)
 {
@@ -222,13 +218,26 @@ string_token (Lexer *lexer)
           advance (lexer);
           switch (peek (lexer))
             {
-            case 'n': c = '\n'; break;
-            case 't': c = '\t'; break;
-            case 'r': c = '\r'; break;
-            case '"': c = '"'; break;
-            case '\'': c = '\''; break;
-            case '\\': c = '\\'; break;
-            default: panic (lexer, "illegal character to escape");
+            case 'n':
+              c = '\n';
+              break;
+            case 't':
+              c = '\t';
+              break;
+            case 'r':
+              c = '\r';
+              break;
+            case '"':
+              c = '"';
+              break;
+            case '\'':
+              c = '\'';
+              break;
+            case '\\':
+              c = '\\';
+              break;
+            default:
+              panic (lexer, "illegal character to escape");
             }
         }
       else
@@ -299,10 +308,6 @@ symbol_token (Lexer *lexer)
 
   return create_token_with_value (lexer, TOKEN_SYMBOL, symbol);
 }
-
-// ───────────────────────────────
-// Character classification
-// ───────────────────────────────
 
 static bool
 is_allowed_for_symbol (char ch)

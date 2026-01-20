@@ -1,10 +1,1 @@
 BasedOnStyle: GNU
-ColumnLimit: 100
-
-AllowAllArgumentsOnNextLine: true
-AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortIfStatementsOnASingleLine: Never
-AllowShortFunctionsOnASingleLine: InlineOnly
-AllowShortBlocksOnASingleLine: true
-AllowShortCaseLabelsOnASingleLine: true
-BinPackArguments: true

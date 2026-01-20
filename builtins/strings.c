@@ -1,7 +1,9 @@
 #include "builtins/strings.h"
+
+#include <string.h>
+
 #include "core/ast.h"
 #include "core/eval.h"
-#include <string.h>
 
 AST *
 builtin_concat (AST *environment, AST *arguments)
@@ -78,7 +80,8 @@ builtin_substring (AST *environment, AST *arguments)
   int arguments_count = arguments_length (arguments);
   if (arguments_count < 2 || arguments_count > 3)
     return make_error (
-        "substring: expects either 2 or 3 arguments: (substring [str] [low index] <high index>)");
+        "substring: expects either 2 or 3 arguments: (substring [str] [low "
+        "index] <high index>)");
 
   AST *string = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (string);
@@ -101,8 +104,6 @@ builtin_substring (AST *environment, AST *arguments)
     high_index = make_integer (strlen (string->as.STRING));
   ERROR_OUT (high_index);
 
-  // Validate types
-
   const char *str = string->as.STRING;
   int len = strlen (str);
   int low = low_index->as.INTEGER;
@@ -121,21 +122,21 @@ builtin_substring (AST *environment, AST *arguments)
     low = len;
 
   if (high < 0)
-    high = len; // -1 means "to the end"
+    high = len;
   else if (high > len)
     high = len;
 
   // Validate that low <= high
   if (low > high)
-    return make_error ("substring: low index must be less than or equal to high index");
+    return make_error (
+        "substring: low index must be less than or equal to high index");
 
   // Calculate substring length
   int substr_len = high - low;
 
   if (substr_len <= 0)
-    return make_string (""); // Empty string for zero or negative length
+    return make_string ("");
 
-  // Allocate and copy substring
   char *buffer = malloc (substr_len + 1);
   if (!buffer)
     return make_error ("substring: memory allocation failed");
@@ -175,9 +176,5 @@ builtin_symbol_to_string (AST *environment, AST *arguments)
   if (symbol_arg->type != AST_SYMBOL)
     return make_error ("symbol->string: argument must be a symbol");
 
-  // Get symbol name
-  const char *name = symbol_arg->as.SYMBOL;
-
-  // Create a string from the symbol name
-  return make_string (name);
+  return make_string (symbol_arg->as.SYMBOL);
 }

@@ -1,5 +1,5 @@
-#ifndef ODEUS_AST_H_
-#define ODEUS_AST_H_
+#ifndef AST_H_
+#define AST_H_
 
 #include <assert.h>
 #include <stddef.h>
@@ -96,4 +96,4 @@ AST *t (void);
 char *ast_to_string (AST *node);
 void ast_print (AST *node);
 
-#endif // ODEUS_AST_H_
+#endif // AST_H_

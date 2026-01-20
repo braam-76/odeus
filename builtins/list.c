@@ -1,11 +1,13 @@
 #include "builtins/list.h"
+
 #include "core/ast.h"
 #include "core/eval.h"
 
 AST *
 builtin_cons (AST *environment, AST *arguments)
 {
-  if (IS_NULL (arguments) || IS_NULL (CADR (arguments)) || !IS_NULL (CDDR (arguments)))
+  if (IS_NULL (arguments) || IS_NULL (CADR (arguments))
+      || !IS_NULL (CDDR (arguments)))
     return make_error ("ERROR: cons expects two argument\n");
 
   AST *first_argument = evaluate_expression (environment, CAR (arguments));
@@ -145,44 +147,35 @@ builtin_map (AST *environment, AST *arguments)
   if (arguments_length (arguments) != 2)
     return make_error ("map: expects exactly two arguments");
 
-  // Get function
-  AST *func = evaluate_expression (environment, CAR (arguments));
+  AST *function = evaluate_expression (environment, CAR (arguments));
 
-  // Check function type
-  if (func->type != AST_BUILTIN_NORMAL && func->type != AST_BUILTIN_SPECIAL
-      && func->type != AST_LAMBDA)
+  if (function->type != AST_BUILTIN_NORMAL
+      && function->type != AST_BUILTIN_SPECIAL && function->type != AST_LAMBDA)
     return make_error ("map: first argument must be a function");
 
   AST *list = evaluate_expression (environment, CADR (arguments));
   if (list->type != AST_CONS)
     return make_error ("map: second argument should be list/cons");
 
-  // Create result list with a dummy head
   AST *result_head = make_cons (nil (), nil ());
-  AST *result_tail = result_head; // Pointer to the tail
+  AST *result_tail = result_head;
 
   while (list->type == AST_CONS && !IS_NULL (list))
     {
-      // Apply function to current element
-      AST *current_arg = CAR (list);
-      AST *func_args = make_cons (current_arg, nil ());
-      AST *applied = apply (func, environment, func_args);
+      AST *current_arguments = CAR (list);
+      AST *function_arguments = make_cons (current_arguments, nil ());
+      AST *applied = apply (function, environment, function_arguments);
       ERROR_OUT (applied);
 
-      // Create new cons cell with the result
       AST *new_cell = make_cons (applied, nil ());
 
-      // Link it to the tail
       CDR (result_tail) = new_cell;
 
-      // Move tail pointer forward
       result_tail = new_cell;
 
-      // Move to next element in input list
       list = CDR (list);
     }
 
-  // Return the actual list (skip the dummy head)
   return CDR (result_head);
 }
 
@@ -192,10 +185,10 @@ builtin_filter (AST *environment, AST *arguments)
   if (arguments_length (arguments) != 2)
     return make_error ("filter: expects exactly two arguments");
 
-  AST *func = evaluate_expression (environment, CAR (arguments));
+  AST *function = evaluate_expression (environment, CAR (arguments));
 
-  if (func->type != AST_BUILTIN_NORMAL && func->type != AST_BUILTIN_SPECIAL
-      && func->type != AST_LAMBDA)
+  if (function->type != AST_BUILTIN_NORMAL
+      && function->type != AST_BUILTIN_SPECIAL && function->type != AST_LAMBDA)
     return make_error ("filter: first argument must be a function");
 
   AST *list = evaluate_expression (environment, CADR (arguments));
@@ -207,19 +200,16 @@ builtin_filter (AST *environment, AST *arguments)
 
   while (list->type == AST_CONS && !IS_NULL (list))
     {
-      // Apply predicate function to current element
       AST *current_element = CAR (list);
       AST *function_arguments = make_cons (current_element, nil ());
-      AST *predicate_result = apply (func, environment, function_arguments);
+      AST *predicate_result
+          = apply (function, environment, function_arguments);
       ERROR_OUT (predicate_result);
 
-      // If predicate returns true (non-nil), include the original element
       if (!IS_NULL (predicate_result))
         {
-          // Create new cons cell with the ORIGINAL element, not the predicate result
           AST *new_cell = make_cons (current_element, nil ());
 
-          // Link it to the result list
           CDR (result_tail) = new_cell;
           result_tail = new_cell;
         }
@@ -236,7 +226,6 @@ static AST *append_two_lists (AST *a, AST *b);
 AST *
 builtin_append (AST *environment, AST *arguments)
 {
-
   AST *lists = nil ();
   AST *last = NULL;
   AST *current = arguments;

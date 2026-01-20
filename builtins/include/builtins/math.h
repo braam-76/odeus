@@ -1,10 +1,10 @@
 #ifndef MATH_H_
 #define MATH_H_
 
+#include <math.h>
+
 #include "core/ast.h"
 #include "core/eval.h"
-
-#include <math.h>
 
 // Essentials
 AST *builtin_add (AST *environment, AST *arguments);
@@ -13,7 +13,6 @@ AST *builtin_mul (AST *environment, AST *arguments);
 AST *builtin_div (AST *environment, AST *arguments);
 
 // More math
-// AST* builtin_%(AST* environment, AST* arguments);
 AST *builtin_mod (AST *environment, AST *arguments);
 AST *builtin_expt (AST *environment, AST *arguments);
 AST *builtin_sqrt (AST *environment, AST *arguments);

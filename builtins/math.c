@@ -1,7 +1,9 @@
 #include "builtins/math.h"
+
+#include <math.h>
+
 #include "core/ast.h"
 #include "core/eval.h"
-#include <math.h>
 
 static AST *
 get_numeric_value (AST *node, double *out, int *is_float)
@@ -13,12 +15,15 @@ get_numeric_value (AST *node, double *out, int *is_float)
 
   switch (node->type)
     {
-    case AST_INTEGER: *out = (double)node->as.INTEGER; return nil ();
+    case AST_INTEGER:
+      *out = (double)node->as.INTEGER;
+      return nil ();
     case AST_FLOAT:
       *out = node->as.FLOAT;
       *is_float = 1;
       return nil ();
-    default: return make_error ("numeric operation expects number");
+    default:
+      return make_error ("numeric operation expects number");
     }
 }
 

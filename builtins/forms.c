@@ -1,4 +1,5 @@
 #include "builtins/forms.h"
+
 #include "core/ast.h"
 #include "core/eval.h"
 
@@ -62,14 +63,14 @@ builtin_let (AST *environment, AST *arguments)
   if (bindings->type != AST_CONS && bindings->type != AST_NIL)
     return make_error ("let: first argument must be a list of bindings");
 
-  // Create a new lexical frame
-  AST *inner_environment = make_cons (environment, nil ()); // parent + empty bindings
+  AST *inner_environment = make_cons (environment, nil ());
 
   AST *current = bindings;
   while (current->type == AST_CONS)
     {
       AST *binding = CAR (current);
-      if (binding->type != AST_CONS || IS_NULL (binding) || IS_NULL (CDR (binding)))
+      if (binding->type != AST_CONS || IS_NULL (binding)
+          || IS_NULL (CDR (binding)))
         return make_error ("let: each binding must be (symbol value)");
 
       AST *key = CAR (binding);
@@ -91,7 +92,6 @@ builtin_let (AST *environment, AST *arguments)
       current = CDR (current);
     }
 
-  // Evaluate body expressions in the new environment
   AST *result = nil ();
   current = body;
   while (current->type == AST_CONS)
@@ -116,14 +116,14 @@ builtin_let_star (AST *environment, AST *arguments)
   if (bindings->type != AST_CONS && bindings->type != AST_NIL)
     return make_error ("let*: first argument must be a list of bindings");
 
-  // Create a new lexical frame
-  AST *inner_environment = make_cons (environment, nil ()); // parent + empty bindings
+  AST *inner_environment = make_cons (environment, nil ());
 
   AST *current = bindings;
   while (current->type == AST_CONS)
     {
       AST *binding = CAR (current);
-      if (binding->type != AST_CONS || IS_NULL (binding) || IS_NULL (CDR (binding)))
+      if (binding->type != AST_CONS || IS_NULL (binding)
+          || IS_NULL (CDR (binding)))
         return make_error ("let: each binding must be (symbol value)");
 
       AST *key = CAR (binding);
@@ -132,20 +132,16 @@ builtin_let_star (AST *environment, AST *arguments)
       if (key->type != AST_SYMBOL)
         return make_error ("let: binding first element must be symbol");
 
-      // Initialize with nil first
       environment_set (inner_environment, key, nil ());
 
-      // Evaluate value in parent environment
       AST *value = evaluate_expression (inner_environment, value_expression);
       ERROR_OUT (value);
 
-      // Update binding
       environment_update (inner_environment, key, value);
 
       current = CDR (current);
     }
 
-  // Evaluate body expressions in the new environment
   AST *result = nil ();
   current = body;
   while (current->type == AST_CONS)
@@ -255,8 +251,9 @@ expand_quasiquote (AST *expr, int depth)
       if (depth == 1)
         return CADR (expr);
       else
-        return make_cons (make_quote (make_symbol ("unquote")),
-                          make_cons (expand_quasiquote (CADR (expr), depth - 1), nil ()));
+        return make_cons (
+            make_quote (make_symbol ("unquote")),
+            make_cons (expand_quasiquote (CADR (expr), depth - 1), nil ()));
     }
 
   if (is_unquote_splicing (expr) && depth == 1)
@@ -265,11 +262,13 @@ expand_quasiquote (AST *expr, int depth)
   if (is_symbol_named (CAR (expr), "quasiquote"))
     {
       if (depth == 1)
-        return make_cons (make_symbol ("quasiquote"),
-                          make_cons (expand_quasiquote (CADR (expr), depth + 1), nil ()));
+        return make_cons (
+            make_symbol ("quasiquote"),
+            make_cons (expand_quasiquote (CADR (expr), depth + 1), nil ()));
       else
-        return make_cons (make_quote (make_symbol ("quasiquote")),
-                          make_cons (expand_quasiquote (CADR (expr), depth + 1), nil ()));
+        return make_cons (
+            make_quote (make_symbol ("quasiquote")),
+            make_cons (expand_quasiquote (CADR (expr), depth + 1), nil ()));
     }
 
   return expand_quasiquote_list (expr, depth);
@@ -295,22 +294,24 @@ expand_quasiquote_list (AST *list, int depth)
           AST *rest = expand_quasiquote_list (CDR (current), depth);
 
           // Wrap elements before the splice
-          AST *list_before
-              = IS_NULL (elements) ? nil () : make_cons (make_symbol ("list"), elements);
+          AST *list_before = IS_NULL (elements)
+                                 ? nil ()
+                                 : make_cons (make_symbol ("list"), elements);
 
           // Build append: (append <list-before> <splice-expr> <rest>)
           AST *append_expression = NULL;
 
           if (IS_NULL (list_before))
-            append_expression
-                = make_cons (make_symbol ("append"),
-                             make_cons (make_cons (make_symbol ("list"), splice_expression),
-                                        make_cons (rest, nil ())));
+            append_expression = make_cons (
+                make_symbol ("append"),
+                make_cons (make_cons (make_symbol ("list"), splice_expression),
+                           make_cons (rest, nil ())));
           else
             append_expression = make_cons (
                 make_symbol ("append"),
                 make_cons (list_before,
-                           make_cons (make_cons (make_symbol ("list"), splice_expression),
+                           make_cons (make_cons (make_symbol ("list"),
+                                                 splice_expression),
                                       make_cons (rest, nil ()))));
 
           return append_expression;
@@ -341,13 +342,14 @@ is_symbol_named (AST *node, const char *name)
 static int
 is_unquote (AST *node)
 {
-  return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote") && !IS_NULL (CDR (node))
-         && IS_NULL (CDDR (node));
+  return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote")
+         && !IS_NULL (CDR (node)) && IS_NULL (CDDR (node));
 }
 
 static int
 is_unquote_splicing (AST *node)
 {
-  return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote-splicing")
+  return node->type == AST_CONS
+         && is_symbol_named (CAR (node), "unquote-splicing")
          && !IS_NULL (CDR (node)) && IS_NULL (CDDR (node));
 }

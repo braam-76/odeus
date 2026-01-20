@@ -1,15 +1,15 @@
 #ifndef LEXER_H_
 #define LEXER_H_
 
-#include "core/core_error.h"
-#include "core/token.h"
-
 #include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "core/core_error.h"
+#include "core/token.h"
 
 typedef struct
 {

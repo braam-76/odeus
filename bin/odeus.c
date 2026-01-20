@@ -1,16 +1,14 @@
+#include <readline/history.h>
+#include <readline/readline.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <readline/history.h>
-#include <readline/readline.h>
 
 #include "builtins/set_builtins.h"
 #include "core/eval.h"
 #include "core/lexer.h"
 #include "core/parser.h"
 
-// Utility to read entire file into string
 char *
 read_file_to_string (const char *filename)
 {
@@ -53,7 +51,8 @@ main (int argc, char **argv)
           return 1;
         }
 
-      Lexer lexer = lexer_from_file (filename, file_content, strlen (file_content));
+      Lexer lexer
+          = lexer_from_file (filename, file_content, strlen (file_content));
       Parser *parser = parser_init (&lexer);
       AST *program = parser_parse (parser);
 
@@ -83,7 +82,7 @@ main (int argc, char **argv)
           AST *program = parser_parse (parser);
 
           AST *result = evaluate_expression (global_env, program);
-
+          printf ("-> ");
           ast_print (result);
           printf ("\n");
 

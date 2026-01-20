@@ -41,7 +41,9 @@ builtin_is_number (AST *environment, AST *arguments)
 
   AST *expression = evaluate_expression (environment, CAR (arguments));
 
-  return (expression->type == AST_INTEGER || expression->type == AST_FLOAT) ? t () : nil ();
+  return (expression->type == AST_INTEGER || expression->type == AST_FLOAT)
+             ? t ()
+             : nil ();
 }
 
 AST *
@@ -85,7 +87,8 @@ builtin_is_function (AST *environment, AST *arguments)
 
   AST *expression = evaluate_expression (environment, CAR (arguments));
 
-  return (expression->type == AST_BUILTIN_NORMAL || expression->type == AST_BUILTIN_SPECIAL
+  return (expression->type == AST_BUILTIN_NORMAL
+          || expression->type == AST_BUILTIN_SPECIAL
           || expression->type == AST_LAMBDA)
              ? t ()
              : nil ();

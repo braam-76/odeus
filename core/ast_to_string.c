@@ -1,19 +1,14 @@
+#include <stdarg.h>
+
 #include "core/ast.h"
 
-#include <stdarg.h> // For va_list
-
-/* ----------------------------------------------------------
- *   STRING CONVERSION (for write function)
- * ---------------------------------------------------------- */
-
-// Helper: Append formatted string to dynamic buffer
 static void
-append_string (char **buffer, size_t *capacity, size_t *length, const char *format, ...)
+append_string (char **buffer, size_t *capacity, size_t *length,
+               const char *format, ...)
 {
   va_list args;
   va_start (args, format);
 
-  // Get the required size
   va_list args_copy;
   va_copy (args_copy, args);
   int needed = vsnprintf (NULL, 0, format, args_copy);
@@ -25,7 +20,6 @@ append_string (char **buffer, size_t *capacity, size_t *length, const char *form
       return;
     }
 
-  // Ensure we have enough space
   if (*length + needed + 1 > *capacity)
     {
       size_t new_capacity = *capacity * 2 + needed + 1;
@@ -39,24 +33,21 @@ append_string (char **buffer, size_t *capacity, size_t *length, const char *form
       *capacity = new_capacity;
     }
 
-  // Append the formatted string
   *length += vsnprintf (*buffer + *length, *capacity - *length, format, args);
   va_end (args);
 }
 
-// Helper: Escape special characters in strings
 static char *
 escape_string (const char *str)
 {
-  // Count how many characters need escaping
   size_t len = strlen (str);
-  size_t escaped_len = len + 2; // Start with quotes
+  size_t escaped_len = len + 2;
 
   for (size_t i = 0; i < len; i++)
     {
       char c = str[i];
       if (c == '"' || c == '\\' || c == '\n' || c == '\t' || c == '\r')
-        escaped_len++; // Need backslash for these
+        escaped_len++;
     }
 
   char *escaped = malloc (escaped_len + 1);
@@ -91,7 +82,9 @@ escape_string (const char *str)
           *dest++ = '\\';
           *dest++ = 'r';
           break;
-        default: *dest++ = c; break;
+        default:
+          *dest++ = c;
+          break;
         }
     }
 
@@ -101,9 +94,9 @@ escape_string (const char *str)
   return escaped;
 }
 
-// Recursive function to convert AST to string
 static void
-ast_to_string_recursive (AST *node, char **buffer, size_t *capacity, size_t *length)
+ast_to_string_recursive (AST *node, char **buffer, size_t *capacity,
+                         size_t *length)
 {
   if (!node)
     {
@@ -113,25 +106,21 @@ ast_to_string_recursive (AST *node, char **buffer, size_t *capacity, size_t *len
 
   switch (node->type)
     {
-    case AST_NIL: append_string (buffer, capacity, length, "nil"); break;
-
-    case AST_SYMBOL: append_string (buffer, capacity, length, "%s", node->as.SYMBOL); break;
-
-    case AST_INTEGER: append_string (buffer, capacity, length, "%ld", node->as.INTEGER); break;
-
+    case AST_NIL:
+      append_string (buffer, capacity, length, "nil");
+      break;
+    case AST_SYMBOL:
+      append_string (buffer, capacity, length, "%s", node->as.SYMBOL);
+      break;
+    case AST_INTEGER:
+      append_string (buffer, capacity, length, "%ld", node->as.INTEGER);
+      break;
     case AST_FLOAT:
-      {
-        double value = node->as.FLOAT;
-        if (value == (long)value)
-          append_string (buffer, capacity, length, "%.1f", value);
-        else
-          append_string (buffer, capacity, length, "%.10g", value);
-      }
+      append_string (buffer, capacity, length, "%g", node->as.FLOAT);
       break;
 
     case AST_STRING:
       {
-        // Strings need quotes and escaping
         char *escaped = escape_string (node->as.STRING);
         if (escaped)
           {
@@ -169,26 +158,32 @@ ast_to_string_recursive (AST *node, char **buffer, size_t *capacity, size_t *len
         break;
       }
 
-    case AST_BUILTIN_NORMAL: append_string (buffer, capacity, length, "#<builtin function>"); break;
+    case AST_BUILTIN_NORMAL:
+      append_string (buffer, capacity, length, "#<builtin function>");
+      break;
+    case AST_BUILTIN_SPECIAL:
+      append_string (buffer, capacity, length, "#<special form>");
+      break;
+    case AST_ERROR:
+      append_string (buffer, capacity, length, "%s", node->as.ERROR.MESSAGE);
+      break;
+    case AST_END_OF_FILE:
+      append_string (buffer, capacity, length, "#<EOF>");
+      break;
 
-    case AST_BUILTIN_SPECIAL: append_string (buffer, capacity, length, "#<special form>"); break;
-
-    case AST_ERROR: append_string (buffer, capacity, length, "%s", node->as.ERROR.MESSAGE); break;
-
-    case AST_END_OF_FILE: append_string (buffer, capacity, length, "#<EOF>"); break;
-
-    default: append_string (buffer, capacity, length, "#<UNKNOWN:%d>", node->type); break;
+    default:
+      append_string (buffer, capacity, length, "#<UNKNOWN:%d>", node->type);
+      break;
     }
 }
 
-// Main function to convert AST to string
 char *
 ast_to_string (AST *node)
 {
   if (!node)
     return strdup ("()");
 
-  size_t capacity = 128; // Initial capacity
+  size_t capacity = 128;
   size_t length = 0;
   char *buffer = malloc (capacity);
 
@@ -199,7 +194,6 @@ ast_to_string (AST *node)
 
   ast_to_string_recursive (node, &buffer, &capacity, &length);
 
-  // Shrink to fit
   char *result = realloc (buffer, length + 1);
   return result ? result : buffer;
 }

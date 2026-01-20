@@ -1,6 +1,7 @@
 #include "core/eval.h"
 
-static AST *bind_arguments (AST *frame, AST *caller_environment, AST *parameters, AST *arguments);
+static AST *bind_arguments (AST *frame, AST *caller_environment,
+                            AST *parameters, AST *arguments);
 
 AST *
 evaluate_expression (AST *environment, AST *expression)
@@ -13,15 +14,17 @@ evaluate_expression (AST *environment, AST *expression)
     case AST_INTEGER:
     case AST_FLOAT:
     case AST_STRING:
-    case AST_NIL: return expression;
-    case AST_QUOTE: return expression->as.QUOTE.EXPR;
-    case AST_SYMBOL: return environment_get (environment, expression);
+    case AST_NIL:
+      return expression;
+    case AST_QUOTE:
+      return expression->as.QUOTE.EXPR;
+    case AST_SYMBOL:
+      return environment_get (environment, expression);
     case AST_CONS:
       {
         AST *operator_node = CAR (expression);
         AST *arguments = CDR (expression);
 
-        /* Evaluate operator */
         AST *function = (operator_node->type == AST_SYMBOL)
                             ? environment_get (environment, operator_node)
                             : evaluate_expression (environment, operator_node);
@@ -32,9 +35,11 @@ evaluate_expression (AST *environment, AST *expression)
       }
 
     case AST_END_OF_FILE:
-    case AST_ERROR: return expression;
+    case AST_ERROR:
+      return expression;
 
-    default: return make_error ("evaluate_expression: unknown AST type");
+    default:
+      return make_error ("evaluate_expression: unknown AST type");
     }
 }
 
@@ -53,12 +58,13 @@ arguments_length (AST *arguments)
 }
 
 static AST *
-bind_arguments (AST *frame, AST *caller_environment, AST *parameters, AST *arguments)
+bind_arguments (AST *frame, AST *caller_environment, AST *parameters,
+                AST *arguments)
 {
   AST *params = parameters;
   AST *args = arguments;
 
-  /* Bind fixed parameters */
+  // Bind fixed parameters
   while (params->type == AST_CONS)
     {
       if (args->type != AST_CONS)
@@ -77,11 +83,10 @@ bind_arguments (AST *frame, AST *caller_environment, AST *parameters, AST *argum
       args = CDR (args);
     }
 
-  /* params is now either NIL or a SYMBOL (rest parameter) */
+  // params is now either NIL or a SYMBOL (rest parameter)
 
   if (params->type == AST_SYMBOL)
     {
-      /* rest parameter */
       environment_set (frame, params, args);
       return nil ();
     }
@@ -89,7 +94,6 @@ bind_arguments (AST *frame, AST *caller_environment, AST *parameters, AST *argum
   if (params->type != AST_NIL)
     return make_error ("lambda: invalid parameter list");
 
-  /* No rest param: ensure no extra arguments */
   if (args->type != AST_NIL)
     return make_error ("lambda: too many arguments");
 
@@ -99,7 +103,6 @@ bind_arguments (AST *frame, AST *caller_environment, AST *parameters, AST *argum
 AST *
 apply (AST *function, AST *environment, AST *arguments)
 {
-  /* Special forms */
   if (function->type == AST_BUILTIN_SPECIAL)
     {
       AST *result = function->as.BUILTIN (environment, arguments);
@@ -107,16 +110,15 @@ apply (AST *function, AST *environment, AST *arguments)
       return result;
     }
 
-  /* Normal builtins */
   if (function->type == AST_BUILTIN_NORMAL)
     return function->as.BUILTIN (environment, arguments);
 
-  /* Lambda */
   if (function->type == AST_LAMBDA)
     {
       AST *frame = make_cons (function->as.LAMBDA.environment, nil ());
 
-      AST *err = bind_arguments (frame, environment, function->as.LAMBDA.parameters, arguments);
+      AST *err = bind_arguments (frame, environment,
+                                 function->as.LAMBDA.parameters, arguments);
       ERROR_OUT (err);
 
       AST *result = nil ();

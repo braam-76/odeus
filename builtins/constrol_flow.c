@@ -1,11 +1,13 @@
 #include "builtins/constrol_flow.h"
+
 #include "core/ast.h"
 #include "core/eval.h"
 
 AST *
 builtin_eq (AST *environment, AST *arguments)
 {
-  if (IS_NULL (arguments) || IS_NULL (CADR (arguments)) || !IS_NULL (CDDR (arguments)))
+  if (IS_NULL (arguments) || IS_NULL (CADR (arguments))
+      || !IS_NULL (CDDR (arguments)))
     return make_error ("ERROR: eq expects two argument\n");
 
   AST *first_argument = evaluate_expression (environment, CAR (arguments));
@@ -20,14 +22,16 @@ builtin_null (AST *environment, AST *arguments)
   if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
     return make_error ("ERROR: null expects one argument\n");
 
-  return evaluate_expression (environment, CAR (arguments)) == nil () ? t () : nil ();
+  return evaluate_expression (environment, CAR (arguments)) == nil () ? t ()
+                                                                      : nil ();
 }
 
 AST *
 builtin_if (AST *env, AST *args)
 {
   if (arguments_length (args) != 3)
-    return make_error ("if: expects exactly 3 arguments (if [condition] [then] [else])");
+    return make_error (
+        "if: expects exactly 3 arguments (if [condition] [then] [else])");
 
   AST *cond = evaluate_expression (env, CAR (args));
   ERROR_OUT (cond);
@@ -46,7 +50,8 @@ builtin_and (AST *environment, AST *arguments)
 
   while (arguments->type == AST_CONS)
     {
-      AST *current_condition = evaluate_expression (environment, CAR (arguments));
+      AST *current_condition
+          = evaluate_expression (environment, CAR (arguments));
 
       if (IS_NULL (current_condition))
         return nil ();
@@ -65,7 +70,8 @@ builtin_or (AST *environment, AST *arguments)
 
   while (arguments->type == AST_CONS)
     {
-      AST *current_condition = evaluate_expression (environment, CAR (arguments));
+      AST *current_condition
+          = evaluate_expression (environment, CAR (arguments));
 
       if (!IS_NULL (current_condition))
         return t ();
