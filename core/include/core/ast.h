@@ -70,8 +70,6 @@ struct AST_Node
       AST *body;
     } MACRO;
   } as;
-  size_t line;
-  size_t column;
 };
 
 #define CAR(cons) ((cons)->as.CONS.CAR)

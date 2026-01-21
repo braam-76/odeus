@@ -109,8 +109,6 @@ parse_expr (Parser *parser, Token *token)
       {
         AST *eof = malloc (sizeof (AST));
         eof->type = AST_END_OF_FILE;
-        eof->line = token->line;
-        eof->column = token->column;
         return eof;
       }
     }
@@ -182,9 +180,6 @@ parse_literal (Parser *parser, Token *token)
       parser_panic (parser, token, "Unexpected literal");
       return nil ();
     }
-
-  n->line = token->line;
-  n->column = token->column;
 
   *token = lexer_next_token (parser->lexer);
   return n;

@@ -15,8 +15,6 @@ nil (void)
     {
       GLOBAL_NIL = malloc (sizeof (AST));
       GLOBAL_NIL->type = AST_NIL;
-      GLOBAL_NIL->line = 0;
-      GLOBAL_NIL->column = 0;
     }
   return GLOBAL_NIL;
 }
@@ -35,8 +33,6 @@ make_integer (long value)
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_INTEGER;
   node->as.INTEGER = value;
-  node->line = 0;
-  node->column = 0;
   return node;
 }
 
@@ -46,8 +42,6 @@ make_float (double value)
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_FLOAT;
   node->as.FLOAT = value;
-  node->line = 0;
-  node->column = 0;
   return node;
 }
 
@@ -57,8 +51,6 @@ make_quote (AST *expression)
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_QUOTE;
   node->as.QUOTE.EXPR = expression;
-  node->line = 0;
-  node->column = 0;
   return node;
 }
 
@@ -68,8 +60,6 @@ make_string (const char *string)
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_STRING;
   node->as.STRING = strdup (string);
-  node->line = 0;
-  node->column = 0;
   return node;
 }
 
@@ -80,8 +70,6 @@ make_cons (AST *car, AST *cdr)
   n->type = AST_CONS;
   CAR (n) = car;
   CDR (n) = cdr;
-  n->line = car->line;
-  n->column = car->column;
   return n;
 }
 
@@ -93,8 +81,6 @@ make_builtin (Builtin_Function builtin_function, AST_Type kind)
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = kind;
   node->as.BUILTIN = builtin_function;
-  node->line = 0;
-  node->column = 0;
   return node;
 }
 
@@ -104,8 +90,6 @@ make_error (const char *message)
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_ERROR;
   node->as.ERROR.MESSAGE = strdup (message);
-  node->line = 0;
-  node->column = 0;
   return node;
 }
 
