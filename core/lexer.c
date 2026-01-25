@@ -51,7 +51,6 @@ lexer_from_string (char *source, size_t source_size)
 Token
 lexer_next_token (Lexer *lexer)
 {
-  Token token_to_return = { 0 };
   while (true)
     { // record start column before consuming
       lexer->token_start_column = lexer->column - 1;
@@ -72,31 +71,32 @@ lexer_next_token (Lexer *lexer)
 
         // Single-character tokens
         case '(':
-          token_to_return = create_token (lexer, TOKEN_OPEN_PAREN);
-          break;
+          advance (lexer);
+          return create_token (lexer, TOKEN_OPEN_PAREN);
         case ')':
-          token_to_return = create_token (lexer, TOKEN_CLOSE_PAREN);
-          break;
+          advance (lexer);
+          return create_token (lexer, TOKEN_CLOSE_PAREN);
         case ',':
           if (peek_next (lexer, 1) == '@')
             {
-              token_to_return = create_token (lexer, TOKEN_UNQUOTE_SPLICING);
-              break;
+              advance (lexer); // consume ','
+              advance (lexer); // consume '@'
+              return create_token (lexer, TOKEN_UNQUOTE_SPLICING);
             }
-          token_to_return = create_token (lexer, TOKEN_UNQUOTE);
-          break;
+          advance (lexer);
+          return create_token (lexer, TOKEN_UNQUOTE);
         case '`':
-          token_to_return = create_token (lexer, TOKEN_QUASIQUOTE);
-          break;
+          advance (lexer);
+          return create_token (lexer, TOKEN_QUASIQUOTE);
         case '\'':
-          token_to_return = create_token (lexer, TOKEN_QUOTE);
-          break;
+          advance (lexer);
+          return create_token (lexer, TOKEN_QUOTE);
 
         case '.':
           if (is_allowed_for_symbol (peek_next (lexer, 1)))
             return symbol_token (lexer);
-          token_to_return = create_token (lexer, TOKEN_PERIOD);
-          break;
+          advance (lexer);
+          return create_token (lexer, TOKEN_PERIOD);
 
         // Comments
         case ';':
@@ -110,8 +110,8 @@ lexer_next_token (Lexer *lexer)
 
         // End of file
         case '\0':
-          token_to_return = create_token (lexer, TOKEN_END_OF_FILE);
-          break;
+          advance (lexer);
+          return create_token (lexer, TOKEN_END_OF_FILE);
 
         // Numbers or symbols
         default:
@@ -126,16 +126,11 @@ lexer_next_token (Lexer *lexer)
               snprintf (buf, sizeof (buf), "Unknown character: '%c'",
                         peek (lexer));
               panic (lexer, buf);
+              advance (lexer);
               return (Token){ .type = TOKEN_NONE };
             }
         }
-
-      if (token_to_return.type != TOKEN_NONE)
-        break;
     }
-
-  advance (lexer);
-  return token_to_return;
 }
 
 static inline char
