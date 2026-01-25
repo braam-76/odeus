@@ -1,5 +1,7 @@
 #include "core/ast.h"
 
+#include <stdarg.h> // for make_error
+
 static AST *GLOBAL_NIL = NULL;
 static AST *GLOBAL_T = NULL;
 
@@ -42,15 +44,6 @@ make_float (double value)
   AST *node = (AST *)malloc (sizeof (AST));
   node->type = AST_FLOAT;
   node->as.FLOAT = value;
-  return node;
-}
-
-AST *
-make_quote (AST *expression)
-{
-  AST *node = (AST *)malloc (sizeof (AST));
-  node->type = AST_QUOTE;
-  node->as.QUOTE.EXPR = expression;
   return node;
 }
 
@@ -137,11 +130,6 @@ ast_print (AST *node)
       break;
     case AST_STRING:
       printf ("\"%s\"", node->as.STRING);
-      break;
-
-    case AST_QUOTE:
-      printf ("'");
-      ast_print (node->as.QUOTE.EXPR);
       break;
 
     case AST_CONS:

@@ -130,11 +130,6 @@ ast_to_string_recursive (AST *node, char **buffer, size_t *capacity,
       }
       break;
 
-    case AST_QUOTE:
-      append_string (buffer, capacity, length, "'");
-      ast_to_string_recursive (node->as.QUOTE.EXPR, buffer, capacity, length);
-      break;
-
     case AST_CONS:
       {
         append_string (buffer, capacity, length, "(");
