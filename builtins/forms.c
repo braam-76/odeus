@@ -9,26 +9,71 @@ AST *
 builtin_define (AST *environment, AST *arguments)
 {
   if (IS_NULL (arguments) || IS_NULL (CDR (arguments)))
-    return make_error ("define expects (symbol expr)");
+    return make_error (
+        "define expects (symbol expr) or (func-name args) expr");
 
-  AST *symbol = CAR (arguments);
-  if (symbol->type != AST_SYMBOL)
-    return make_error ("define: first argument must be a symbol");
+  AST *to_be_defined = CAR (arguments);
+  AST *definition = CADR (arguments);
 
-  AST *current = environment_get (environment, symbol);
-  if (current->type != AST_ERROR)
-    return make_error ("define: symbol already defined");
+  // Case 1: Variable definition (define symbol expr)
+  if (to_be_defined->type == AST_SYMBOL)
+    {
+      // Check if symbol already exists
+      AST *current = environment_get (environment, to_be_defined);
+      if (current->type != AST_ERROR)
+        return make_error ("define: symbol already defined");
 
-  environment_set (environment, symbol, nil ());
+      // Initialize with nil first
+      environment_set (environment, to_be_defined, nil ());
 
-  AST *value = evaluate_expression (environment, CADR (arguments));
-  ERROR_OUT (value);
+      // Evaluate the expression
+      AST *value = evaluate_expression (environment, definition);
+      ERROR_OUT (value);
 
-  environment_update (environment, symbol, value);
+      // Update the binding
+      environment_update (environment, to_be_defined, value);
 
-  return symbol;
+      return to_be_defined;
+    }
+  // Case 2: Function definition (define (name args...) expr)
+  else if (to_be_defined->type == AST_CONS)
+    {
+      // Extract function name from (name args...)
+      if (IS_NULL (to_be_defined))
+        return make_error ("define: function definition cannot be empty");
+
+      AST *func_name = CAR (to_be_defined);
+      if (func_name->type != AST_SYMBOL)
+        return make_error ("define: function name must be a symbol");
+
+      // Check if function already exists
+      AST *current = environment_get (environment, func_name);
+      if (current->type != AST_ERROR)
+        return make_error ("define: symbol already defined");
+
+      // Parse parameter list (rest of the first cons)
+      AST *params = CDR (to_be_defined);
+
+      // Initialize with nil first
+      environment_set (environment, func_name, nil ());
+
+      // Create the lambda expression
+      // lambda_args should be (params body...)
+      // definition contains the first body expression
+      // CDR(arguments) contains any additional body expressions
+
+      AST *lambda_args = make_cons (params, CDR (arguments));
+      AST *lambda = builtin_lambda (environment, lambda_args);
+      ERROR_OUT (lambda);
+
+      // Update the environment with the lambda
+      environment_update (environment, func_name, lambda);
+
+      return func_name;
+    }
+  else
+    return make_error ("define: first argument must be a symbol or cons");
 }
-
 AST *
 builtin_set (AST *environment, AST *arguments)
 {
@@ -180,10 +225,6 @@ builtin_eval (AST *env, AST *args)
   AST *expr_to_eval = evaluate_expression (env, expr);
   ERROR_OUT (expr_to_eval);
 
-  // If it's a quote node, unwrap it
-  if (expr_to_eval->type == AST_QUOTE)
-    expr_to_eval = expr_to_eval->as.QUOTE.EXPR;
-
   return evaluate_expression (env, expr_to_eval);
 }
 
@@ -228,22 +269,22 @@ builtin_lambda (AST *environment, AST *arguments)
 }
 
 AST *
-builtin_macro(AST *environment, AST *arguments)
+builtin_macro (AST *environment, AST *arguments)
 {
-  if (IS_NULL(arguments))
-    return make_error("macro: expects parameter list");
+  (void)environment;
+  if (IS_NULL (arguments))
+    return make_error ("macro: expects parameter list");
 
-  AST *parameters = CAR(arguments);
-  AST *body = CDR(arguments);
+  AST *parameters = CAR (arguments);
+  AST *body = CDR (arguments);
 
-  AST *macro = malloc(sizeof(AST));
+  AST *macro = malloc (sizeof (AST));
   macro->type = AST_MACRO;
   macro->as.MACRO.parameters = parameters;
   macro->as.MACRO.body = body;
 
   return macro;
 }
-
 
 //
 // Quasiquote helpers
@@ -262,7 +303,9 @@ expand_quasiquote (AST *expr, int depth)
     return nil ();
 
   if (expr->type != AST_CONS)
-    return (depth == 1) ? make_quote (expr) : expr;
+    return (depth == 1)
+               ? make_cons (make_symbol ("quote"), make_cons (expr, nil ()))
+               : expr;
 
   if (is_unquote (expr))
     {
@@ -270,7 +313,8 @@ expand_quasiquote (AST *expr, int depth)
         return CADR (expr);
       else
         return make_cons (
-            make_quote (make_symbol ("unquote")),
+            make_cons (make_symbol ("quote"),
+                       make_cons (make_symbol ("unquote"), nil ())),
             make_cons (expand_quasiquote (CADR (expr), depth - 1), nil ()));
     }
 
@@ -285,7 +329,8 @@ expand_quasiquote (AST *expr, int depth)
             make_cons (expand_quasiquote (CADR (expr), depth + 1), nil ()));
       else
         return make_cons (
-            make_quote (make_symbol ("quasiquote")),
+            make_cons (make_symbol ("quote"),
+                       make_cons (make_symbol ("quasiquote"), nil ())),
             make_cons (expand_quasiquote (CADR (expr), depth + 1), nil ()));
     }
 
@@ -296,7 +341,7 @@ static AST *
 expand_quasiquote_list (AST *list, int depth)
 {
   if (IS_NULL (list))
-    return make_quote (nil ());
+    return make_cons (make_symbol ("quote"), make_cons (nil (), nil ()));
 
   AST *elements = nil ();
   AST *last = NULL;
