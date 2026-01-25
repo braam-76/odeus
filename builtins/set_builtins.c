@@ -74,6 +74,7 @@ set_builtins (AST *environment)
   NORMAL ("dump", builtin_dump);
   NORMAL ("read", builtin_read);
   NORMAL ("read-file", builtin_read_file);         // expects lisp code
+  NORMAL ("load-file", builtin_load_file);
   NORMAL ("file->string", builtin_file_to_string); // just reads file as string
   NORMAL ("write", builtin_write);
   NORMAL ("display", builtin_display);

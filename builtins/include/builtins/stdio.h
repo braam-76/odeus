@@ -11,6 +11,7 @@
 AST *builtin_dump (AST *environment, AST *arguments);
 AST *builtin_read (AST *environment, AST *arguments);
 AST *builtin_read_file (AST *environment, AST *arguments);
+AST *builtin_load_file (AST *environment, AST *arguments);
 AST *builtin_file_to_string (AST *environment, AST *arguments);
 AST *builtin_write (AST *environment, AST *arguments);
 AST *builtin_display (AST *environment, AST *arguments);

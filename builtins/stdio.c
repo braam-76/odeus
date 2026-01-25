@@ -2,10 +2,7 @@
 
 #include <stdio.h>
 
-#include "core/ast.h"
-#include "core/eval.h"
-#include "core/lexer.h"
-#include "core/parser.h"
+#include "builtins/forms.h"
 
 AST *
 builtin_dump (AST *environment, AST *arguments)
@@ -73,6 +70,48 @@ builtin_read_file (AST *environment, AST *arguments)
   AST *expression = parser_parse (parser);
 
   return expression;
+}
+
+AST *
+builtin_load_file (AST *environment, AST *arguments)
+{
+  if (arguments_length (arguments) != 1)
+    return make_error ("load: expects exactly one argument");
+
+  // Evaluate filename argument
+  AST *filename = evaluate_expression (environment, CAR (arguments));
+  ERROR_OUT (filename);
+
+  if (filename->type != AST_STRING)
+    return make_error ("load: filename must be a string");
+
+  // Read and parse the file
+  AST *read_args = make_cons (filename, nil ());
+  AST *program = builtin_read_file (environment, read_args);
+
+  if (program->type == AST_ERROR)
+    {
+      // Enhance error message with filename
+      char error_msg[256];
+      snprintf (error_msg, sizeof (error_msg), "load: error reading %s: %s",
+                filename->as.STRING, program->as.ERROR.MESSAGE);
+      return make_error (error_msg);
+    }
+
+  // Evaluate the parsed program
+  AST *eval_args = make_cons (program, nil ());
+  AST *result = builtin_eval (environment, eval_args);
+
+  if (result->type == AST_ERROR)
+    {
+      // Enhance error message with filename
+      char error_msg[256];
+      snprintf (error_msg, sizeof (error_msg), "load: error evaluating %s: %s",
+                filename->as.STRING, result->as.ERROR.MESSAGE);
+      return make_error (error_msg);
+    }
+
+  return result;
 }
 
 AST *
