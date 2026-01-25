@@ -20,8 +20,7 @@ evaluate_expression (AST *environment, AST *expression)
     case AST_LAMBDA:
     case AST_MACRO:
       return expression;
-    case AST_QUOTE:
-      return expression->as.QUOTE.EXPR;
+
     case AST_SYMBOL:
       return environment_get (environment, expression);
     case AST_CONS:
@@ -91,7 +90,25 @@ bind_arguments (AST *frame, AST *caller_environment, AST *parameters,
 
   if (params->type == AST_SYMBOL)
     {
-      environment_set (frame, params, args);
+      AST *evaluated_args = nil ();
+      AST *last = NULL;
+
+      while (args->type == AST_CONS)
+        {
+          AST *value = evaluate_expression (caller_environment, CAR (args));
+          ERROR_OUT (value);
+
+          AST *new_cons = make_cons (value, nil ());
+          if (IS_NULL (evaluated_args))
+            evaluated_args = new_cons;
+          else
+            last->as.CONS.CDR = new_cons;
+          last = new_cons;
+
+          args = CDR (args);
+        }
+
+      environment_set (frame, params, evaluated_args);
       return nil ();
     }
 
