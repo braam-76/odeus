@@ -2,6 +2,7 @@ add_library(
   builtins STATIC
   constrol_flow.c
   forms.c
+  macros.c
   list.c
   math.c
   stdio.c

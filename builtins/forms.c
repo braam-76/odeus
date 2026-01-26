@@ -18,7 +18,6 @@ builtin_define (AST *environment, AST *arguments)
   // Case 1: Variable definition (define symbol expr)
   if (to_be_defined->type == AST_SYMBOL)
     {
-      // Check if symbol already exists
       AST *current = environment_get (environment, to_be_defined);
       if (current->type != AST_ERROR)
         return make_error ("define: symbol already defined");
@@ -26,7 +25,6 @@ builtin_define (AST *environment, AST *arguments)
       // Initialize with nil first
       environment_set (environment, to_be_defined, nil ());
 
-      // Evaluate the expression
       AST *value = evaluate_expression (environment, definition);
       ERROR_OUT (value);
 
@@ -38,7 +36,6 @@ builtin_define (AST *environment, AST *arguments)
   // Case 2: Function definition (define (name args...) expr)
   else if (to_be_defined->type == AST_CONS)
     {
-      // Extract function name from (name args...)
       if (IS_NULL (to_be_defined))
         return make_error ("define: function definition cannot be empty");
 
@@ -46,21 +43,14 @@ builtin_define (AST *environment, AST *arguments)
       if (func_name->type != AST_SYMBOL)
         return make_error ("define: function name must be a symbol");
 
-      // Check if function already exists
       AST *current = environment_get (environment, func_name);
       if (current->type != AST_ERROR)
         return make_error ("define: symbol already defined");
 
-      // Parse parameter list (rest of the first cons)
       AST *params = CDR (to_be_defined);
 
       // Initialize with nil first
       environment_set (environment, func_name, nil ());
-
-      // Create the lambda expression
-      // lambda_args should be (params body...)
-      // definition contains the first body expression
-      // CDR(arguments) contains any additional body expressions
 
       AST *lambda_args = make_cons (params, CDR (arguments));
       AST *lambda = builtin_lambda (environment, lambda_args);
@@ -268,23 +258,6 @@ builtin_lambda (AST *environment, AST *arguments)
   return lambda;
 }
 
-AST *
-builtin_macro (AST *environment, AST *arguments)
-{
-  (void)environment;
-  if (IS_NULL (arguments))
-    return make_error ("macro: expects parameter list");
-
-  AST *parameters = CAR (arguments);
-  AST *body = CDR (arguments);
-
-  AST *macro = malloc (sizeof (AST));
-  macro->type = AST_MACRO;
-  macro->as.MACRO.parameters = parameters;
-  macro->as.MACRO.body = body;
-
-  return macro;
-}
 
 //
 // Quasiquote helpers
