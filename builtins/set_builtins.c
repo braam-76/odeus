@@ -3,6 +3,7 @@
 #include "builtins/constrol_flow.h"
 #include "builtins/forms.h"
 #include "builtins/list.h"
+#include "builtins/macros.h"
 #include "builtins/math.h"
 #include "builtins/stdio.h"
 #include "builtins/strings.h"
@@ -73,7 +74,7 @@ set_builtins (AST *environment)
   // I/O operations
   NORMAL ("dump", builtin_dump);
   NORMAL ("read", builtin_read);
-  NORMAL ("read-file", builtin_read_file);         // expects lisp code
+  NORMAL ("read-file", builtin_read_file); // expects lisp code
   NORMAL ("load-file", builtin_load_file);
   NORMAL ("file->string", builtin_file_to_string); // just reads file as string
   NORMAL ("write", builtin_write);
@@ -101,5 +102,6 @@ set_builtins (AST *environment)
   SPECIAL ("quote", builtin_quote);
   SPECIAL ("lambda", builtin_lambda);
   SPECIAL ("macro", builtin_macro);
+  SPECIAL ("defmacro", builtin_defmacro);
   SPECIAL ("quasiquote", builtin_quasiquote);
 }
