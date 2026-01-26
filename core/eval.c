@@ -23,6 +23,7 @@ evaluate_expression (AST *environment, AST *expression)
 
     case AST_SYMBOL:
       return environment_get (environment, expression);
+
     case AST_CONS:
       {
         AST *operator_node = CAR (expression);
@@ -126,6 +127,29 @@ static AST *substitute_macro_parameters (AST *expr, AST *frame);
 AST *
 apply (AST *function, AST *caller_environment, AST *arguments)
 {
+  if (function->type == AST_MACRO)
+    {
+      AST *frame = make_cons (function->as.MACRO.environment, nil ());
+
+      AST *err = bind_macro_arguments (frame, function->as.MACRO.parameters,
+                                       arguments);
+      ERROR_OUT (err);
+
+      // Evaluate macro body to get expansion
+      AST *expanded = nil ();
+      AST *current = function->as.MACRO.body;
+
+      while (current->type == AST_CONS)
+        {
+          expanded = evaluate_expression (frame, CAR (current));
+          ERROR_OUT (expanded);
+          current = CDR (current);
+        }
+
+      // Now evaluate the expansion
+      return evaluate_expression (caller_environment, expanded);
+    }
+
   // Builtin special forms
   if (function->type == AST_BUILTIN_SPECIAL)
     {
@@ -162,29 +186,6 @@ apply (AST *function, AST *caller_environment, AST *arguments)
         }
 
       return result;
-    }
-
-  // Macro
-  if (function->type == AST_MACRO)
-    {
-      AST *frame = make_cons (nil (), nil ());
-
-      AST *err = bind_macro_arguments (frame, function->as.MACRO.parameters,
-                                       arguments);
-      ERROR_OUT (err);
-
-      AST *expanded_body = nil ();
-      AST *current = function->as.MACRO.body;
-
-      // Macros return the last expression after substitution
-      while (current->type == AST_CONS)
-        {
-          expanded_body = substitute_macro_parameters (CAR (current), frame);
-          current = CDR (current);
-        }
-
-      // Evaluate expanded AST in the caller environment
-      return evaluate_expression (caller_environment, expanded_body);
     }
 
   return make_error ("attempt to call non-function");

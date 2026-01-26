@@ -60,6 +60,7 @@ struct AST_Node
 
     struct
     {
+      AST *environment;
       AST *parameters;
       AST *body;
     } MACRO;

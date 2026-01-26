@@ -3,7 +3,6 @@
 AST *
 builtin_macro (AST *environment, AST *arguments)
 {
-  (void)environment;
   if (IS_NULL (arguments))
     return make_error ("macro: expects parameter list");
 
@@ -14,6 +13,7 @@ builtin_macro (AST *environment, AST *arguments)
   macro->type = AST_MACRO;
   macro->as.MACRO.parameters = parameters;
   macro->as.MACRO.body = body;
+  macro->as.MACRO.environment = environment;
 
   return macro;
 }
