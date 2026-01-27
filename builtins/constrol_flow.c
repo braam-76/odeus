@@ -6,20 +6,21 @@
 AST *
 builtin_eq (AST *environment, AST *arguments)
 {
-  if (IS_NULL (arguments) || IS_NULL (CADR (arguments))
-      || !IS_NULL (CDDR (arguments)))
-    return make_error ("ERROR: eq expects two argument\n");
+  if (arguments_length (arguments) != 2)
+    return make_error ("ERROR: eq expects exactly two arguments");
 
-  AST *first_argument = evaluate_expression (environment, CAR (arguments));
-  AST *second_argument = evaluate_expression (environment, CADR (arguments));
+  AST *first_value = evaluate_expression (environment, CAR (arguments));
+  ERROR_OUT (first_value);
+  AST *second_value = evaluate_expression (environment, CADR (arguments));
+  ERROR_OUT (second_value);
 
-  return first_argument == second_argument ? t () : nil ();
+  return (first_value == second_value) ? t () : nil ();
 }
 
 AST *
 builtin_null (AST *environment, AST *arguments)
 {
-  if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
+  if (arguments_length(arguments) != 1)
     return make_error ("ERROR: null expects one argument\n");
 
   return evaluate_expression (environment, CAR (arguments)) == nil () ? t ()
@@ -45,7 +46,7 @@ builtin_if (AST *env, AST *args)
 AST *
 builtin_and (AST *environment, AST *arguments)
 {
-  if (IS_NULL (arguments))
+  if (arguments_length(arguments) <= 0)
     return make_error ("ERROR: and expects at least 1 argument\n");
 
   while (arguments->type == AST_CONS)
@@ -65,7 +66,7 @@ builtin_and (AST *environment, AST *arguments)
 AST *
 builtin_or (AST *environment, AST *arguments)
 {
-  if (IS_NULL (arguments))
+  if (arguments_length(arguments) <= 0)
     return make_error ("ERROR: or expects at least 1 argument\n");
 
   while (arguments->type == AST_CONS)
