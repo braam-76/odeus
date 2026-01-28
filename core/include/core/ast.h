@@ -16,8 +16,7 @@ typedef enum
   AST_STRING,
   AST_CONS,
 
-  AST_BUILTIN_NORMAL,
-  AST_BUILTIN_SPECIAL,
+  AST_BUILTIN,
   AST_LAMBDA,
   AST_MACRO,
 
@@ -82,9 +81,7 @@ AST *make_float (double value);
 AST *make_string (const char *string);
 AST *make_symbol (const char *symbol);
 AST *make_cons (AST *car, AST *cdr);
-
-// 'kind' should be either AST_BUILTIN_NORMAL or AST_BUILTIN_SPECIAL
-AST *make_builtin (Builtin_Function builtin_function, AST_Type kind);
+AST *make_builtin (Builtin_Function builtin_function);
 
 // special AST node builder, only for error messages
 AST *make_error (const char *message);

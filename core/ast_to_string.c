@@ -153,12 +153,10 @@ ast_to_string_recursive (AST *node, char **buffer, size_t *capacity,
         break;
       }
 
-    case AST_BUILTIN_NORMAL:
+    case AST_BUILTIN:
       append_string (buffer, capacity, length, "#<builtin function>");
       break;
-    case AST_BUILTIN_SPECIAL:
-      append_string (buffer, capacity, length, "#<special form>");
-      break;
+
     case AST_ERROR:
       append_string (buffer, capacity, length, "%s", node->as.ERROR.MESSAGE);
       break;

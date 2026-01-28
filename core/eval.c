@@ -168,8 +168,7 @@ bind_arguments (AST *frame, AST *caller_environment, AST *parameters,
 AST *
 apply (AST *function, AST *caller_env, AST *arguments)
 {
-  if (function->type == AST_BUILTIN_SPECIAL
-      || function->type == AST_BUILTIN_NORMAL)
+  if (function->type == AST_BUILTIN)
     return function->as.BUILTIN (caller_env, arguments);
 
   if (function->type == AST_LAMBDA)

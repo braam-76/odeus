@@ -67,12 +67,10 @@ make_cons (AST *car, AST *cdr)
 }
 
 AST *
-make_builtin (Builtin_Function builtin_function, AST_Type kind)
+make_builtin (Builtin_Function builtin_function)
 {
-  assert (kind == AST_BUILTIN_NORMAL || kind == AST_BUILTIN_SPECIAL);
-
   AST *node = (AST *)malloc (sizeof (AST));
-  node->type = kind;
+  node->type = AST_BUILTIN;
   node->as.BUILTIN = builtin_function;
   return node;
 }
@@ -192,11 +190,8 @@ ast_print (AST *node)
         break;
       }
 
-    case AST_BUILTIN_NORMAL:
+    case AST_BUILTIN:
       printf ("#<builtin function>");
-      break;
-    case AST_BUILTIN_SPECIAL:
-      printf ("#<special form>");
       break;
 
     case AST_LAMBDA:

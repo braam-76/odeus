@@ -9,13 +9,8 @@
 #include "builtins/strings.h"
 #include "builtins/typeof.h"
 
-#define NORMAL(name, fn)                                                      \
-  environment_set (environment, make_symbol (name),                           \
-                   make_builtin (fn, AST_BUILTIN_NORMAL))
-
-#define SPECIAL(name, fn)                                                     \
-  environment_set (environment, make_symbol (name),                           \
-                   make_builtin (fn, AST_BUILTIN_SPECIAL))
+#define REGISTER(name, fn)                                                    \
+  environment_set (environment, make_symbol (name), make_builtin (fn))
 
 void
 set_builtins (AST *environment)
@@ -23,75 +18,76 @@ set_builtins (AST *environment)
   environment_set (environment, make_symbol ("t"), t ());
   environment_set (environment, make_symbol ("nil"), nil ());
 
-  SPECIAL ("begin", builtin_begin);
-  NORMAL ("eval", builtin_eval);
+  REGISTER ("begin", builtin_begin);
+  REGISTER ("eval", builtin_eval);
 
   // Control flow
-  SPECIAL ("if", builtin_if);
-  NORMAL ("eq", builtin_eq);
-  NORMAL ("and", builtin_and);
-  NORMAL ("or", builtin_or);
+  REGISTER ("if", builtin_if);
+  REGISTER ("eq", builtin_eq);
+  REGISTER ("and", builtin_and);
+  REGISTER ("or", builtin_or);
 
   // List operations
-  NORMAL ("cons", builtin_cons);
-  NORMAL ("list", builtin_list);
-  NORMAL ("car", builtin_car);
-  NORMAL ("cdr", builtin_cdr);
-  NORMAL ("set-car!", builtin_set_car);
-  NORMAL ("set-cdr!", builtin_set_cdr);
-  NORMAL ("length", builtin_length);
-  NORMAL ("reverse", builtin_reverse);
-  NORMAL ("filter", builtin_filter);
-  NORMAL ("apply", builtin_apply);
+  REGISTER ("cons", builtin_cons);
+  REGISTER ("list", builtin_list);
+  REGISTER ("car", builtin_car);
+  REGISTER ("cdr", builtin_cdr);
+  REGISTER ("set-car!", builtin_set_car);
+  REGISTER ("set-cdr!", builtin_set_cdr);
+  REGISTER ("length", builtin_length);
+  REGISTER ("reverse", builtin_reverse);
+  REGISTER ("filter", builtin_filter);
+  REGISTER ("apply", builtin_apply);
 
   // Comparison operators
-  NORMAL ("=", builtin_num_eq);
-  NORMAL (">", builtin_num_gt);
-  NORMAL ("<", builtin_num_lt);
-  NORMAL (">=", builtin_num_gte);
-  NORMAL ("<=", builtin_num_lte);
+  REGISTER ("=", builtin_num_eq);
+  REGISTER (">", builtin_num_gt);
+  REGISTER ("<", builtin_num_lt);
+  REGISTER (">=", builtin_num_gte);
+  REGISTER ("<=", builtin_num_lte);
 
-  NORMAL ("typeof", builtin_typeof);
+  REGISTER ("typeof", builtin_typeof);
 
   // String operations
-  NORMAL ("concat", builtin_concat);
-  NORMAL ("string-length", builtin_string_length);
-  NORMAL ("substring", builtin_substring);
-  NORMAL ("string->symbol", builtin_string_to_symbol);
-  NORMAL ("symbol->string", builtin_symbol_to_string);
+  REGISTER ("concat", builtin_concat);
+  REGISTER ("string-length", builtin_string_length);
+  REGISTER ("substring", builtin_substring);
+  REGISTER ("string->symbol", builtin_string_to_symbol);
+  REGISTER ("symbol->string", builtin_symbol_to_string);
 
   // I/O operations
-  NORMAL ("dump", builtin_dump);
-  NORMAL ("read", builtin_read);
-  NORMAL ("read-file", builtin_read_file); // expects lisp code
-  NORMAL ("load-file", builtin_load_file);
-  NORMAL ("file->string", builtin_file_to_string); // just reads file as string
-  NORMAL ("write", builtin_write);
-  NORMAL ("display", builtin_display);
+  REGISTER ("dump", builtin_dump);
+  REGISTER ("read", builtin_read);
+  REGISTER ("read-file", builtin_read_file); // expects lisp code
+  REGISTER ("load-file", builtin_load_file);
+  REGISTER ("file->string",
+            builtin_file_to_string); // just reads file as string
+  REGISTER ("write", builtin_write);
+  REGISTER ("display", builtin_display);
 
   // Math functions
-  NORMAL ("+", builtin_add);
-  NORMAL ("-", builtin_sub);
-  NORMAL ("*", builtin_mul);
-  NORMAL ("/", builtin_div);
-  NORMAL ("mod", builtin_mod);
-  NORMAL ("expt", builtin_expt);
-  NORMAL ("sqrt", builtin_sqrt);
-  NORMAL ("abs", builtin_abs);
-  NORMAL ("floor", builtin_floor);
-  NORMAL ("ceil", builtin_ceil);
-  NORMAL ("round", builtin_round);
+  REGISTER ("+", builtin_add);
+  REGISTER ("-", builtin_sub);
+  REGISTER ("*", builtin_mul);
+  REGISTER ("/", builtin_div);
+  REGISTER ("mod", builtin_mod);
+  REGISTER ("expt", builtin_expt);
+  REGISTER ("sqrt", builtin_sqrt);
+  REGISTER ("abs", builtin_abs);
+  REGISTER ("floor", builtin_floor);
+  REGISTER ("ceil", builtin_ceil);
+  REGISTER ("round", builtin_round);
 
   // Variable managment
-  SPECIAL ("define", builtin_define);
-  SPECIAL ("set!", builtin_set);
-  SPECIAL ("let", builtin_let);
-  SPECIAL ("let*", builtin_let_star);
+  REGISTER ("define", builtin_define);
+  REGISTER ("set!", builtin_set);
+  REGISTER ("let", builtin_let);
+  REGISTER ("let*", builtin_let_star);
 
-  SPECIAL ("quote", builtin_quote);
-  SPECIAL ("lambda", builtin_lambda);
-  SPECIAL ("macro", builtin_macro);
-  SPECIAL ("defmacro", builtin_defmacro);
-  SPECIAL ("macroexpand", builtin_macroexpand);
-  SPECIAL ("quasiquote", builtin_quasiquote);
+  REGISTER ("quote", builtin_quote);
+  REGISTER ("lambda", builtin_lambda);
+  REGISTER ("macro", builtin_macro);
+  REGISTER ("defmacro", builtin_defmacro);
+  REGISTER ("macroexpand", builtin_macroexpand);
+  REGISTER ("quasiquote", builtin_quasiquote);
 }
