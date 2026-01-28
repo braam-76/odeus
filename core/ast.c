@@ -128,8 +128,45 @@ ast_print (AST *node)
     case AST_FLOAT:
       printf ("%g", node->as.FLOAT);
       break;
+
     case AST_STRING:
-      printf ("\"%s\"", node->as.STRING);
+      {
+        char *s = node->as.STRING;
+        putchar ('"');
+        for (; *s; s++)
+          {
+            switch (*s)
+              {
+              case '\n':
+                printf ("\\n");
+                break;
+              case '\t':
+                printf ("\\t");
+                break;
+              case '\r':
+                printf ("\\r");
+                break;
+              case '\b':
+                printf ("\\b");
+                break;
+              case '\f':
+                printf ("\\f");
+                break;
+              case '\\':
+                printf ("\\\\");
+                break;
+              case '"':
+                printf ("\\\"");
+                break;
+              default:
+                if ((unsigned char)*s < 32 || (unsigned char)*s >= 127)
+                  printf ("\\x%02x", (unsigned char)*s);
+                else
+                  putchar (*s);
+              }
+          }
+        putchar ('"');
+      }
       break;
 
     case AST_CONS:
