@@ -162,6 +162,13 @@ ast_print (AST *node)
       printf ("#<special form>");
       break;
 
+    case AST_LAMBDA:
+      printf ("#<lambda>");
+      break;
+    case AST_MACRO:
+      printf ("#<macro>");
+      break;
+
     case AST_ERROR:
       printf ("%s", node->as.ERROR.MESSAGE);
       break;
