@@ -7,7 +7,7 @@
 #include "builtins/math.h"
 #include "builtins/stdio.h"
 #include "builtins/strings.h"
-#include "builtins/typep.h"
+#include "builtins/typeof.h"
 
 #define NORMAL(name, fn)                                                      \
   environment_set (environment, make_symbol (name),                           \
@@ -51,15 +51,7 @@ set_builtins (AST *environment)
   NORMAL (">=", builtin_num_gte);
   NORMAL ("<=", builtin_num_lte);
 
-  // Type predicates
-  NORMAL ("atom?", builtin_is_atom);
-  NORMAL ("symbol?", builtin_is_symbol);
-  NORMAL ("string?", builtin_is_string);
-  NORMAL ("number?", builtin_is_number);
-  NORMAL ("integer?", builtin_is_integer);
-  NORMAL ("float?", builtin_is_float);
-  NORMAL ("cons?", builtin_is_cons);
-  NORMAL ("function?", builtin_is_function);
+  NORMAL ("typeof", builtin_typeof);
 
   // String operations
   NORMAL ("concat", builtin_concat);

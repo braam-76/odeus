@@ -6,7 +6,7 @@ add_library(
   list.c
   math.c
   stdio.c
-  typep.c
+  typeof.c
   strings.c
   set_builtins.c)
 
