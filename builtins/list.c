@@ -4,6 +4,22 @@
 #include "core/eval.h"
 
 AST *
+builtin_apply (AST *environment, AST *arguments)
+{
+  if (arguments_length (arguments) < 2)
+    return make_error (
+        "apply: expected at least 2 arguments");
+
+  AST *fn = CAR (arguments);
+  AST *arg_list = CADR (arguments);
+
+  if (arg_list->type != AST_NIL && arg_list->type != AST_CONS)
+    return make_error ("apply: second argument must be a list");
+
+  return apply (fn, environment, arg_list);
+}
+
+AST *
 builtin_cons (AST *environment, AST *arguments)
 {
   if (IS_NULL (arguments) || IS_NULL (CADR (arguments))

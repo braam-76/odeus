@@ -10,20 +10,13 @@
 (define (foldr f init list)
   (if list
       (f (car list)
-            (foldr f init (cdr list)))
+         (foldr f init (cdr list)))
       init))
 
-(define (unary-map proc list)
+(define (map proc list)
   (foldr (lambda (x rest) (cons (proc x) rest))
          nil
          list))
-
-(define (map proc . arg-lists)
-  (if (car arg-lists)
-      (cons (apply proc (unary-map car arg-lists))
-            (apply map (cons proc
-                             (unary-map cdr arg-lists))))
-      nil))
 
 (define (append . lists)
   (foldl (lambda (acc lst) (foldr cons acc lst))

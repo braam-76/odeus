@@ -42,6 +42,7 @@ set_builtins (AST *environment)
   NORMAL ("length", builtin_length);
   NORMAL ("reverse", builtin_reverse);
   NORMAL ("filter", builtin_filter);
+  NORMAL ("apply", builtin_apply);
 
   // Comparison operators
   NORMAL ("=", builtin_num_eq);
