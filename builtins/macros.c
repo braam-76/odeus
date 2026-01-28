@@ -1,4 +1,5 @@
 #include "builtins/macros.h"
+#include "core/eval.h"
 
 AST *
 builtin_macro (AST *environment, AST *arguments)
@@ -22,8 +23,7 @@ AST *
 builtin_defmacro (AST *environment, AST *arguments)
 {
   if (IS_NULL (arguments) || IS_NULL (CDR (arguments)))
-    return make_error (
-        "defmacro: expects (macro-name args) expr");
+    return make_error ("defmacro: expects (macro-name args) expr");
 
   AST *to_be_defined = CAR (arguments);
 
@@ -53,4 +53,17 @@ builtin_defmacro (AST *environment, AST *arguments)
   environment_update (environment, func_name, macro);
 
   return func_name;
+}
+
+AST *
+builtin_macroexpand (AST *environment, AST *arguments)
+{
+    if (IS_NULL(arguments))
+        return make_error("macroexpand: expected 1 argument");
+
+    // Get the expression (e.g., strip the quote from '(my-macro ...))
+    AST *expr = macro_expand_expression(environment, CAR(arguments));
+    ERROR_OUT(expr);
+
+    return expr;
 }

@@ -5,6 +5,7 @@ add_library(core STATIC
     eval.c
     ast.c
     ast_to_string.c
+    quasiquote.c
 )
 
 target_include_directories(core PUBLIC
