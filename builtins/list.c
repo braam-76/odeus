@@ -165,8 +165,7 @@ builtin_filter (AST *environment, AST *arguments)
 
   AST *function = evaluate_expression (environment, CAR (arguments));
 
-  if (function->type != AST_BUILTIN_NORMAL
-      && function->type != AST_BUILTIN_SPECIAL && function->type != AST_LAMBDA)
+  if (function->type != AST_BUILTIN && function->type != AST_LAMBDA)
     return make_error ("filter: first argument must be a function");
 
   AST *list = evaluate_expression (environment, CADR (arguments));

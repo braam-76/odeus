@@ -216,8 +216,7 @@ display_value (AST *value)
     case AST_LAMBDA:
       printf ("<lambda>");
       break;
-    case AST_BUILTIN_NORMAL:
-    case AST_BUILTIN_SPECIAL:
+    case AST_BUILTIN:
       printf ("<builtin>");
       break;
 

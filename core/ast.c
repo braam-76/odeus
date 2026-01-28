@@ -3,7 +3,6 @@
 #include <stdarg.h> // for make_error
 
 static AST *GLOBAL_NIL = NULL;
-static AST *GLOBAL_T = NULL;
 
 // symbol table used for interning symbols
 #define MAX_SYMBOLS 4096
@@ -24,9 +23,7 @@ nil (void)
 AST *
 t (void)
 {
-  if (!GLOBAL_T)
-    GLOBAL_T = make_symbol ("t");
-  return GLOBAL_T;
+  return make_symbol ("t");
 }
 
 AST *

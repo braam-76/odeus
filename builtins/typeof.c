@@ -23,8 +23,7 @@ builtin_typeof (AST *environment, AST *arguments)
       return make_symbol ("string");
     case AST_CONS:
       return make_symbol ("cons");
-    case AST_BUILTIN_NORMAL:
-    case AST_BUILTIN_SPECIAL:
+    case AST_BUILTIN:
     case AST_LAMBDA:
       return make_symbol ("function");
     case AST_MACRO:
