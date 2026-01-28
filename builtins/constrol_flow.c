@@ -18,16 +18,6 @@ builtin_eq (AST *environment, AST *arguments)
 }
 
 AST *
-builtin_null (AST *environment, AST *arguments)
-{
-  if (arguments_length(arguments) != 1)
-    return make_error ("ERROR: null expects one argument\n");
-
-  return evaluate_expression (environment, CAR (arguments)) == nil () ? t ()
-                                                                      : nil ();
-}
-
-AST *
 builtin_if (AST *env, AST *args)
 {
   if (arguments_length (args) != 3)

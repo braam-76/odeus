@@ -142,44 +142,6 @@ builtin_reverse (AST *environment, AST *arguments)
 }
 
 AST *
-builtin_map (AST *environment, AST *arguments)
-{
-  if (arguments_length (arguments) != 2)
-    return make_error ("map: expects exactly two arguments");
-
-  AST *function = evaluate_expression (environment, CAR (arguments));
-
-  if (function->type != AST_BUILTIN_NORMAL
-      && function->type != AST_BUILTIN_SPECIAL && function->type != AST_LAMBDA)
-    return make_error ("map: first argument must be a function");
-
-  AST *list = evaluate_expression (environment, CADR (arguments));
-  if (list->type != AST_CONS)
-    return make_error ("map: second argument should be list/cons");
-
-  AST *result_head = make_cons (nil (), nil ());
-  AST *result_tail = result_head;
-
-  while (list->type == AST_CONS && !IS_NULL (list))
-    {
-      AST *current_arguments = CAR (list);
-      AST *function_arguments = make_cons (current_arguments, nil ());
-      AST *applied = apply (function, environment, function_arguments);
-      ERROR_OUT (applied);
-
-      AST *new_cell = make_cons (applied, nil ());
-
-      CDR (result_tail) = new_cell;
-
-      result_tail = new_cell;
-
-      list = CDR (list);
-    }
-
-  return CDR (result_head);
-}
-
-AST *
 builtin_filter (AST *environment, AST *arguments)
 {
   if (arguments_length (arguments) != 2)
@@ -218,63 +180,4 @@ builtin_filter (AST *environment, AST *arguments)
     }
 
   return CDR (result_head);
-}
-
-static AST *append_all_lists (AST *lists);
-static AST *append_two_lists (AST *a, AST *b);
-
-AST *
-builtin_append (AST *environment, AST *arguments)
-{
-  AST *lists = nil ();
-  AST *last = NULL;
-  AST *current = arguments;
-
-  while (current->type == AST_CONS)
-    {
-      AST *arg = evaluate_expression (environment, CAR (current));
-      ERROR_OUT (arg);
-
-      if (arg->type != AST_CONS && !IS_NULL (arg))
-        return make_error ("append expects list(s)");
-
-      AST *new_cons = make_cons (arg, nil ());
-      if (IS_NULL (lists))
-        lists = new_cons;
-      else
-        last->as.CONS.CDR = new_cons;
-      last = new_cons;
-
-      current = CDR (current);
-    }
-
-  if (!IS_NULL (current))
-    return make_error ("append: improper list in arguments");
-
-  return append_all_lists (lists);
-}
-
-static AST *
-append_all_lists (AST *lists)
-{
-  if (IS_NULL (lists))
-    return nil ();
-
-  AST *first_list = CAR (lists);
-  AST *rest_lists = CDR (lists);
-
-  if (IS_NULL (rest_lists))
-    return first_list;
-
-  AST *rest_result = append_all_lists (rest_lists);
-  return append_two_lists (first_list, rest_result);
-}
-
-static AST *
-append_two_lists (AST *a, AST *b)
-{
-  if (IS_NULL (a))
-    return b;
-
-  return make_cons (CAR (a), append_two_lists (CDR (a), b));
 }

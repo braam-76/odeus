@@ -29,22 +29,18 @@ set_builtins (AST *environment)
   // Control flow
   SPECIAL ("if", builtin_if);
   NORMAL ("eq", builtin_eq);
-  NORMAL ("null", builtin_null); // lisper's not operator
-  NORMAL ("not", builtin_null);  // human readable not operator
   NORMAL ("and", builtin_and);
   NORMAL ("or", builtin_or);
 
   // List operations
   NORMAL ("cons", builtin_cons);
   NORMAL ("list", builtin_list);
-  NORMAL ("append", builtin_append);
   NORMAL ("car", builtin_car);
   NORMAL ("cdr", builtin_cdr);
   NORMAL ("set-car!", builtin_set_car);
   NORMAL ("set-cdr!", builtin_set_cdr);
   NORMAL ("length", builtin_length);
   NORMAL ("reverse", builtin_reverse);
-  NORMAL ("map", builtin_map);
   NORMAL ("filter", builtin_filter);
 
   // Comparison operators
@@ -103,5 +99,6 @@ set_builtins (AST *environment)
   SPECIAL ("lambda", builtin_lambda);
   SPECIAL ("macro", builtin_macro);
   SPECIAL ("defmacro", builtin_defmacro);
+  SPECIAL ("macroexpand", builtin_macroexpand);
   SPECIAL ("quasiquote", builtin_quasiquote);
 }
