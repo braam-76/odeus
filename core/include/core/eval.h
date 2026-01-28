@@ -10,6 +10,7 @@
 
 AST *evaluate_expression (AST *environment, AST *expression);
 AST *apply (AST *function, AST *environment, AST *arguments);
+AST *macro_expand_expression (AST *environment, AST *expr);
 
 #define ERROR_OUT(x)                                                          \
   do                                                                          \
