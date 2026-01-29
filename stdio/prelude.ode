@@ -1,4 +1,14 @@
 (define (nil? a) (eq a nil))
+(define (not a) (nil? a))  ;; same as nil? but easier to understand in (if ...)
+
+(define (string? a) (eq (typeof a) 'string))
+(define (integer? a) (eq (typeof a) 'integer))
+(define (float? a) (eq (typeof a) 'float))
+(define (number? a) (or (integer? a) (float? a)))
+(define (cons? a) (eq (typeof a) 'cons))
+(define (atom? a) (not (cons? a)))
+(define (function? a) (eq (typeof a) 'function))
+(define (macro? a) (eq (typeof a) 'macro))
 
 (define (foldl f init list)
   (if list
@@ -23,11 +33,6 @@
          nil
          (reverse lists)))
 
-(define (caar x) (car (car x)))
-(define (cdar x) (cdr (car x)))
-(define (cadr x) (car (cdr x)))
-(define (cddr x) (cdr (cdr x)))
-
 (defmacro (cond . clauses)
   (if (nil? clauses)
       nil
@@ -39,3 +44,36 @@
                   test
                   (cons 'begin body))
              (cond ,@(cdr clauses))))))
+
+(define (compose . functions)
+  (define (compose-2 f g)
+    (lambda (x) (f (g x))))
+  (define (id x) x)
+  (foldr compose-2 id functions))
+
+(define caar (compose car car))
+(define cdar (compose cdr car))
+(define cadr (compose car cdr))
+(define cddr (compose cdr cdr))
+
+;; Thread-first (->)
+(defmacro (-> expr . forms)
+  (define (thread expr forms)
+    (if (nil? forms)
+        expr
+        (let* ((form (car forms))
+               (op (if (cons? form) (car form) form))
+               (args (if (cons? form) (cdr form) '())))
+          (thread `(,op ,expr ,@args) (cdr forms)))))
+  (thread expr forms))
+
+;; Thread-last (->>)
+(defmacro (->> expr . forms)
+  (define (thread expr forms)
+    (if (nil? forms)
+        expr
+        (let* ((form (car forms))
+               (op (if (cons? form) (car form) form))
+               (args (if (cons? form) (cdr form) '())))
+          (thread `(,op ,@args ,expr) (cdr forms)))))
+  (thread expr forms))
