@@ -28,7 +28,7 @@ expand_quasiquote (Val *expr, int depth)
   if (expr->type != VALUE_CONS)
     {
       // Basic types (integers, strings, or symbols) get quoted
-      return make_cons (make_symbol ("quote"), make_cons (expr, nil ()));
+      return val_cons (val_symbol ("quote"), val_cons (expr, nil ()));
     }
 
   // Handle ,expression
@@ -37,12 +37,12 @@ expand_quasiquote (Val *expr, int depth)
       if (depth == 1)
         return CADR (expr);
       // If nested, we stay in quasiquote mode
-      return make_cons (
-          make_symbol ("list"),
-          make_cons (
-              make_cons (make_symbol ("quote"),
-                         make_cons (make_symbol ("unquote"), nil ())),
-              make_cons (expand_quasiquote (CADR (expr), depth - 1), nil ())));
+      return val_cons (
+          val_symbol ("list"),
+          val_cons (
+              val_cons (val_symbol ("quote"),
+                         val_cons (val_symbol ("unquote"), nil ())),
+              val_cons (expand_quasiquote (CADR (expr), depth - 1), nil ())));
     }
 
   // Handle ( ,@splice . rest )
@@ -50,17 +50,17 @@ expand_quasiquote (Val *expr, int depth)
   if (is_unquote_splicing (head) && depth == 1)
     {
       // This turns `(,@a . b) into (append a `b)
-      return make_cons (
-          make_symbol ("append"),
-          make_cons (
+      return val_cons (
+          val_symbol ("append"),
+          val_cons (
               CADR (head),
-              make_cons (expand_quasiquote (CDR (expr), depth), nil ())));
+              val_cons (expand_quasiquote (CDR (expr), depth), nil ())));
     }
 
   // Handle standard ( head . rest )
   // This turns `(a . b) into (cons `a `b)
-  return make_cons (
-      make_symbol ("cons"),
-      make_cons (expand_quasiquote (head, depth),
-                 make_cons (expand_quasiquote (CDR (expr), depth), nil ())));
+  return val_cons (
+      val_symbol ("cons"),
+      val_cons (expand_quasiquote (head, depth),
+                 val_cons (expand_quasiquote (CDR (expr), depth), nil ())));
 }

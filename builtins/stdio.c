@@ -26,12 +26,12 @@ Val *
 builtin_read (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("read: expects exactly one argument");
+    return val_error ("read: expects exactly one argument");
 
   Val *code = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (code);
   if (code->type != VALUE_STRING)
-    return make_error ("read: argument is not string");
+    return val_error ("read: argument is not string");
 
   Lexer lexer = lexer_from_string (code->as.STRING, strlen (code->as.STRING));
   Parser *parser = parser_init (&lexer);
@@ -44,16 +44,16 @@ Val *
 builtin_read_file (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("read-file: expects exactly one argument");
+    return val_error ("read-file: expects exactly one argument");
 
   Val *filename = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (filename);
   if (filename->type != VALUE_STRING)
-    return make_error ("read-file: argument is not string");
+    return val_error ("read-file: argument is not string");
 
   FILE *f = fopen (filename->as.STRING, "r");
   if (!f)
-    return make_error ("read-file: could not find file");
+    return val_error ("read-file: could not find file");
 
   fseek (f, 0, SEEK_END);
   long size = ftell (f);
@@ -76,15 +76,15 @@ Val *
 builtin_load_file (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("load-file: expects exactly one argument");
+    return val_error ("load-file: expects exactly one argument");
 
   Val *filename = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (filename);
 
   if (filename->type != VALUE_STRING)
-    return make_error ("load-file: filename must be a string");
+    return val_error ("load-file: filename must be a string");
 
-  Val *read_args = make_cons (filename, nil ());
+  Val *read_args = val_cons (filename, nil ());
   Val *program = builtin_read_file (environment, read_args);
 
   if (program->type == VALUE_ERROR)
@@ -93,10 +93,10 @@ builtin_load_file (Val *environment, Val *arguments)
       snprintf (error_msg, sizeof (error_msg),
                 "load-file: error reading %s: %s", filename->as.STRING,
                 program->as.ERROR.MESSAGE);
-      return make_error (error_msg);
+      return val_error (error_msg);
     }
 
-  Val *eval_args = make_cons (program, nil ());
+  Val *eval_args = val_cons (program, nil ());
   Val *result = builtin_eval (environment, eval_args);
 
   if (result->type == VALUE_ERROR)
@@ -105,7 +105,7 @@ builtin_load_file (Val *environment, Val *arguments)
       snprintf (error_msg, sizeof (error_msg),
                 "load-file: error evaluating %s: %s", filename->as.STRING,
                 result->as.ERROR.MESSAGE);
-      return make_error (error_msg);
+      return val_error (error_msg);
     }
 
   return result;
@@ -115,16 +115,16 @@ Val *
 builtin_file_to_string (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("file->string: expects exactly one argument");
+    return val_error ("file->string: expects exactly one argument");
 
   Val *filename = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (filename);
   if (filename->type != VALUE_STRING)
-    return make_error ("file->string: argument is not string");
+    return val_error ("file->string: argument is not string");
 
   FILE *f = fopen (filename->as.STRING, "r");
   if (!f)
-    return make_error ("file->string: could not find file");
+    return val_error ("file->string: could not find file");
 
   fseek (f, 0, SEEK_END);
   long size = ftell (f);
@@ -136,23 +136,23 @@ builtin_file_to_string (Val *environment, Val *arguments)
 
   fclose (f);
 
-  return make_string (buffer);
+  return val_string (buffer);
 }
 
 Val *
 builtin_write (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("write: expects exactly one argument");
+    return val_error ("write: expects exactly one argument");
 
   Val *expr = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (expr);
 
   char *str = value_to_string (expr);
   if (!str)
-    return make_error ("write: memory allocation failed");
+    return val_error ("write: memory allocation failed");
 
-  Val *result = make_string (str);
+  Val *result = val_string (str);
   free (str);
 
   return result;
@@ -164,7 +164,7 @@ Val *
 builtin_display (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("display: expects exactly 1 argument");
+    return val_error ("display: expects exactly 1 argument");
 
   Val *value = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (value);

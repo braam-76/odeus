@@ -6,33 +6,33 @@ Val *
 builtin_typeof (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("typeof: expects exactly one argument\n");
+    return val_error ("typeof: expects exactly one argument\n");
 
   Val *expression = evaluate_expression (environment, CAR (arguments));
   switch (expression->type)
     {
     case VALUE_NIL:
-      return make_symbol ("cons");
+      return val_symbol ("cons");
     case VALUE_SYMBOL:
-      return make_symbol ("symbol");
+      return val_symbol ("symbol");
     case VALUE_INTEGER:
-      return make_symbol ("integer");
+      return val_symbol ("integer");
     case VALUE_FLOAT:
-      return make_symbol ("float");
+      return val_symbol ("float");
     case VALUE_STRING:
-      return make_symbol ("string");
+      return val_symbol ("string");
     case VALUE_CONS:
-      return make_symbol ("cons");
+      return val_symbol ("cons");
     case VALUE_BUILTIN:
     case VALUE_LAMBDA:
-      return make_symbol ("function");
+      return val_symbol ("function");
     case VALUE_MACRO:
-      return make_symbol ("macro");
+      return val_symbol ("macro");
     case VALUE_ERROR:
       return expression;
     case VALUE_END_OF_FILE:
-      return make_error ("typeof: Unexpected end of file\n");
+      return val_error ("typeof: Unexpected end of file\n");
     default:
-      return make_error ("typeof: unreachable\n");
+      return val_error ("typeof: unreachable\n");
     }
 }

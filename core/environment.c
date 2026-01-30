@@ -19,8 +19,8 @@ environment_set (Val *environment, Val *symbol, Val *value)
       variables = CDR (variables);
     }
 
-  Val *pair = make_cons (symbol, value);
-  environment->as.CONS.CDR = make_cons (pair, CDR (environment));
+  Val *pair = val_cons (symbol, value);
+  environment->as.CONS.CDR = val_cons (pair, CDR (environment));
 }
 
 void
@@ -65,7 +65,7 @@ environment_get (Val *environment, Val *symbol)
     {
       char buf[256];
       snprintf (buf, sizeof (buf), "Unbound symbol: %s", symbol->as.SYMBOL);
-      return make_error (buf);
+      return val_error (buf);
     }
 
   return environment_get (parent_environment, symbol);

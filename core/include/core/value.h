@@ -76,15 +76,15 @@ struct Value
 
 #define IS_NULL(a) ((a) == NULL || (a)->type == VALUE_NIL)
 
-Val *make_integer (long value);
-Val *make_float (double value);
-Val *make_string (const char *string);
-Val *make_symbol (const char *symbol);
-Val *make_cons (Val *car, Val *cdr);
-Val *make_builtin (Builtin_Function builtin_function);
+Val *val_integer (long value);
+Val *val_float (double value);
+Val *val_string (const char *string);
+Val *val_symbol (const char *symbol);
+Val *val_cons (Val *car, Val *cdr);
+Val *val_builtin (Builtin_Function builtin_function);
 
 // special VALUE node builder, only for error messages
-Val *make_error (const char *message);
+Val *val_error (const char *message);
 
 Val *nil (void);
 Val *t (void);

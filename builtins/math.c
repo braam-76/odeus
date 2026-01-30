@@ -11,7 +11,7 @@ get_numeric_value (Val *node, double *out, int *is_float)
   *is_float = 0;
 
   if (!node)
-    return make_error ("numeric operation got null node");
+    return val_error ("numeric operation got null node");
 
   switch (node->type)
     {
@@ -23,7 +23,7 @@ get_numeric_value (Val *node, double *out, int *is_float)
       *is_float = 1;
       return nil ();
     default:
-      return make_error ("numeric operation expects number");
+      return val_error ("numeric operation expects number");
     }
 }
 
@@ -50,14 +50,14 @@ builtin_add (Val *env, Val *args)
       args = CDR (args);
     }
 
-  return has_float ? make_float (result) : make_integer ((long)result);
+  return has_float ? val_float (result) : val_integer ((long)result);
 }
 
 Val *
 builtin_sub (Val *env, Val *args)
 {
   if (IS_NULL (args))
-    return make_error ("- expects at levalue one argument");
+    return val_error ("- expects at levalue one argument");
 
   int is_float = 0;
   Val *first_node = evaluate_expression (env, CAR (args));
@@ -70,7 +70,7 @@ builtin_sub (Val *env, Val *args)
   args = CDR (args);
 
   if (IS_NULL (args))
-    return is_float ? make_float (-result) : make_integer ((long)-result);
+    return is_float ? val_float (-result) : val_integer ((long)-result);
 
   int has_float = is_float;
 
@@ -91,7 +91,7 @@ builtin_sub (Val *env, Val *args)
       args = CDR (args);
     }
 
-  return has_float ? make_float (result) : make_integer ((long)result);
+  return has_float ? val_float (result) : val_integer ((long)result);
 }
 
 Val *
@@ -117,14 +117,14 @@ builtin_mul (Val *env, Val *args)
       args = CDR (args);
     }
 
-  return has_float ? make_float (result) : make_integer ((long)result);
+  return has_float ? val_float (result) : val_integer ((long)result);
 }
 
 Val *
 builtin_div (Val *env, Val *args)
 {
   if (IS_NULL (args))
-    return make_error ("/ expects at levalue one argument");
+    return val_error ("/ expects at levalue one argument");
 
   int is_float = 0;
   Val *first_node = evaluate_expression (env, CAR (args));
@@ -137,7 +137,7 @@ builtin_div (Val *env, Val *args)
   args = CDR (args);
 
   if (IS_NULL (args))
-    return make_float (1.0 / result);
+    return val_float (1.0 / result);
 
   while (args->type == VALUE_CONS)
     {
@@ -150,20 +150,20 @@ builtin_div (Val *env, Val *args)
       ERROR_OUT (err);
 
       if (divisor == 0.0)
-        return make_error ("division by zero");
+        return val_error ("division by zero");
 
       result /= divisor;
       args = CDR (args);
     }
 
-  return make_float (result);
+  return val_float (result);
 }
 
 Val *
 builtin_mod (Val *env, Val *args)
 {
   if (arguments_length (args) != 2)
-    return make_error ("mod expects exactly two arguments");
+    return val_error ("mod expects exactly two arguments");
 
   int is_float_a = 0, is_float_b = 0;
   double a, b;
@@ -179,16 +179,16 @@ builtin_mod (Val *env, Val *args)
   ERROR_OUT (err);
 
   if (b == 0.0)
-    return make_error ("mod: division by zero");
+    return val_error ("mod: division by zero");
 
-  return make_integer ((long)fmod (a, b));
+  return val_integer ((long)fmod (a, b));
 }
 
 Val *
 builtin_expt (Val *env, Val *args)
 {
   if (arguments_length (args) != 2)
-    return make_error ("expt expects exactly two arguments");
+    return val_error ("expt expects exactly two arguments");
 
   int is_float_a = 0, is_float_b = 0;
   double a, b;
@@ -206,16 +206,16 @@ builtin_expt (Val *env, Val *args)
   double result = pow (a, b);
 
   if (!is_float_a && !is_float_b && b >= 0 && b == (long)b)
-    return make_integer ((long)result);
+    return val_integer ((long)result);
   else
-    return make_float (result);
+    return val_float (result);
 }
 
 Val *
 builtin_abs (Val *env, Val *args)
 {
   if (arguments_length (args) != 1)
-    return make_error ("abs expects exactly one argument");
+    return val_error ("abs expects exactly one argument");
 
   int is_float = 0;
   double a;
@@ -225,14 +225,14 @@ builtin_abs (Val *env, Val *args)
   Val *err = get_numeric_value (node, &a, &is_float);
   ERROR_OUT (err);
 
-  return is_float ? make_float (fabs (a)) : make_integer ((long)fabs (a));
+  return is_float ? val_float (fabs (a)) : val_integer ((long)fabs (a));
 }
 
 Val *
 builtin_sqrt (Val *env, Val *args)
 {
   if (arguments_length (args) != 1)
-    return make_error ("sqrt expects exactly one argument");
+    return val_error ("sqrt expects exactly one argument");
 
   int is_float = 0;
   double a;
@@ -243,16 +243,16 @@ builtin_sqrt (Val *env, Val *args)
   ERROR_OUT (err);
 
   if (a < 0.0)
-    return make_error ("sqrt: negative number");
+    return val_error ("sqrt: negative number");
 
-  return make_float (sqrt (a));
+  return val_float (sqrt (a));
 }
 
 Val *
 builtin_num_eq (Val *env, Val *args)
 {
   if (arguments_length (args) != 2)
-    return make_error ("= expects exactly two arguments");
+    return val_error ("= expects exactly two arguments");
 
   int unused1 = 0, unused2 = 0;
   double a, b;
@@ -274,7 +274,7 @@ Val *
 builtin_num_gt (Val *env, Val *args)
 {
   if (arguments_length (args) != 2)
-    return make_error ("> expects exactly two arguments");
+    return val_error ("> expects exactly two arguments");
 
   int unused1 = 0, unused2 = 0;
   double a, b;
@@ -296,7 +296,7 @@ Val *
 builtin_num_lt (Val *env, Val *args)
 {
   if (arguments_length (args) != 2)
-    return make_error ("< expects exactly two arguments");
+    return val_error ("< expects exactly two arguments");
 
   int unused1 = 0, unused2 = 0;
   double a, b;
@@ -318,7 +318,7 @@ Val *
 builtin_num_gte (Val *env, Val *args)
 {
   if (arguments_length (args) != 2)
-    return make_error (">= expects exactly two arguments");
+    return val_error (">= expects exactly two arguments");
 
   int unused1 = 0, unused2 = 0;
   double a, b;
@@ -340,7 +340,7 @@ Val *
 builtin_num_lte (Val *env, Val *args)
 {
   if (arguments_length (args) != 2)
-    return make_error ("<= expects exactly two arguments");
+    return val_error ("<= expects exactly two arguments");
 
   int unused1 = 0, unused2 = 0;
   double a, b;
@@ -362,7 +362,7 @@ Val *
 builtin_floor (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("floor: expects exactly one arguments");
+    return val_error ("floor: expects exactly one arguments");
 
   Val *first_node = evaluate_expression (environment, CAR (arguments));
 
@@ -372,14 +372,14 @@ builtin_floor (Val *environment, Val *arguments)
   Val *err = get_numeric_value (first_node, &a, &is_float);
   ERROR_OUT (err);
 
-  return make_integer (floor (a));
+  return val_integer (floor (a));
 }
 
 Val *
 builtin_ceil (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("ceil: expects exactly one arguments");
+    return val_error ("ceil: expects exactly one arguments");
 
   Val *first_node = evaluate_expression (environment, CAR (arguments));
 
@@ -389,14 +389,14 @@ builtin_ceil (Val *environment, Val *arguments)
   Val *err = get_numeric_value (first_node, &a, &is_float);
   ERROR_OUT (err);
 
-  return make_integer (ceil (a));
+  return val_integer (ceil (a));
 }
 
 Val *
 builtin_round (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
-    return make_error ("round: expects exactly one arguments");
+    return val_error ("round: expects exactly one arguments");
 
   Val *first_node = evaluate_expression (environment, CAR (arguments));
 
@@ -406,5 +406,5 @@ builtin_round (Val *environment, Val *arguments)
   Val *err = get_numeric_value (first_node, &a, &is_float);
   ERROR_OUT (err);
 
-  return make_integer (round (a));
+  return val_integer (round (a));
 }

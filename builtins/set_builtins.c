@@ -15,8 +15,8 @@
 void
 set_builtins (Val *environment)
 {
-  environment_set (environment, make_symbol ("t"), t ());
-  environment_set (environment, make_symbol ("nil"), nil ());
+  environment_set (environment, val_symbol ("t"), t ());
+  environment_set (environment, val_symbol ("nil"), nil ());
 
   REGISTER ("begin", builtin_begin);
   REGISTER ("eval", builtin_eval);

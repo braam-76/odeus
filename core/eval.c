@@ -49,7 +49,7 @@ evaluate_expression (Val *environment, Val *expression)
       return expression;
 
     default:
-      return make_error ("evaluate_expression: unknown VALUE type");
+      return val_error ("evaluate_expression: unknown VALUE type");
     }
 }
 
@@ -84,7 +84,7 @@ macro_expand_expression (Val *environment, Val *expr)
     return expr;
 
   // Create macro frame
-  Val *frame = make_cons (macro->as.MACRO.environment, nil ());
+  Val *frame = val_cons (macro->as.MACRO.environment, nil ());
 
   Val *err
       = bind_macro_arguments (frame, macro->as.MACRO.parameters, CDR (expr));
@@ -115,11 +115,11 @@ bind_arguments (Val *frame, Val *caller_environment, Val *parameters,
   while (params->type == VALUE_CONS)
     {
       if (args->type != VALUE_CONS)
-        return make_error ("lambda: too few arguments");
+        return val_error ("lambda: too few arguments");
 
       Val *param = CAR (params);
       if (param->type != VALUE_SYMBOL)
-        return make_error ("lambda parameter must be symbol");
+        return val_error ("lambda parameter must be symbol");
 
       Val *value = evaluate_expression (caller_environment, CAR (args));
       ERROR_OUT (value);
@@ -142,7 +142,7 @@ bind_arguments (Val *frame, Val *caller_environment, Val *parameters,
           Val *value = evaluate_expression (caller_environment, CAR (args));
           ERROR_OUT (value);
 
-          Val *new_cons = make_cons (value, nil ());
+          Val *new_cons = val_cons (value, nil ());
           if (IS_NULL (evaluated_args))
             evaluated_args = new_cons;
           else
@@ -157,10 +157,10 @@ bind_arguments (Val *frame, Val *caller_environment, Val *parameters,
     }
 
   if (params->type != VALUE_NIL)
-    return make_error ("lambda: invalid parameter list");
+    return val_error ("lambda: invalid parameter list");
 
   if (args->type != VALUE_NIL)
-    return make_error ("lambda: too many arguments");
+    return val_error ("lambda: too many arguments");
 
   return nil ();
 }
@@ -173,7 +173,7 @@ apply (Val *function, Val *caller_env, Val *arguments)
 
   if (function->type == VALUE_LAMBDA)
     {
-      Val *frame = make_cons (function->as.LAMBDA.environment, nil ());
+      Val *frame = val_cons (function->as.LAMBDA.environment, nil ());
       Val *err = bind_arguments (frame, caller_env,
                                  function->as.LAMBDA.parameters, arguments);
       ERROR_OUT (err);
@@ -189,7 +189,7 @@ apply (Val *function, Val *caller_env, Val *arguments)
       return result;
     }
 
-  return make_error ("attempt to call non-function");
+  return val_error ("attempt to call non-function");
 }
 
 static Val *
@@ -201,11 +201,11 @@ bind_macro_arguments (Val *frame, Val *parameters, Val *arguments)
   while (params->type == VALUE_CONS)
     {
       if (args->type != VALUE_CONS)
-        return make_error ("macro: too few arguments");
+        return val_error ("macro: too few arguments");
 
       Val *param = CAR (params);
       if (param->type != VALUE_SYMBOL)
-        return make_error ("macro parameter must be symbol");
+        return val_error ("macro parameter must be symbol");
 
       environment_set (frame, param, CAR (args)); // raw VALUE
       params = CDR (params);
@@ -220,10 +220,10 @@ bind_macro_arguments (Val *frame, Val *parameters, Val *arguments)
     }
 
   if (params->type != VALUE_NIL)
-    return make_error ("macro: invalid parameter list");
+    return val_error ("macro: invalid parameter list");
 
   if (args->type != VALUE_NIL)
-    return make_error ("macro: too many arguments");
+    return val_error ("macro: too many arguments");
 
   return nil ();
 }

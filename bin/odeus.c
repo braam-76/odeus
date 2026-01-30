@@ -39,7 +39,7 @@ int
 main (int argc, char **argv)
 {
   // Persistent global environment
-  Val *global_env = make_cons (nil (), nil ());
+  Val *global_env = val_cons (nil (), nil ());
   set_builtins (global_env);
 
   if (argc > 1)
