@@ -8,19 +8,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "core/value.h"
+#include "core/ast.h"
 #include "core/lexer.h"
 #include "core/token.h"
 
 typedef struct
 {
   Lexer *lexer;
-  Val *start_node;
+  AST *start_node;
   Error error;
 } Parser;
 
 Parser *parser_init (Lexer *lexer);
-Val *parser_parse (Parser *parser);
+AST *parser_parse (Parser *parser);
 void parser_panic (Parser *parser, Token *token, const char *message);
 
 #endif // PARSER_H_
