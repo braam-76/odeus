@@ -3,29 +3,29 @@
 
 #include <math.h>
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/eval.h"
 
 // Essentials
-AST *builtin_add (AST *environment, AST *arguments);
-AST *builtin_sub (AST *environment, AST *arguments);
-AST *builtin_mul (AST *environment, AST *arguments);
-AST *builtin_div (AST *environment, AST *arguments);
+Val *builtin_add (Val *environment, Val *arguments);
+Val *builtin_sub (Val *environment, Val *arguments);
+Val *builtin_mul (Val *environment, Val *arguments);
+Val *builtin_div (Val *environment, Val *arguments);
 
 // More math
-AST *builtin_mod (AST *environment, AST *arguments);
-AST *builtin_expt (AST *environment, AST *arguments);
-AST *builtin_sqrt (AST *environment, AST *arguments);
-AST *builtin_abs (AST *environment, AST *arguments);
-AST *builtin_floor (AST *environment, AST *arguments);
-AST *builtin_ceil (AST *environment, AST *arguments);
-AST *builtin_round (AST *environment, AST *arguments);
+Val *builtin_mod (Val *environment, Val *arguments);
+Val *builtin_expt (Val *environment, Val *arguments);
+Val *builtin_sqrt (Val *environment, Val *arguments);
+Val *builtin_abs (Val *environment, Val *arguments);
+Val *builtin_floor (Val *environment, Val *arguments);
+Val *builtin_ceil (Val *environment, Val *arguments);
+Val *builtin_round (Val *environment, Val *arguments);
 
 // Numeric comparison
-AST *builtin_num_eq (AST *environment, AST *arguments);
-AST *builtin_num_gt (AST *environment, AST *arguments);
-AST *builtin_num_lt (AST *environment, AST *arguments);
-AST *builtin_num_gte (AST *environment, AST *arguments);
-AST *builtin_num_lte (AST *environment, AST *arguments);
+Val *builtin_num_eq (Val *environment, Val *arguments);
+Val *builtin_num_gt (Val *environment, Val *arguments);
+Val *builtin_num_lt (Val *environment, Val *arguments);
+Val *builtin_num_gte (Val *environment, Val *arguments);
+Val *builtin_num_lte (Val *environment, Val *arguments);
 
 #endif // MATH_H_

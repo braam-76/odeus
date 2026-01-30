@@ -1,14 +1,14 @@
 #include "core/environment.h"
 
 void
-environment_set (AST *environment, AST *symbol, AST *value)
+environment_set (Val *environment, Val *symbol, Val *value)
 {
-  AST *variables = CDR (environment);
+  Val *variables = CDR (environment);
 
-  while (variables->type == AST_CONS)
+  while (variables->type == VALUE_CONS)
     {
-      AST *pair = CAR (variables);
-      AST *key_symbol = CAR (pair);
+      Val *pair = CAR (variables);
+      Val *key_symbol = CAR (pair);
 
       if (key_symbol == symbol)
         {
@@ -19,18 +19,18 @@ environment_set (AST *environment, AST *symbol, AST *value)
       variables = CDR (variables);
     }
 
-  AST *pair = make_cons (symbol, value);
+  Val *pair = make_cons (symbol, value);
   environment->as.CONS.CDR = make_cons (pair, CDR (environment));
 }
 
 void
-environment_update (AST *env, AST *symbol, AST *value)
+environment_update (Val *env, Val *symbol, Val *value)
 {
-  AST *bindings = env->as.CONS.CDR;
+  Val *bindings = env->as.CONS.CDR;
 
-  while (bindings->type == AST_CONS)
+  while (bindings->type == VALUE_CONS)
     {
-      AST *binding = CAR (bindings);
+      Val *binding = CAR (bindings);
 
       if (CAR (binding) == symbol)
         {
@@ -44,16 +44,16 @@ environment_update (AST *env, AST *symbol, AST *value)
   environment_set (env, symbol, value);
 }
 
-AST *
-environment_get (AST *environment, AST *symbol)
+Val *
+environment_get (Val *environment, Val *symbol)
 {
-  AST *variables = CDR (environment);
-  AST *parent_environment = CAR (environment);
+  Val *variables = CDR (environment);
+  Val *parent_environment = CAR (environment);
 
-  while (variables->type != AST_NIL)
+  while (variables->type != VALUE_NIL)
     {
-      AST *pair = CAR (variables);
-      AST *key_symbol = CAR (pair);
+      Val *pair = CAR (variables);
+      Val *key_symbol = CAR (pair);
 
       if (key_symbol == symbol)
         return CDR (pair);
@@ -61,7 +61,7 @@ environment_get (AST *environment, AST *symbol)
       variables = CDR (variables);
     }
 
-  if (parent_environment->type == AST_NIL)
+  if (parent_environment->type == VALUE_NIL)
     {
       char buf[256];
       snprintf (buf, sizeof (buf), "Unbound symbol: %s", symbol->as.SYMBOL);

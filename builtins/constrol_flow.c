@@ -1,30 +1,30 @@
 #include "builtins/constrol_flow.h"
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/eval.h"
 
-AST *
-builtin_eq (AST *environment, AST *arguments)
+Val *
+builtin_eq (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 2)
     return make_error ("ERROR: eq expects exactly two arguments");
 
-  AST *first_value = evaluate_expression (environment, CAR (arguments));
+  Val *first_value = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (first_value);
-  AST *second_value = evaluate_expression (environment, CADR (arguments));
+  Val *second_value = evaluate_expression (environment, CADR (arguments));
   ERROR_OUT (second_value);
 
   return (first_value == second_value) ? t () : nil ();
 }
 
-AST *
-builtin_if (AST *env, AST *args)
+Val *
+builtin_if (Val *env, Val *args)
 {
   if (arguments_length (args) != 3)
     return make_error (
         "if: expects exactly 3 arguments (if [condition] [then] [else])");
 
-  AST *cond = evaluate_expression (env, CAR (args));
+  Val *cond = evaluate_expression (env, CAR (args));
   ERROR_OUT (cond);
 
   if (!IS_NULL (cond))
@@ -33,15 +33,15 @@ builtin_if (AST *env, AST *args)
     return evaluate_expression (env, CADR (CDR (args)));
 }
 
-AST *
-builtin_and (AST *environment, AST *arguments)
+Val *
+builtin_and (Val *environment, Val *arguments)
 {
   if (arguments_length(arguments) <= 0)
-    return make_error ("ERROR: and expects at least 1 argument\n");
+    return make_error ("ERROR: and expects at levalue 1 argument\n");
 
-  while (arguments->type == AST_CONS)
+  while (arguments->type == VALUE_CONS)
     {
-      AST *current_condition
+      Val *current_condition
           = evaluate_expression (environment, CAR (arguments));
 
       if (IS_NULL (current_condition))
@@ -53,15 +53,15 @@ builtin_and (AST *environment, AST *arguments)
   return t ();
 }
 
-AST *
-builtin_or (AST *environment, AST *arguments)
+Val *
+builtin_or (Val *environment, Val *arguments)
 {
   if (arguments_length(arguments) <= 0)
-    return make_error ("ERROR: or expects at least 1 argument\n");
+    return make_error ("ERROR: or expects at levalue 1 argument\n");
 
-  while (arguments->type == AST_CONS)
+  while (arguments->type == VALUE_CONS)
     {
-      AST *current_condition
+      Val *current_condition
           = evaluate_expression (environment, CAR (arguments));
 
       if (!IS_NULL (current_condition))

@@ -2,31 +2,31 @@
 
 #include <string.h>
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/eval.h"
 
-AST *
-builtin_concat (AST *environment, AST *arguments)
+Val *
+builtin_concat (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) < 2)
-    return make_error ("concat: expects at least two arguments");
+    return make_error ("concat: expects at levalue two arguments");
 
-  AST *evaluated = nil ();
-  AST *tail = nil ();
+  Val *evaluated = nil ();
+  Val *tail = nil ();
 
   size_t total_length = 0;
 
-  while (arguments->type == AST_CONS)
+  while (arguments->type == VALUE_CONS)
     {
-      AST *value = evaluate_expression (environment, CAR (arguments));
+      Val *value = evaluate_expression (environment, CAR (arguments));
       ERROR_OUT (value);
 
-      if (value->type != AST_STRING)
+      if (value->type != VALUE_STRING)
         return make_error ("concat: all arguments must be strings");
 
       total_length += strlen (value->as.STRING);
 
-      AST *cell = make_cons (value, nil ());
+      Val *cell = make_cons (value, nil ());
       if (IS_NULL (evaluated))
         evaluated = tail = cell;
       else
@@ -40,9 +40,9 @@ builtin_concat (AST *environment, AST *arguments)
     return make_error ("concat: memory allocation failed");
 
   char *dst = buffer;
-  AST *current = evaluated;
+  Val *current = evaluated;
 
-  while (current->type == AST_CONS)
+  while (current->type == VALUE_CONS)
     {
       const char *src = CAR (current)->as.STRING;
       size_t len = strlen (src);
@@ -53,29 +53,29 @@ builtin_concat (AST *environment, AST *arguments)
 
   *dst = '\0';
 
-  AST *result = make_string (buffer);
+  Val *result = make_string (buffer);
   free (buffer);
 
   return result;
 }
 
-AST *
-builtin_string_length (AST *environment, AST *arguments)
+Val *
+builtin_string_length (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return make_error ("string-length: expects exactly one argument");
 
-  AST *string = evaluate_expression (environment, CAR (arguments));
+  Val *string = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (string);
 
-  if (string->type != AST_STRING)
+  if (string->type != VALUE_STRING)
     return make_error ("string-length: argument is not string");
 
   return make_integer (strlen (string->as.STRING));
 }
 
-AST *
-builtin_substring (AST *environment, AST *arguments)
+Val *
+builtin_substring (Val *environment, Val *arguments)
 {
   int arguments_count = arguments_length (arguments);
   if (arguments_count < 2 || arguments_count > 3)
@@ -83,21 +83,21 @@ builtin_substring (AST *environment, AST *arguments)
         "substring: expects either 2 or 3 arguments: (substring [str] [low "
         "index] <high index>)");
 
-  AST *string = evaluate_expression (environment, CAR (arguments));
+  Val *string = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (string);
-  if (string->type != AST_STRING)
+  if (string->type != VALUE_STRING)
     return make_error ("substring: first argument must be a string");
 
-  AST *low_index = evaluate_expression (environment, CADR (arguments));
+  Val *low_index = evaluate_expression (environment, CADR (arguments));
   ERROR_OUT (low_index);
-  if (low_index->type != AST_INTEGER)
+  if (low_index->type != VALUE_INTEGER)
     return make_error ("substring: low index must be an integer");
 
-  AST *high_index;
+  Val *high_index;
   if (arguments_count == 3)
     {
       high_index = evaluate_expression (environment, CADR (CDR (arguments)));
-      if (high_index->type != AST_INTEGER)
+      if (high_index->type != VALUE_INTEGER)
         return make_error ("substring: high index must be an integer");
     }
   else
@@ -144,14 +144,14 @@ builtin_substring (AST *environment, AST *arguments)
   memcpy (buffer, str + low, substr_len);
   buffer[substr_len] = '\0';
 
-  AST *result = make_string (buffer);
+  Val *result = make_string (buffer);
   free (buffer);
 
   return result;
 }
 
-AST *
-builtin_string_to_symbol (AST *environment, AST *arguments)
+Val *
+builtin_string_to_symbol (Val *environment, Val *arguments)
 {
   (void)environment;
   (void)arguments;
@@ -164,16 +164,16 @@ builtin_string_to_symbol (AST *environment, AST *arguments)
   return make_error ("string->symbol: not implemented yet");
 }
 
-AST *
-builtin_symbol_to_string (AST *environment, AST *arguments)
+Val *
+builtin_symbol_to_string (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return make_error ("symbol->string: expects exactly one argument");
 
-  AST *symbol_arg = evaluate_expression (environment, CAR (arguments));
+  Val *symbol_arg = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (symbol_arg);
 
-  if (symbol_arg->type != AST_SYMBOL)
+  if (symbol_arg->type != VALUE_SYMBOL)
     return make_error ("symbol->string: argument must be a symbol");
 
   return make_string (symbol_arg->as.SYMBOL);

@@ -3,8 +3,8 @@ add_library(core STATIC
     parser.c
     environment.c
     eval.c
-    ast.c
-    ast_to_string.c
+    value.c
+    value_to_string.c
     quasiquote.c
 )
 

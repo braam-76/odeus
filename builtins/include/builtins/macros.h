@@ -1,11 +1,11 @@
 #ifndef MACROS_H_
 #define MACROS_H_
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/eval.h"
 
-AST *builtin_defmacro (AST *environment, AST *arguments);
-AST *builtin_macro (AST *environment, AST *arguments);
-AST *builtin_macroexpand (AST *environment, AST *arguments);
+Val *builtin_defmacro (Val *environment, Val *arguments);
+Val *builtin_macro (Val *environment, Val *arguments);
+Val *builtin_macroexpand (Val *environment, Val *arguments);
 
 #endif // MACROS_H_

@@ -1,31 +1,31 @@
 #include "core/quasiquote.h"
-#include "core/ast.h"
+#include "core/value.h"
 
 static int
-is_symbol_named (AST *node, const char *name)
+is_symbol_named (Val *node, const char *name)
 {
-  return node->type == AST_SYMBOL && strcmp (node->as.SYMBOL, name) == 0;
+  return node->type == VALUE_SYMBOL && strcmp (node->as.SYMBOL, name) == 0;
 }
 
 static int
-is_unquote (AST *node)
+is_unquote (Val *node)
 {
-  return node->type == AST_CONS && is_symbol_named (CAR (node), "unquote")
+  return node->type == VALUE_CONS && is_symbol_named (CAR (node), "unquote")
          && !IS_NULL (CDR (node)) && IS_NULL (CDDR (node));
 }
 
 static int
-is_unquote_splicing (AST *node)
+is_unquote_splicing (Val *node)
 {
-  return node->type == AST_CONS
+  return node->type == VALUE_CONS
          && is_symbol_named (CAR (node), "unquote-splicing")
          && !IS_NULL (CDR (node)) && IS_NULL (CDDR (node));
 }
 
-AST *
-expand_quasiquote (AST *expr, int depth)
+Val *
+expand_quasiquote (Val *expr, int depth)
 {
-  if (expr->type != AST_CONS)
+  if (expr->type != VALUE_CONS)
     {
       // Basic types (integers, strings, or symbols) get quoted
       return make_cons (make_symbol ("quote"), make_cons (expr, nil ()));
@@ -46,7 +46,7 @@ expand_quasiquote (AST *expr, int depth)
     }
 
   // Handle ( ,@splice . rest )
-  AST *head = CAR (expr);
+  Val *head = CAR (expr);
   if (is_unquote_splicing (head) && depth == 1)
     {
       // This turns `(,@a . b) into (append a `b)

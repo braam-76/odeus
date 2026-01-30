@@ -39,7 +39,7 @@ int
 main (int argc, char **argv)
 {
   // Persistent global environment
-  AST *global_env = make_cons (nil (), nil ());
+  Val *global_env = make_cons (nil (), nil ());
   set_builtins (global_env);
 
   if (argc > 1)
@@ -55,7 +55,7 @@ main (int argc, char **argv)
       Lexer lexer
           = lexer_from_file (filename, file_content, strlen (file_content));
       Parser *parser = parser_init (&lexer);
-      AST *program = parser_parse (parser);
+      Val *program = parser_parse (parser);
 
       evaluate_expression (global_env, program);
 
@@ -80,11 +80,11 @@ main (int argc, char **argv)
 
           Lexer lexer = lexer_from_string (input, strlen (input));
           Parser *parser = parser_init (&lexer);
-          AST *program = parser_parse (parser);
+          Val *program = parser_parse (parser);
 
-          AST *result = evaluate_expression (global_env, program);
+          Val *result = evaluate_expression (global_env, program);
           printf ("-> ");
-          ast_print (result);
+          value_print (result);
           printf ("\n");
 
           free (parser);

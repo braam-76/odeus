@@ -1,9 +1,9 @@
 #ifndef TYPE_OF_H_
 #define TYPE_OF_H_
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/eval.h"
 
-AST *builtin_typeof (AST *environment, AST *arguments);
+Val *builtin_typeof (Val *environment, Val *arguments);
 
 #endif // TYPE_OF_H_

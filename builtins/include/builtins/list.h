@@ -1,19 +1,19 @@
 #ifndef LIST_OPERATIONS_H_
 #define LIST_OPERATIONS_H_
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/eval.h"
 
-AST *builtin_cons (AST *environment, AST *arguments);
-AST *builtin_list (AST *environment, AST *arguments);
+Val *builtin_cons (Val *environment, Val *arguments);
+Val *builtin_list (Val *environment, Val *arguments);
 
-AST *builtin_car (AST *environment, AST *arguments);
-AST *builtin_cdr (AST *environment, AST *arguments);
-AST *builtin_set_car (AST *environment, AST *arguments);
-AST *builtin_set_cdr (AST *environment, AST *arguments);
-AST *builtin_length (AST *environment, AST *arguments);
-AST *builtin_reverse (AST *environment, AST *arguments);
-AST *builtin_filter (AST *environment, AST *arguments);
-AST *builtin_apply (AST *environment, AST *arguments);
+Val *builtin_car (Val *environment, Val *arguments);
+Val *builtin_cdr (Val *environment, Val *arguments);
+Val *builtin_set_car (Val *environment, Val *arguments);
+Val *builtin_set_cdr (Val *environment, Val *arguments);
+Val *builtin_length (Val *environment, Val *arguments);
+Val *builtin_reverse (Val *environment, Val *arguments);
+Val *builtin_filter (Val *environment, Val *arguments);
+Val *builtin_apply (Val *environment, Val *arguments);
 
 #endif // LIST_OPERATIONS_H_

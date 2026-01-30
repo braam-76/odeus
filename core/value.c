@@ -1,87 +1,87 @@
-#include "core/ast.h"
+#include "core/value.h"
 
 #include <stdarg.h> // for make_error
 
-static AST *GLOBAL_NIL = NULL;
+static Val *GLOBAL_NIL = NULL;
 
 // symbol table used for interning symbols
 #define MAX_SYMBOLS 4096
-static AST *symbol_table[MAX_SYMBOLS];
+static Val *symbol_table[MAX_SYMBOLS];
 static int symbol_count = 0;
 
-AST *
+Val *
 nil (void)
 {
   if (!GLOBAL_NIL)
     {
-      GLOBAL_NIL = malloc (sizeof (AST));
-      GLOBAL_NIL->type = AST_NIL;
+      GLOBAL_NIL = malloc (sizeof (Val));
+      GLOBAL_NIL->type = VALUE_NIL;
     }
   return GLOBAL_NIL;
 }
 
-AST *
+Val *
 t (void)
 {
   return make_symbol ("t");
 }
 
-AST *
+Val *
 make_integer (long value)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
-  node->type = AST_INTEGER;
+  Val *node = (Val *)malloc (sizeof (Val));
+  node->type = VALUE_INTEGER;
   node->as.INTEGER = value;
   return node;
 }
 
-AST *
+Val *
 make_float (double value)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
-  node->type = AST_FLOAT;
+  Val *node = (Val *)malloc (sizeof (Val));
+  node->type = VALUE_FLOAT;
   node->as.FLOAT = value;
   return node;
 }
 
-AST *
+Val *
 make_string (const char *string)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
-  node->type = AST_STRING;
+  Val *node = (Val *)malloc (sizeof (Val));
+  node->type = VALUE_STRING;
   node->as.STRING = strdup (string);
   return node;
 }
 
-AST *
-make_cons (AST *car, AST *cdr)
+Val *
+make_cons (Val *car, Val *cdr)
 {
-  AST *n = malloc (sizeof (AST));
-  n->type = AST_CONS;
+  Val *n = malloc (sizeof (Val));
+  n->type = VALUE_CONS;
   CAR (n) = car;
   CDR (n) = cdr;
   return n;
 }
 
-AST *
+Val *
 make_builtin (Builtin_Function builtin_function)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
-  node->type = AST_BUILTIN;
+  Val *node = (Val *)malloc (sizeof (Val));
+  node->type = VALUE_BUILTIN;
   node->as.BUILTIN = builtin_function;
   return node;
 }
 
-AST *
+Val *
 make_error (const char *message)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
-  node->type = AST_ERROR;
+  Val *node = (Val *)malloc (sizeof (Val));
+  node->type = VALUE_ERROR;
   node->as.ERROR.MESSAGE = strdup (message);
   return node;
 }
 
-AST *
+Val *
 make_symbol (const char *symbol)
 {
   for (int i = 0; i < symbol_count; i++)
@@ -92,8 +92,8 @@ make_symbol (const char *symbol)
     return make_error (
         "FATAL ERROR: can't create more symbols. symbol_table is full");
 
-  AST *sym = malloc (sizeof (AST));
-  sym->type = AST_SYMBOL;
+  Val *sym = malloc (sizeof (Val));
+  sym->type = VALUE_SYMBOL;
   sym->as.SYMBOL = strdup (symbol);
 
   symbol_table[symbol_count++] = sym;
@@ -101,7 +101,7 @@ make_symbol (const char *symbol)
 }
 
 void
-ast_print (AST *node)
+value_print (Val *node)
 {
   if (!node)
     {
@@ -111,20 +111,20 @@ ast_print (AST *node)
 
   switch (node->type)
     {
-    case AST_NIL:
+    case VALUE_NIL:
       printf ("nil");
       break;
-    case AST_SYMBOL:
+    case VALUE_SYMBOL:
       printf ("%s", node->as.SYMBOL);
       break;
-    case AST_INTEGER:
+    case VALUE_INTEGER:
       printf ("%ld", node->as.INTEGER);
       break;
-    case AST_FLOAT:
+    case VALUE_FLOAT:
       printf ("%g", node->as.FLOAT);
       break;
 
-    case AST_STRING:
+    case VALUE_STRING:
       {
         char *s = node->as.STRING;
         putchar ('"');
@@ -164,44 +164,44 @@ ast_print (AST *node)
       }
       break;
 
-    case AST_CONS:
+    case VALUE_CONS:
       {
         printf ("(");
-        AST *cur = node;
+        Val *cur = node;
 
-        while (cur->type == AST_CONS)
+        while (cur->type == VALUE_CONS)
           {
-            ast_print (CAR (cur));
+            value_print (CAR (cur));
             cur = CDR (cur);
 
-            if (cur->type == AST_CONS)
+            if (cur->type == VALUE_CONS)
               printf (" ");
           }
 
-        if (cur->type != AST_NIL)
+        if (cur->type != VALUE_NIL)
           {
             printf (" . ");
-            ast_print (cur);
+            value_print (cur);
           }
         printf (")");
         break;
       }
 
-    case AST_BUILTIN:
+    case VALUE_BUILTIN:
       printf ("#<builtin function>");
       break;
 
-    case AST_LAMBDA:
+    case VALUE_LAMBDA:
       printf ("#<lambda>");
       break;
-    case AST_MACRO:
+    case VALUE_MACRO:
       printf ("#<macro>");
       break;
 
-    case AST_ERROR:
+    case VALUE_ERROR:
       printf ("%s", node->as.ERROR.MESSAGE);
       break;
-    case AST_END_OF_FILE:
+    case VALUE_END_OF_FILE:
       printf ("#<EOF>");
       break;
 

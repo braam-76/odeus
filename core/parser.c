@@ -6,20 +6,20 @@
  *      | quote
  *      | quasiquote
  */
-static AST *parse_expr (Parser *parser, Token *token);
+static Val *parse_expr (Parser *parser, Token *token);
 
 /* list = '(' expr+ ')' */
-static AST *parse_list (Parser *parser, Token *token);
+static Val *parse_list (Parser *parser, Token *token);
 
 /* literal = SYMBOL | INTEGER | FLOAT | STRING */
-static AST *parse_literal (Parser *parser, Token *token);
+static Val *parse_literal (Parser *parser, Token *token);
 
 /* quote = '\'' expr  */
-static AST *parse_quote (Parser *parser, Token *token);
+static Val *parse_quote (Parser *parser, Token *token);
 
-static AST *parse_quasiquote (Parser *parser, Token *token);
-static AST *parse_unquote (Parser *parser, Token *token);
-static AST *parse_unquote_splicing (Parser *parser, Token *token);
+static Val *parse_quasiquote (Parser *parser, Token *token);
+static Val *parse_unquote (Parser *parser, Token *token);
+static Val *parse_unquote_splicing (Parser *parser, Token *token);
 
 void
 parser_panic (Parser *parser, Token *token, const char *message)
@@ -47,17 +47,17 @@ parser_init (Lexer *lexer)
   return parser;
 }
 
-AST *
+Val *
 parser_parse (Parser *parser)
 {
-  AST *begin_head = nil ();
-  AST **begin_tail = &begin_head;
+  Val *begin_head = nil ();
+  Val **begin_tail = &begin_head;
 
   Token token = lexer_next_token (parser->lexer);
 
   while (token.type != TOKEN_END_OF_FILE)
     {
-      AST *expr = parse_expr (parser, &token);
+      Val *expr = parse_expr (parser, &token);
       if (expr)
         {
           *begin_tail = make_cons (expr, nil ());
@@ -68,7 +68,7 @@ parser_parse (Parser *parser)
   return make_cons (make_symbol ("begin"), begin_head);
 }
 
-static AST *
+static Val *
 parse_expr (Parser *parser, Token *token)
 {
   switch (token->type)
@@ -107,22 +107,22 @@ parse_expr (Parser *parser, Token *token)
 
     case TOKEN_END_OF_FILE:
       {
-        AST *eof = malloc (sizeof (AST));
-        eof->type = AST_END_OF_FILE;
+        Val *eof = malloc (sizeof (Val));
+        eof->type = VALUE_END_OF_FILE;
         return eof;
       }
     }
   return NULL;
 }
 
-static AST *
+static Val *
 parse_list (Parser *parser, Token *token)
 {
   // consume '('
   *token = lexer_next_token (parser->lexer);
 
-  AST *head = NULL;
-  AST **tail = &head;
+  Val *head = NULL;
+  Val **tail = &head;
 
   while (token->type != TOKEN_END_OF_FILE && token->type != TOKEN_CLOSE_PAREN)
     {
@@ -130,7 +130,7 @@ parse_list (Parser *parser, Token *token)
         {
           // dot notation: CAR already exists, parse CDR
           *token = lexer_next_token (parser->lexer); // consume '.'
-          AST *cdr = parse_expr (parser, token);
+          Val *cdr = parse_expr (parser, token);
 
           if (!head)
             parser_panic (parser, token, "Dot without CAR");
@@ -144,7 +144,7 @@ parse_list (Parser *parser, Token *token)
           return head;
         }
 
-      AST *expr = parse_expr (parser, token);
+      Val *expr = parse_expr (parser, token);
       *tail = make_cons (expr, nil ());
       tail = &CDR (*tail);
     }
@@ -156,10 +156,10 @@ parse_list (Parser *parser, Token *token)
   return head ? head : nil ();
 }
 
-static AST *
+static Val *
 parse_literal (Parser *parser, Token *token)
 {
-  AST *n = NULL;
+  Val *n = NULL;
 
   switch (token->type)
     {
@@ -185,46 +185,46 @@ parse_literal (Parser *parser, Token *token)
   return n;
 }
 
-static AST *
+static Val *
 parse_quote (Parser *parser, Token *token)
 {
   // consume '
   *token = lexer_next_token (parser->lexer);
 
-  AST *expr = parse_expr (parser, token);
+  Val *expr = parse_expr (parser, token);
 
   return make_cons (make_symbol ("quote"), make_cons (expr, nil ()));
 }
 
-static AST *
+static Val *
 parse_quasiquote (Parser *parser, Token *token)
 {
   // consume `
   *token = lexer_next_token (parser->lexer);
 
-  AST *expr = parse_expr (parser, token);
+  Val *expr = parse_expr (parser, token);
 
   return make_cons (make_symbol ("quasiquote"), make_cons (expr, nil ()));
 }
 
-static AST *
+static Val *
 parse_unquote (Parser *parser, Token *token)
 {
   // consume ,
   *token = lexer_next_token (parser->lexer);
 
-  AST *expr = parse_expr (parser, token);
+  Val *expr = parse_expr (parser, token);
 
   return make_cons (make_symbol ("unquote"), make_cons (expr, nil ()));
 }
 
-static AST *
+static Val *
 parse_unquote_splicing (Parser *parser, Token *token)
 {
   // consume ,@
   *token = lexer_next_token (parser->lexer);
 
-  AST *expr = parse_expr (parser, token);
+  Val *expr = parse_expr (parser, token);
 
   return make_cons (make_symbol ("unquote-splicing"),
                     make_cons (expr, nil ()));

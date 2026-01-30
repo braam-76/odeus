@@ -1,3 +1,4 @@
+;; Predicates
 (define (nil? a) (eq a nil))
 (define (not a) (nil? a))  ;; same as nil? but easier to understand in (if ...)
 
@@ -10,6 +11,7 @@
 (define (function? a) (eq (typeof a) 'function))
 (define (macro? a) (eq (typeof a) 'macro))
 
+;; Higher order functions
 (define (foldl f init list)
   (if list
       (foldl f
@@ -28,11 +30,31 @@
          nil
          list))
 
+(define (compose . functions)
+  (define (compose-2 f g)
+    (lambda (x) (f (g x))))
+  (define (id x) x)
+  (foldr compose-2 id functions))
+
+;; List operations
 (define (append . lists)
   (foldl (lambda (acc lst) (foldr cons acc lst))
          nil
          (reverse lists)))
 
+(define caar (compose car car))
+(define cdar (compose cdr car))
+(define cadr (compose car cdr))
+(define cddr (compose cdr cdr))
+
+(define (nth index lst)
+  (cond
+    ((nil? lst)       nil)
+    ((nil? (cdr lst)) nil)  ; Index out of bounds
+    ((= index 0)      (car lst))
+    (t                (nth (- index 1) (cdr lst)))))
+
+;; Advanced conditionals
 (defmacro (cond . clauses)
   (if (nil? clauses)
       nil
@@ -44,17 +66,6 @@
                   test
                   (cons 'begin body))
              (cond ,@(cdr clauses))))))
-
-(define (compose . functions)
-  (define (compose-2 f g)
-    (lambda (x) (f (g x))))
-  (define (id x) x)
-  (foldr compose-2 id functions))
-
-(define caar (compose car car))
-(define cdar (compose cdr car))
-(define cadr (compose car cdr))
-(define cddr (compose cdr cdr))
 
 ;; Thread-first (->)
 (defmacro (-> expr . forms)

@@ -1,41 +1,41 @@
 #include "core/eval.h"
-#include "core/ast.h"
+#include "core/value.h"
 
-static AST *bind_arguments (AST *frame, AST *caller_environment,
-                            AST *parameters, AST *arguments);
-static AST *bind_macro_arguments (AST *frame, AST *parameters, AST *arguments);
+static Val *bind_arguments (Val *frame, Val *caller_environment,
+                            Val *parameters, Val *arguments);
+static Val *bind_macro_arguments (Val *frame, Val *parameters, Val *arguments);
 
-AST *
-evaluate_expression (AST *environment, AST *expression)
+Val *
+evaluate_expression (Val *environment, Val *expression)
 {
   if (!expression)
     return nil ();
 
   switch (expression->type)
     {
-    case AST_INTEGER:
-    case AST_FLOAT:
-    case AST_STRING:
-    case AST_NIL:
-    case AST_LAMBDA:
-    case AST_MACRO:
+    case VALUE_INTEGER:
+    case VALUE_FLOAT:
+    case VALUE_STRING:
+    case VALUE_NIL:
+    case VALUE_LAMBDA:
+    case VALUE_MACRO:
       return expression;
 
-    case AST_SYMBOL:
+    case VALUE_SYMBOL:
       return environment_get (environment, expression);
 
-    case AST_CONS:
+    case VALUE_CONS:
       {
-        AST *expanded = macro_expand_expression (environment, expression);
+        Val *expanded = macro_expand_expression (environment, expression);
         ERROR_OUT (expanded);
 
         if (expanded != expression)
           return evaluate_expression (environment, expanded);
 
-        AST *operator_node = CAR (expression);
-        AST *arguments = CDR (expression);
+        Val *operator_node = CAR (expression);
+        Val *arguments = CDR (expression);
 
-        AST *function = (operator_node->type == AST_SYMBOL)
+        Val *function = (operator_node->type == VALUE_SYMBOL)
                             ? environment_get (environment, operator_node)
                             : evaluate_expression (environment, operator_node);
 
@@ -44,21 +44,21 @@ evaluate_expression (AST *environment, AST *expression)
         return apply (function, environment, arguments);
       }
 
-    case AST_END_OF_FILE:
-    case AST_ERROR:
+    case VALUE_END_OF_FILE:
+    case VALUE_ERROR:
       return expression;
 
     default:
-      return make_error ("evaluate_expression: unknown AST type");
+      return make_error ("evaluate_expression: unknown VALUE type");
     }
 }
 
 int
-arguments_length (AST *arguments)
+arguments_length (Val *arguments)
 {
   int count = 0;
 
-  while (arguments->type == AST_CONS)
+  while (arguments->type == VALUE_CONS)
     {
       count++;
       arguments = CDR (arguments);
@@ -67,34 +67,34 @@ arguments_length (AST *arguments)
   return count;
 }
 
-AST *
-macro_expand_expression (AST *environment, AST *expr)
+Val *
+macro_expand_expression (Val *environment, Val *expr)
 {
-  if (expr->type != AST_CONS)
+  if (expr->type != VALUE_CONS)
     return expr;
 
-  AST *head = CAR (expr);
-  if (head->type != AST_SYMBOL)
+  Val *head = CAR (expr);
+  if (head->type != VALUE_SYMBOL)
     return expr;
 
-  AST *macro = environment_get (environment, head);
+  Val *macro = environment_get (environment, head);
   ERROR_OUT (macro);
 
-  if (macro->type != AST_MACRO)
+  if (macro->type != VALUE_MACRO)
     return expr;
 
   // Create macro frame
-  AST *frame = make_cons (macro->as.MACRO.environment, nil ());
+  Val *frame = make_cons (macro->as.MACRO.environment, nil ());
 
-  AST *err
+  Val *err
       = bind_macro_arguments (frame, macro->as.MACRO.parameters, CDR (expr));
   ERROR_OUT (err);
 
   // Evaluate macro body *to produce code*
-  AST *expanded = nil ();
-  AST *body = macro->as.MACRO.body;
+  Val *expanded = nil ();
+  Val *body = macro->as.MACRO.body;
 
-  while (body->type == AST_CONS)
+  while (body->type == VALUE_CONS)
     {
       expanded = evaluate_expression (frame, CAR (body));
       ERROR_OUT (expanded);
@@ -104,24 +104,24 @@ macro_expand_expression (AST *environment, AST *expr)
   return expanded; // <-- NOT evaluated here
 }
 
-static AST *
-bind_arguments (AST *frame, AST *caller_environment, AST *parameters,
-                AST *arguments)
+static Val *
+bind_arguments (Val *frame, Val *caller_environment, Val *parameters,
+                Val *arguments)
 {
-  AST *params = parameters;
-  AST *args = arguments;
+  Val *params = parameters;
+  Val *args = arguments;
 
   // Bind fixed parameters
-  while (params->type == AST_CONS)
+  while (params->type == VALUE_CONS)
     {
-      if (args->type != AST_CONS)
+      if (args->type != VALUE_CONS)
         return make_error ("lambda: too few arguments");
 
-      AST *param = CAR (params);
-      if (param->type != AST_SYMBOL)
+      Val *param = CAR (params);
+      if (param->type != VALUE_SYMBOL)
         return make_error ("lambda parameter must be symbol");
 
-      AST *value = evaluate_expression (caller_environment, CAR (args));
+      Val *value = evaluate_expression (caller_environment, CAR (args));
       ERROR_OUT (value);
 
       environment_set (frame, param, value);
@@ -132,22 +132,22 @@ bind_arguments (AST *frame, AST *caller_environment, AST *parameters,
 
   // params is now either NIL or a SYMBOL (rest parameter)
 
-  if (params->type == AST_SYMBOL)
+  if (params->type == VALUE_SYMBOL)
     {
-      AST *evaluated_args = nil ();
-      AST *last = NULL;
+      Val *evaluated_args = nil ();
+      Val *lvalue = NULL;
 
-      while (args->type == AST_CONS)
+      while (args->type == VALUE_CONS)
         {
-          AST *value = evaluate_expression (caller_environment, CAR (args));
+          Val *value = evaluate_expression (caller_environment, CAR (args));
           ERROR_OUT (value);
 
-          AST *new_cons = make_cons (value, nil ());
+          Val *new_cons = make_cons (value, nil ());
           if (IS_NULL (evaluated_args))
             evaluated_args = new_cons;
           else
-            last->as.CONS.CDR = new_cons;
-          last = new_cons;
+            lvalue->as.CONS.CDR = new_cons;
+          lvalue = new_cons;
 
           args = CDR (args);
         }
@@ -156,31 +156,31 @@ bind_arguments (AST *frame, AST *caller_environment, AST *parameters,
       return nil ();
     }
 
-  if (params->type != AST_NIL)
+  if (params->type != VALUE_NIL)
     return make_error ("lambda: invalid parameter list");
 
-  if (args->type != AST_NIL)
+  if (args->type != VALUE_NIL)
     return make_error ("lambda: too many arguments");
 
   return nil ();
 }
 
-AST *
-apply (AST *function, AST *caller_env, AST *arguments)
+Val *
+apply (Val *function, Val *caller_env, Val *arguments)
 {
-  if (function->type == AST_BUILTIN)
+  if (function->type == VALUE_BUILTIN)
     return function->as.BUILTIN (caller_env, arguments);
 
-  if (function->type == AST_LAMBDA)
+  if (function->type == VALUE_LAMBDA)
     {
-      AST *frame = make_cons (function->as.LAMBDA.environment, nil ());
-      AST *err = bind_arguments (frame, caller_env,
+      Val *frame = make_cons (function->as.LAMBDA.environment, nil ());
+      Val *err = bind_arguments (frame, caller_env,
                                  function->as.LAMBDA.parameters, arguments);
       ERROR_OUT (err);
 
-      AST *result = nil ();
-      AST *body = function->as.LAMBDA.body;
-      while (body->type == AST_CONS)
+      Val *result = nil ();
+      Val *body = function->as.LAMBDA.body;
+      while (body->type == VALUE_CONS)
         {
           result = evaluate_expression (frame, CAR (body));
           ERROR_OUT (result);
@@ -192,37 +192,37 @@ apply (AST *function, AST *caller_env, AST *arguments)
   return make_error ("attempt to call non-function");
 }
 
-static AST *
-bind_macro_arguments (AST *frame, AST *parameters, AST *arguments)
+static Val *
+bind_macro_arguments (Val *frame, Val *parameters, Val *arguments)
 {
-  AST *params = parameters;
-  AST *args = arguments;
+  Val *params = parameters;
+  Val *args = arguments;
 
-  while (params->type == AST_CONS)
+  while (params->type == VALUE_CONS)
     {
-      if (args->type != AST_CONS)
+      if (args->type != VALUE_CONS)
         return make_error ("macro: too few arguments");
 
-      AST *param = CAR (params);
-      if (param->type != AST_SYMBOL)
+      Val *param = CAR (params);
+      if (param->type != VALUE_SYMBOL)
         return make_error ("macro parameter must be symbol");
 
-      environment_set (frame, param, CAR (args)); // raw AST
+      environment_set (frame, param, CAR (args)); // raw VALUE
       params = CDR (params);
       args = CDR (args);
     }
 
-  // If the last parameter is a symbol, treat it as "rest"
-  if (params->type == AST_SYMBOL)
+  // If the lvalue parameter is a symbol, treat it as "rest"
+  if (params->type == VALUE_SYMBOL)
     {
       environment_set (frame, params, args); // bind all remaining args
       return nil ();
     }
 
-  if (params->type != AST_NIL)
+  if (params->type != VALUE_NIL)
     return make_error ("macro: invalid parameter list");
 
-  if (args->type != AST_NIL)
+  if (args->type != VALUE_NIL)
     return make_error ("macro: too many arguments");
 
   return nil ();

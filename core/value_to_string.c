@@ -1,6 +1,6 @@
 #include <stdarg.h>
 
-#include "core/ast.h"
+#include "core/value.h"
 
 static void
 append_string (char **buffer, size_t *capacity, size_t *length,
@@ -95,7 +95,7 @@ escape_string (const char *str)
 }
 
 static void
-ast_to_string_recursive (AST *node, char **buffer, size_t *capacity,
+value_to_string_recursive (Val *node, char **buffer, size_t *capacity,
                          size_t *length)
 {
   if (!node)
@@ -106,20 +106,20 @@ ast_to_string_recursive (AST *node, char **buffer, size_t *capacity,
 
   switch (node->type)
     {
-    case AST_NIL:
+    case VALUE_NIL:
       append_string (buffer, capacity, length, "nil");
       break;
-    case AST_SYMBOL:
+    case VALUE_SYMBOL:
       append_string (buffer, capacity, length, "%s", node->as.SYMBOL);
       break;
-    case AST_INTEGER:
+    case VALUE_INTEGER:
       append_string (buffer, capacity, length, "%ld", node->as.INTEGER);
       break;
-    case AST_FLOAT:
+    case VALUE_FLOAT:
       append_string (buffer, capacity, length, "%g", node->as.FLOAT);
       break;
 
-    case AST_STRING:
+    case VALUE_STRING:
       {
         char *escaped = escape_string (node->as.STRING);
         if (escaped)
@@ -130,37 +130,37 @@ ast_to_string_recursive (AST *node, char **buffer, size_t *capacity,
       }
       break;
 
-    case AST_CONS:
+    case VALUE_CONS:
       {
         append_string (buffer, capacity, length, "(");
-        AST *cur = node;
+        Val *cur = node;
 
-        while (cur->type == AST_CONS)
+        while (cur->type == VALUE_CONS)
           {
-            ast_to_string_recursive (CAR (cur), buffer, capacity, length);
+            value_to_string_recursive (CAR (cur), buffer, capacity, length);
             cur = CDR (cur);
 
-            if (cur->type == AST_CONS)
+            if (cur->type == VALUE_CONS)
               append_string (buffer, capacity, length, " ");
           }
 
-        if (cur->type != AST_NIL)
+        if (cur->type != VALUE_NIL)
           {
             append_string (buffer, capacity, length, " . ");
-            ast_to_string_recursive (cur, buffer, capacity, length);
+            value_to_string_recursive (cur, buffer, capacity, length);
           }
         append_string (buffer, capacity, length, ")");
         break;
       }
 
-    case AST_BUILTIN:
+    case VALUE_BUILTIN:
       append_string (buffer, capacity, length, "#<builtin function>");
       break;
 
-    case AST_ERROR:
+    case VALUE_ERROR:
       append_string (buffer, capacity, length, "%s", node->as.ERROR.MESSAGE);
       break;
-    case AST_END_OF_FILE:
+    case VALUE_END_OF_FILE:
       append_string (buffer, capacity, length, "#<EOF>");
       break;
 
@@ -171,7 +171,7 @@ ast_to_string_recursive (AST *node, char **buffer, size_t *capacity,
 }
 
 char *
-ast_to_string (AST *node)
+value_to_string (Val *node)
 {
   if (!node)
     return strdup ("()");
@@ -185,7 +185,7 @@ ast_to_string (AST *node)
 
   buffer[0] = '\0';
 
-  ast_to_string_recursive (node, &buffer, &capacity, &length);
+  value_to_string_recursive (node, &buffer, &capacity, &length);
 
   char *result = realloc (buffer, length + 1);
   return result ? result : buffer;

@@ -1,55 +1,55 @@
 #include "builtins/list.h"
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/eval.h"
 
-AST *
-builtin_apply (AST *environment, AST *arguments)
+Val *
+builtin_apply (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) < 2)
     return make_error (
-        "apply: expected at least 2 arguments");
+        "apply: expected at levalue 2 arguments");
 
-  AST *fn = CAR (arguments);
-  AST *arg_list = CADR (arguments);
+  Val *fn = CAR (arguments);
+  Val *arg_list = CADR (arguments);
 
-  if (arg_list->type != AST_NIL && arg_list->type != AST_CONS)
+  if (arg_list->type != VALUE_NIL && arg_list->type != VALUE_CONS)
     return make_error ("apply: second argument must be a list");
 
   return apply (fn, environment, arg_list);
 }
 
-AST *
-builtin_cons (AST *environment, AST *arguments)
+Val *
+builtin_cons (Val *environment, Val *arguments)
 {
   if (IS_NULL (arguments) || IS_NULL (CADR (arguments))
       || !IS_NULL (CDDR (arguments)))
     return make_error ("ERROR: cons expects two argument\n");
 
-  AST *first_argument = evaluate_expression (environment, CAR (arguments));
-  AST *second_argument = evaluate_expression (environment, CADR (arguments));
+  Val *first_argument = evaluate_expression (environment, CAR (arguments));
+  Val *second_argument = evaluate_expression (environment, CADR (arguments));
 
   return make_cons (first_argument, second_argument);
 }
 
-AST *
-builtin_list (AST *environment, AST *arguments)
+Val *
+builtin_list (Val *environment, Val *arguments)
 {
-  AST *result = nil ();
-  AST *last = NULL;
+  Val *result = nil ();
+  Val *lvalue = NULL;
 
-  while (arguments->type == AST_CONS)
+  while (arguments->type == VALUE_CONS)
     {
-      AST *elem = evaluate_expression (environment, CAR (arguments));
+      Val *elem = evaluate_expression (environment, CAR (arguments));
       ERROR_OUT (elem);
 
-      AST *new_cons = make_cons (elem, nil ());
+      Val *new_cons = make_cons (elem, nil ());
       if (IS_NULL (result))
         result = new_cons;
       else
-        last->as.CONS.CDR = new_cons;
+        lvalue->as.CONS.CDR = new_cons;
 
-      last = new_cons;
+      lvalue = new_cons;
       arguments = CDR (arguments);
     }
 
@@ -59,44 +59,44 @@ builtin_list (AST *environment, AST *arguments)
   return result;
 }
 
-AST *
-builtin_car (AST *environment, AST *arguments)
+Val *
+builtin_car (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return make_error ("car: expects exactly one argument");
 
-  AST *list = evaluate_expression (environment, CAR (arguments));
+  Val *list = evaluate_expression (environment, CAR (arguments));
 
-  if (list->type != AST_CONS)
+  if (list->type != VALUE_CONS)
     return make_error ("car: argument is not a pair");
 
   return CAR (list);
 }
 
-AST *
-builtin_cdr (AST *environment, AST *arguments)
+Val *
+builtin_cdr (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return make_error ("cdr: expects exactly one argument");
 
-  AST *list = evaluate_expression (environment, CAR (arguments));
+  Val *list = evaluate_expression (environment, CAR (arguments));
 
-  if (list->type != AST_CONS)
+  if (list->type != VALUE_CONS)
     return make_error ("cdr: argument is not a pair");
 
   return CDR (list);
 }
 
-AST *
-builtin_set_car (AST *environment, AST *arguments)
+Val *
+builtin_set_car (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 2)
     return make_error ("set-car!: expects exactly two argument");
 
-  AST *list = evaluate_expression (environment, CAR (arguments));
-  AST *value = evaluate_expression (environment, CADR (arguments));
+  Val *list = evaluate_expression (environment, CAR (arguments));
+  Val *value = evaluate_expression (environment, CADR (arguments));
 
-  if (list->type != AST_CONS)
+  if (list->type != VALUE_CONS)
     return make_error ("set-car!: first argument is not a pair");
 
   CAR (list) = value;
@@ -104,16 +104,16 @@ builtin_set_car (AST *environment, AST *arguments)
   return list;
 }
 
-AST *
-builtin_set_cdr (AST *environment, AST *arguments)
+Val *
+builtin_set_cdr (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 2)
     return make_error ("set-cdr!: expects exactly two argument");
 
-  AST *list = evaluate_expression (environment, CAR (arguments));
-  AST *value = evaluate_expression (environment, CADR (arguments));
+  Val *list = evaluate_expression (environment, CAR (arguments));
+  Val *value = evaluate_expression (environment, CADR (arguments));
 
-  if (list->type != AST_CONS)
+  if (list->type != VALUE_CONS)
     return make_error ("set-cdr!: first argument is not a pair");
 
   CDR (list) = value;
@@ -121,16 +121,16 @@ builtin_set_cdr (AST *environment, AST *arguments)
   return list;
 }
 
-AST *
-builtin_length (AST *environment, AST *arguments)
+Val *
+builtin_length (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return make_error ("length: expects exactly one argument");
 
-  AST *list = evaluate_expression (environment, CAR (arguments));
+  Val *list = evaluate_expression (environment, CAR (arguments));
 
   int count = 0;
-  while (list->type == AST_CONS)
+  while (list->type == VALUE_CONS)
     {
       count++;
       list = CDR (list);
@@ -139,16 +139,16 @@ builtin_length (AST *environment, AST *arguments)
   return make_integer (count);
 }
 
-AST *
-builtin_reverse (AST *environment, AST *arguments)
+Val *
+builtin_reverse (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return make_error ("reverse: expects exactly one argument");
 
-  AST *list = evaluate_expression (environment, CAR (arguments));
-  AST *result = nil ();
+  Val *list = evaluate_expression (environment, CAR (arguments));
+  Val *result = nil ();
 
-  while (list->type == AST_CONS)
+  while (list->type == VALUE_CONS)
     {
       result = make_cons (CAR (list), result);
       list = CDR (list);
@@ -157,35 +157,35 @@ builtin_reverse (AST *environment, AST *arguments)
   return result;
 }
 
-AST *
-builtin_filter (AST *environment, AST *arguments)
+Val *
+builtin_filter (Val *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 2)
     return make_error ("filter: expects exactly two arguments");
 
-  AST *function = evaluate_expression (environment, CAR (arguments));
+  Val *function = evaluate_expression (environment, CAR (arguments));
 
-  if (function->type != AST_BUILTIN && function->type != AST_LAMBDA)
+  if (function->type != VALUE_BUILTIN && function->type != VALUE_LAMBDA)
     return make_error ("filter: first argument must be a function");
 
-  AST *list = evaluate_expression (environment, CADR (arguments));
-  if (list->type != AST_CONS)
+  Val *list = evaluate_expression (environment, CADR (arguments));
+  if (list->type != VALUE_CONS)
     return make_error ("filter: second argument should be list/cons");
 
-  AST *result_head = make_cons (nil (), nil ());
-  AST *result_tail = result_head;
+  Val *result_head = make_cons (nil (), nil ());
+  Val *result_tail = result_head;
 
-  while (list->type == AST_CONS && !IS_NULL (list))
+  while (list->type == VALUE_CONS && !IS_NULL (list))
     {
-      AST *current_element = CAR (list);
-      AST *function_arguments = make_cons (current_element, nil ());
-      AST *predicate_result
+      Val *current_element = CAR (list);
+      Val *function_arguments = make_cons (current_element, nil ());
+      Val *predicate_result
           = apply (function, environment, function_arguments);
       ERROR_OUT (predicate_result);
 
       if (!IS_NULL (predicate_result))
         {
-          AST *new_cell = make_cons (current_element, nil ());
+          Val *new_cell = make_cons (current_element, nil ());
 
           CDR (result_tail) = new_cell;
           result_tail = new_cell;

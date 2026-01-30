@@ -1,10 +1,10 @@
 #ifndef ENVIRONMENT_H_
 #define ENVIRONMENT_H_
 
-#include "core/ast.h"
+#include "core/value.h"
 
-void environment_set (AST *env, AST *symbol, AST *value);
-AST *environment_get (AST *env, AST *symbol);
-void environment_update (AST *env, AST *symbol, AST *value);
+void environment_set (Val *env, Val *symbol, Val *value);
+Val *environment_get (Val *env, Val *symbol);
+void environment_update (Val *env, Val *symbol, Val *value);
 
 #endif // ENVIRONMENT_H_

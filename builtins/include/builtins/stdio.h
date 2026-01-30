@@ -3,17 +3,17 @@
 
 #include <stdio.h>
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/eval.h"
 #include "core/lexer.h"
 #include "core/parser.h"
 
-AST *builtin_dump (AST *environment, AST *arguments);
-AST *builtin_read (AST *environment, AST *arguments);
-AST *builtin_read_file (AST *environment, AST *arguments);
-AST *builtin_load_file (AST *environment, AST *arguments);
-AST *builtin_file_to_string (AST *environment, AST *arguments);
-AST *builtin_write (AST *environment, AST *arguments);
-AST *builtin_display (AST *environment, AST *arguments);
+Val *builtin_dump (Val *environment, Val *arguments);
+Val *builtin_read (Val *environment, Val *arguments);
+Val *builtin_read_file (Val *environment, Val *arguments);
+Val *builtin_load_file (Val *environment, Val *arguments);
+Val *builtin_file_to_string (Val *environment, Val *arguments);
+Val *builtin_write (Val *environment, Val *arguments);
+Val *builtin_display (Val *environment, Val *arguments);
 
 #endif // STDIO_H_

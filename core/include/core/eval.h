@@ -5,21 +5,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "core/ast.h"
+#include "core/value.h"
 #include "core/environment.h"
 
-AST *evaluate_expression (AST *environment, AST *expression);
-AST *apply (AST *function, AST *environment, AST *arguments);
-AST *macro_expand_expression (AST *environment, AST *expr);
+Val *evaluate_expression (Val *environment, Val *expression);
+Val *apply (Val *function, Val *environment, Val *arguments);
+Val *macro_expand_expression (Val *environment, Val *expr);
 
 #define ERROR_OUT(x)                                                          \
   do                                                                          \
     {                                                                         \
-      if ((x)->type == AST_ERROR)                                             \
+      if ((x)->type == VALUE_ERROR)                                             \
         return (x);                                                           \
     }                                                                         \
   while (0)
 
-int arguments_length (AST *arguments);
+int arguments_length (Val *arguments);
 
 #endif // EVAL_H_

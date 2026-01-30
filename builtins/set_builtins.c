@@ -13,7 +13,7 @@
   environment_set (environment, make_symbol (name), make_builtin (fn))
 
 void
-set_builtins (AST *environment)
+set_builtins (Val *environment)
 {
   environment_set (environment, make_symbol ("t"), t ());
   environment_set (environment, make_symbol ("nil"), nil ());

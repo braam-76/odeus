@@ -1,8 +1,8 @@
 #ifndef QUASIQUOTE_H_
 #define QUASIQUOTE_H_
 
-#include "core/ast.h"
+#include "core/value.h"
 
-AST *expand_quasiquote (AST *expr, int depth);
+Val *expand_quasiquote (Val *expr, int depth);
 
 #endif // QUASIQUOTE_H_
