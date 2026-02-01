@@ -5,7 +5,7 @@
 #include "core/quasiquote.h"
 
 Val *
-builtin_define (Val *environment, Val *arguments)
+builtin_define (Env *environment, Val *arguments)
 {
   if (IS_NULL (arguments) || IS_NULL (CDR (arguments)))
     return val_error (
@@ -17,18 +17,18 @@ builtin_define (Val *environment, Val *arguments)
   // Case 1: Variable definition (define symbol expr)
   if (to_be_defined->type == VALUE_SYMBOL)
     {
-      Val *current = environment_get (environment, to_be_defined);
+      Val *current = env_get (environment, to_be_defined);
       if (current->type != VALUE_ERROR)
         return val_error ("define: symbol already defined");
 
       // Initialize with nil first
-      environment_set (environment, to_be_defined, nil ());
+      env_set (environment, to_be_defined, val_nil ());
 
       Val *value = evaluate_expression (environment, definition);
       ERROR_OUT (value);
 
       // Update the binding
-      environment_update (environment, to_be_defined, value);
+      env_update (environment, to_be_defined, value);
 
       return to_be_defined;
     }
@@ -42,21 +42,21 @@ builtin_define (Val *environment, Val *arguments)
       if (func_name->type != VALUE_SYMBOL)
         return val_error ("define: function name must be a symbol");
 
-      Val *current = environment_get (environment, func_name);
+      Val *current = env_get (environment, func_name);
       if (current->type != VALUE_ERROR)
         return val_error ("define: symbol already defined");
 
       Val *params = CDR (to_be_defined);
 
       // Initialize with nil first
-      environment_set (environment, func_name, nil ());
+      env_set (environment, func_name, val_nil ());
 
       Val *lambda_args = val_cons (params, CDR (arguments));
       Val *lambda = builtin_lambda (environment, lambda_args);
       ERROR_OUT (lambda);
 
       // Update the environment with the lambda
-      environment_update (environment, func_name, lambda);
+      env_update (environment, func_name, lambda);
 
       return func_name;
     }
@@ -64,7 +64,7 @@ builtin_define (Val *environment, Val *arguments)
     return val_error ("define: first argument must be a symbol or cons");
 }
 Val *
-builtin_set (Val *environment, Val *arguments)
+builtin_set (Env *environment, Val *arguments)
 {
   if (IS_NULL (arguments) || IS_NULL (CDR (arguments)))
     return val_error ("set!: expects (symbol expr)");
@@ -73,20 +73,20 @@ builtin_set (Val *environment, Val *arguments)
   if (symbol->type != VALUE_SYMBOL)
     return val_error ("set!: first argument must be a symbol");
 
-  Val *current = environment_get (environment, symbol);
+  Val *current = env_get (environment, symbol);
   if (current->type == VALUE_ERROR)
     return val_error ("set!: cannot set! undefined symbol");
 
   Val *value = evaluate_expression (environment, CADR (arguments));
   ERROR_OUT (value);
 
-  environment_update (environment, symbol, value);
+  env_update (environment, symbol, value);
 
   return symbol;
 }
 
 Val *
-builtin_let (Val *environment, Val *arguments)
+builtin_let (Env *environment, Val *arguments)
 {
   if (IS_NULL (arguments))
     return val_error ("let: expects at levalue bindings and body");
@@ -97,7 +97,7 @@ builtin_let (Val *environment, Val *arguments)
   if (bindings->type != VALUE_CONS && bindings->type != VALUE_NIL)
     return val_error ("let: first argument must be a list of bindings");
 
-  Val *inner_environment = val_cons (environment, nil ());
+  Env *inner_environment = environment;
 
   Val *current = bindings;
   while (current->type == VALUE_CONS)
@@ -114,19 +114,19 @@ builtin_let (Val *environment, Val *arguments)
         return val_error ("let: binding first element must be symbol");
 
       // Initialize with nil first
-      environment_set (inner_environment, key, nil ());
+      env_set (inner_environment, key, val_nil ());
 
       // Evaluate value in parent environment
       Val *value = evaluate_expression (environment, value_expression);
       ERROR_OUT (value);
 
       // Update binding
-      environment_update (inner_environment, key, value);
+      env_update (inner_environment, key, value);
 
       current = CDR (current);
     }
 
-  Val *result = nil ();
+  Val *result = val_nil ();
   current = body;
   while (current->type == VALUE_CONS)
     {
@@ -139,7 +139,7 @@ builtin_let (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_let_star (Val *environment, Val *arguments)
+builtin_let_star (Env *environment, Val *arguments)
 {
   if (IS_NULL (arguments))
     return val_error ("let*: expects at levalue bindings and body");
@@ -150,7 +150,7 @@ builtin_let_star (Val *environment, Val *arguments)
   if (bindings->type != VALUE_CONS && bindings->type != VALUE_NIL)
     return val_error ("let*: first argument must be a list of bindings");
 
-  Val *inner_environment = val_cons (environment, nil ());
+  Env *inner_environment = environment;
 
   Val *current = bindings;
   while (current->type == VALUE_CONS)
@@ -166,17 +166,17 @@ builtin_let_star (Val *environment, Val *arguments)
       if (key->type != VALUE_SYMBOL)
         return val_error ("let: binding first element must be symbol");
 
-      environment_set (inner_environment, key, nil ());
+      env_set (inner_environment, key, val_nil ());
 
       Val *value = evaluate_expression (inner_environment, value_expression);
       ERROR_OUT (value);
 
-      environment_update (inner_environment, key, value);
+      env_update (inner_environment, key, value);
 
       current = CDR (current);
     }
 
-  Val *result = nil ();
+  Val *result = val_nil ();
   current = body;
   while (current->type == VALUE_CONS)
     {
@@ -189,22 +189,22 @@ builtin_let_star (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_begin (Val *environment, Val *arguments)
+builtin_begin (Env *environment, Val *arguments)
 {
-  Val *lvalue_value = nil ();
+  Val *lvalue = val_nil ();
 
   while (arguments->type == VALUE_CONS)
     {
-      lvalue_value = evaluate_expression (environment, CAR (arguments));
-      ERROR_OUT (lvalue_value);
+      lvalue = evaluate_expression (environment, CAR (arguments));
+      ERROR_OUT (lvalue);
       arguments = CDR (arguments);
     }
 
-  return lvalue_value;
+  return lvalue;
 }
 
 Val *
-builtin_eval (Val *env, Val *args)
+builtin_eval (Env *env, Val *args)
 {
   if (IS_NULL (args) || !IS_NULL (CDR (args)))
     return val_error ("eval expects exactly one argument");
@@ -218,20 +218,20 @@ builtin_eval (Val *env, Val *args)
 }
 
 Val *
-builtin_quote (Val *environment, Val *arguments)
+builtin_quote (Env *environment, Val *arguments)
 {
   (void)environment;
 
-  if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
+  if (arguments_length(arguments) != 1)
     return val_error ("ERROR: quote expects one argument\n");
 
   return CAR (arguments);
 }
 
 Val *
-builtin_quasiquote (Val *environment, Val *arguments)
+builtin_quasiquote (Env *environment, Val *arguments)
 {
-  if (IS_NULL (arguments) || !IS_NULL (CDR (arguments)))
+  if (arguments_length(arguments) != 1)
     return val_error ("quasiquote expects exactly one argument");
 
   Val *expansion_logic = expand_quasiquote (CAR (arguments), 1);
@@ -241,7 +241,7 @@ builtin_quasiquote (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_lambda (Val *environment, Val *arguments)
+builtin_lambda (Env *environment, Val *arguments)
 {
   if (IS_NULL (arguments))
     return val_error ("ERROR: lambda expects at levalue parameter list\n");

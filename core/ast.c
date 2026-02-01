@@ -10,7 +10,7 @@ static AST *symbol_table[MAX_SYMBOLS];
 static int symbol_count = 0;
 
 AST *
-nil (void)
+ast_nil ()
 {
   if (!GLOBAL_NIL)
     {
@@ -18,12 +18,6 @@ nil (void)
       GLOBAL_NIL->type = AST_NIL;
     }
   return GLOBAL_NIL;
-}
-
-AST *
-t (void)
-{
-  return ast_symbol ("t");
 }
 
 AST *
@@ -180,9 +174,6 @@ ast_print (AST *node)
 
     case AST_ERROR:
       printf ("%s", node->as.ERROR.MESSAGE);
-      break;
-    case AST_END_OF_FILE:
-      printf ("#<EOF>");
       break;
 
     default:

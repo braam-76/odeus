@@ -1,4 +1,5 @@
 #include "core/parser.h"
+#include "core/ast.h"
 
 /* expr = literal
  *      | '(' expr '.' expr ')'
@@ -21,16 +22,6 @@ static AST *parse_quasiquote (Parser *parser, Token *token);
 static AST *parse_unquote (Parser *parser, Token *token);
 static AST *parse_unquote_splicing (Parser *parser, Token *token);
 
-void
-parser_panic (Parser *parser, Token *token, const char *message)
-{
-  parser->error.filename = parser->lexer->filename;
-  parser->error.status = ERROR;
-  parser->error.message = message;
-  parser->error.line = token->line;
-  parser->error.column = token->column;
-}
-
 Parser *
 parser_init (Lexer *lexer)
 {
@@ -42,7 +33,7 @@ parser_init (Lexer *lexer)
     }
 
   parser->lexer = lexer;
-  parser->start_node = nil ();
+  parser->start_node = ast_nil ();
 
   return parser;
 }
@@ -50,7 +41,7 @@ parser_init (Lexer *lexer)
 AST *
 parser_parse (Parser *parser)
 {
-  AST *begin_head = nil ();
+  AST *begin_head = ast_nil ();
   AST **begin_tail = &begin_head;
 
   Token token = lexer_next_token (parser->lexer);
@@ -58,9 +49,12 @@ parser_parse (Parser *parser)
   while (token.type != TOKEN_END_OF_FILE)
     {
       AST *expr = parse_expr (parser, &token);
+      if (!expr || expr->type == AST_ERROR)
+        return expr;
+
       if (expr)
         {
-          *begin_tail = ast_cons (expr, nil ());
+          *begin_tail = ast_cons (expr, ast_nil ());
           begin_tail = &CDR (*begin_tail);
         }
     }
@@ -99,20 +93,15 @@ parse_expr (Parser *parser, Token *token)
     case TOKEN_PERIOD:
       {
         char message[256];
-        snprintf (message, sizeof (message), "Unexpected token '%s'",
-                  token->value);
-        parser_panic (parser, token, message);
+        snprintf (message, sizeof (message),
+                  "ERROR: parse_expr: Unexpected token '%s'", token->value);
+        return ast_error (message);
       }
       break;
 
-    case TOKEN_END_OF_FILE:
-      {
-        AST *eof = malloc (sizeof (AST));
-        eof->type = AST_END_OF_FILE;
-        return eof;
-      }
+    default:
+      return ast_error ("ERROR: parse_expr: Unreachable");
     }
-  return NULL;
 }
 
 static AST *
@@ -133,27 +122,27 @@ parse_list (Parser *parser, Token *token)
           AST *cdr = parse_expr (parser, token);
 
           if (!head)
-            parser_panic (parser, token, "Dot without CAR");
+            return ast_error ("Dot without CAR");
 
           *tail = cdr;
 
           if (token->type != TOKEN_CLOSE_PAREN)
-            parser_panic (parser, token, "Expected ')' after dotted pair\n");
+            return ast_error ("Expected ')' after dotted pair\n");
 
           *token = lexer_next_token (parser->lexer);
           return head;
         }
 
       AST *expr = parse_expr (parser, token);
-      *tail = ast_cons (expr, nil ());
+      *tail = ast_cons (expr, ast_nil ());
       tail = &CDR (*tail);
     }
 
   if (token->type != TOKEN_CLOSE_PAREN)
-    parser_panic (parser, token, "Unterminated list");
+    return ast_error ("Unterminated list");
 
   *token = lexer_next_token (parser->lexer); // consume ')'
-  return head ? head : nil ();
+  return head ? head : ast_nil ();
 }
 
 static AST *
@@ -177,8 +166,8 @@ parse_literal (Parser *parser, Token *token)
       break;
 
     default:
-      parser_panic (parser, token, "Unexpected literal");
-      return nil ();
+      ast_error ("Unexpected literal");
+      return ast_nil ();
     }
 
   *token = lexer_next_token (parser->lexer);
@@ -193,7 +182,7 @@ parse_quote (Parser *parser, Token *token)
 
   AST *expr = parse_expr (parser, token);
 
-  return ast_cons (ast_symbol ("quote"), ast_cons (expr, nil ()));
+  return ast_cons (ast_symbol ("quote"), ast_cons (expr, ast_nil ()));
 }
 
 static AST *
@@ -204,7 +193,7 @@ parse_quasiquote (Parser *parser, Token *token)
 
   AST *expr = parse_expr (parser, token);
 
-  return ast_cons (ast_symbol ("quasiquote"), ast_cons (expr, nil ()));
+  return ast_cons (ast_symbol ("quasiquote"), ast_cons (expr, ast_nil ()));
 }
 
 static AST *
@@ -215,7 +204,7 @@ parse_unquote (Parser *parser, Token *token)
 
   AST *expr = parse_expr (parser, token);
 
-  return ast_cons (ast_symbol ("unquote"), ast_cons (expr, nil ()));
+  return ast_cons (ast_symbol ("unquote"), ast_cons (expr, ast_nil ()));
 }
 
 static AST *
@@ -226,5 +215,6 @@ parse_unquote_splicing (Parser *parser, Token *token)
 
   AST *expr = parse_expr (parser, token);
 
-  return ast_cons (ast_symbol ("unquote-splicing"), ast_cons (expr, nil ()));
+  return ast_cons (ast_symbol ("unquote-splicing"),
+                   ast_cons (expr, ast_nil ()));
 }

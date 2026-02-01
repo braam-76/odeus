@@ -28,7 +28,7 @@ expand_quasiquote (Val *expr, int depth)
   if (expr->type != VALUE_CONS)
     {
       // Basic types (integers, strings, or symbols) get quoted
-      return val_cons (val_symbol ("quote"), val_cons (expr, nil ()));
+      return val_cons (val_symbol ("quote"), val_cons (expr, val_nil ()));
     }
 
   // Handle ,expression
@@ -41,8 +41,8 @@ expand_quasiquote (Val *expr, int depth)
           val_symbol ("list"),
           val_cons (
               val_cons (val_symbol ("quote"),
-                         val_cons (val_symbol ("unquote"), nil ())),
-              val_cons (expand_quasiquote (CADR (expr), depth - 1), nil ())));
+                         val_cons (val_symbol ("unquote"), val_nil ())),
+              val_cons (expand_quasiquote (CADR (expr), depth - 1), val_nil ())));
     }
 
   // Handle ( ,@splice . rest )
@@ -54,7 +54,7 @@ expand_quasiquote (Val *expr, int depth)
           val_symbol ("append"),
           val_cons (
               CADR (head),
-              val_cons (expand_quasiquote (CDR (expr), depth), nil ())));
+              val_cons (expand_quasiquote (CDR (expr), depth), val_nil ())));
     }
 
   // Handle standard ( head . rest )
@@ -62,5 +62,5 @@ expand_quasiquote (Val *expr, int depth)
   return val_cons (
       val_symbol ("cons"),
       val_cons (expand_quasiquote (head, depth),
-                 val_cons (expand_quasiquote (CDR (expr), depth), nil ())));
+                 val_cons (expand_quasiquote (CDR (expr), depth), val_nil ())));
 }

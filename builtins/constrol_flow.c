@@ -4,7 +4,7 @@
 #include "core/eval.h"
 
 Val *
-builtin_eq (Val *environment, Val *arguments)
+builtin_eq (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 2)
     return val_error ("ERROR: eq expects exactly two arguments");
@@ -14,27 +14,27 @@ builtin_eq (Val *environment, Val *arguments)
   Val *second_value = evaluate_expression (environment, CADR (arguments));
   ERROR_OUT (second_value);
 
-  return (first_value == second_value) ? t () : nil ();
+  return (first_value == second_value) ? val_t () : val_nil ();
 }
 
 Val *
-builtin_if (Val *env, Val *args)
+builtin_if (Env *environment, Val *args)
 {
   if (arguments_length (args) != 3)
     return val_error (
         "if: expects exactly 3 arguments (if [condition] [then] [else])");
 
-  Val *cond = evaluate_expression (env, CAR (args));
+  Val *cond = evaluate_expression (environment, CAR (args));
   ERROR_OUT (cond);
 
   if (!IS_NULL (cond))
-    return evaluate_expression (env, CADR (args));
+    return evaluate_expression (environment, CADR (args));
   else
-    return evaluate_expression (env, CADR (CDR (args)));
+    return evaluate_expression (environment, CADR (CDR (args)));
 }
 
 Val *
-builtin_and (Val *environment, Val *arguments)
+builtin_and (Env *environment, Val *arguments)
 {
   if (arguments_length(arguments) <= 0)
     return val_error ("ERROR: and expects at levalue 1 argument\n");
@@ -45,16 +45,16 @@ builtin_and (Val *environment, Val *arguments)
           = evaluate_expression (environment, CAR (arguments));
 
       if (IS_NULL (current_condition))
-        return nil ();
+        return val_nil ();
 
       arguments = CDR (arguments);
     }
 
-  return t ();
+  return val_t ();
 }
 
 Val *
-builtin_or (Val *environment, Val *arguments)
+builtin_or (Env *environment, Val *arguments)
 {
   if (arguments_length(arguments) <= 0)
     return val_error ("ERROR: or expects at levalue 1 argument\n");
@@ -65,10 +65,10 @@ builtin_or (Val *environment, Val *arguments)
           = evaluate_expression (environment, CAR (arguments));
 
       if (!IS_NULL (current_condition))
-        return t ();
+        return val_t ();
 
       arguments = CDR (arguments);
     }
 
-  return nil ();
+  return val_nil ();
 }

@@ -2,7 +2,7 @@
 #include "core/eval.h"
 
 Val *
-builtin_macro (Val *environment, Val *arguments)
+builtin_macro (Env *environment, Val *arguments)
 {
   if (IS_NULL (arguments))
     return val_error ("macro: expects parameter list");
@@ -20,7 +20,7 @@ builtin_macro (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_defmacro (Val *environment, Val *arguments)
+builtin_defmacro (Env *environment, Val *arguments)
 {
   if (IS_NULL (arguments) || IS_NULL (CDR (arguments)))
     return val_error ("defmacro: expects (macro-name args) expr");
@@ -36,27 +36,27 @@ builtin_defmacro (Val *environment, Val *arguments)
   if (func_name->type != VALUE_SYMBOL)
     return val_error ("defmacro: macro name must be a symbol");
 
-  Val *current = environment_get (environment, func_name);
+  Val *current = env_get (environment, func_name);
   if (current->type != VALUE_ERROR)
     return val_error ("defmacro: symbol already defined");
 
   Val *params = CDR (to_be_defined);
 
   // Initialize with nil first
-  environment_set (environment, func_name, nil ());
+  env_set (environment, func_name, val_nil ());
 
   Val *macro_args = val_cons (params, CDR (arguments));
   Val *macro = builtin_macro (environment, macro_args);
   ERROR_OUT (macro);
 
   // Update the environment with the macro
-  environment_update (environment, func_name, macro);
+  env_update (environment, func_name, macro);
 
   return func_name;
 }
 
 Val *
-builtin_macroexpand (Val *environment, Val *arguments)
+builtin_macroexpand (Env *environment, Val *arguments)
 {
     if (IS_NULL(arguments))
         return val_error("macroexpand: expected 1 argument");

@@ -1,15 +1,24 @@
 #include "core/eval.h"
 #include "core/value.h"
 
-static Val *bind_arguments (Val *frame, Val *caller_environment,
-                            Val *parameters, Val *arguments);
-static Val *bind_macro_arguments (Val *frame, Val *parameters, Val *arguments);
+/*
+ * Bind lambda arguments
+ *  - call_env  : environment where arguments are evaluated
+ *  - frame     : fresh lambda call frame
+ */
+static Val *bind_arguments (Env *call_env, Env *frame, Val *parameters,
+                            Val *arguments);
+
+/*
+ * Bind macro arguments (unevaluated)
+ */
+static Val *bind_macro_arguments (Env *frame, Val *parameters, Val *arguments);
 
 Val *
-evaluate_expression (Val *environment, Val *expression)
+evaluate_expression (Env *environment, Val *expression)
 {
   if (!expression)
-    return nil ();
+    return val_nil ();
 
   switch (expression->type)
     {
@@ -22,7 +31,7 @@ evaluate_expression (Val *environment, Val *expression)
       return expression;
 
     case VALUE_SYMBOL:
-      return environment_get (environment, expression);
+      return env_get (environment, expression);
 
     case VALUE_CONS:
       {
@@ -32,20 +41,20 @@ evaluate_expression (Val *environment, Val *expression)
         if (expanded != expression)
           return evaluate_expression (environment, expanded);
 
-        Val *operator_node = CAR (expression);
-        Val *arguments = CDR (expression);
+        Val *op = CAR (expression);
+        Val *args = CDR (expression);
 
-        Val *function = (operator_node->type == VALUE_SYMBOL)
-                            ? environment_get (environment, operator_node)
-                            : evaluate_expression (environment, operator_node);
+        Val *fn = (op->type == VALUE_SYMBOL)
+                      ? env_get (environment, op)
+                      : evaluate_expression (environment, op);
 
-        ERROR_OUT (function);
+        ERROR_OUT (fn);
 
-        return apply (function, environment, arguments);
+        return apply (environment, fn, args);
       }
 
-    case VALUE_END_OF_FILE:
     case VALUE_ERROR:
+    case VALUE_END_OF_FILE:
       return expression;
 
     default:
@@ -68,7 +77,7 @@ arguments_length (Val *arguments)
 }
 
 Val *
-macro_expand_expression (Val *environment, Val *expr)
+macro_expand_expression (Env *environment, Val *expr)
 {
   if (expr->type != VALUE_CONS)
     return expr;
@@ -77,41 +86,68 @@ macro_expand_expression (Val *environment, Val *expr)
   if (head->type != VALUE_SYMBOL)
     return expr;
 
-  Val *macro = environment_get (environment, head);
+  Val *macro = env_get (environment, head);
   ERROR_OUT (macro);
 
   if (macro->type != VALUE_MACRO)
     return expr;
 
-  // Create macro frame
-  Val *frame = val_cons (macro->as.MACRO.environment, nil ());
+  /* fresh macro expansion frame */
+  Env *frame = env_init (macro->as.MACRO.environment);
 
   Val *err
       = bind_macro_arguments (frame, macro->as.MACRO.parameters, CDR (expr));
   ERROR_OUT (err);
 
-  // Evaluate macro body *to produce code*
-  Val *expanded = nil ();
-  Val *body = macro->as.MACRO.body;
-
-  while (body->type == VALUE_CONS)
+  /* evaluate macro body to produce code */
+  Val *result = val_nil ();
+  for (Val *body = macro->as.MACRO.body; body->type == VALUE_CONS;
+       body = CDR (body))
     {
-      expanded = evaluate_expression (frame, CAR (body));
-      ERROR_OUT (expanded);
-      body = CDR (body);
+      result = evaluate_expression (frame, CAR (body));
+      ERROR_OUT (result);
     }
 
-  return expanded; // <-- NOT evaluated here
+  return result; /* returned unevaluated */
+}
+
+Val *
+apply (Env *call_env, Val *function, Val *arguments)
+{
+  if (function->type == VALUE_BUILTIN)
+    return function->as.BUILTIN (call_env, arguments);
+
+  if (function->type == VALUE_LAMBDA)
+    {
+      /* fresh call frame */
+      Env *frame = env_init (function->as.LAMBDA.environment);
+
+      Val *err = bind_arguments (call_env, /* arguments evaluated here */
+                                 frame,    /* bindings stored here */
+                                 function->as.LAMBDA.parameters, arguments);
+      ERROR_OUT (err);
+
+      Val *result = val_nil ();
+      for (Val *body = function->as.LAMBDA.body; body->type == VALUE_CONS;
+           body = CDR (body))
+        {
+          result = evaluate_expression (frame, CAR (body));
+          ERROR_OUT (result);
+        }
+
+      return result;
+    }
+
+  return val_error ("attempt to call non-function");
 }
 
 static Val *
-bind_arguments (Val *frame, Val *caller_environment, Val *parameters,
-                Val *arguments)
+bind_arguments (Env *call_env, Env *frame, Val *parameters, Val *arguments)
 {
   Val *params = parameters;
   Val *args = arguments;
 
-  // Bind fixed parameters
+  /* fixed parameters */
   while (params->type == VALUE_CONS)
     {
       if (args->type != VALUE_CONS)
@@ -121,39 +157,38 @@ bind_arguments (Val *frame, Val *caller_environment, Val *parameters,
       if (param->type != VALUE_SYMBOL)
         return val_error ("lambda parameter must be symbol");
 
-      Val *value = evaluate_expression (caller_environment, CAR (args));
+      Val *value = evaluate_expression (call_env, CAR (args));
       ERROR_OUT (value);
 
-      environment_set (frame, param, value);
+      env_set (frame, param, value);
 
       params = CDR (params);
       args = CDR (args);
     }
 
-  // params is now either NIL or a SYMBOL (rest parameter)
-
+  /* rest parameter */
   if (params->type == VALUE_SYMBOL)
     {
-      Val *evaluated_args = nil ();
-      Val *lvalue = NULL;
+      Val *list = val_nil ();
+      Val *tail = NULL;
 
       while (args->type == VALUE_CONS)
         {
-          Val *value = evaluate_expression (caller_environment, CAR (args));
+          Val *value = evaluate_expression (call_env, CAR (args));
           ERROR_OUT (value);
 
-          Val *new_cons = val_cons (value, nil ());
-          if (IS_NULL (evaluated_args))
-            evaluated_args = new_cons;
+          Val *cell = val_cons (value, val_nil ());
+          if (IS_NULL (list))
+            list = cell;
           else
-            lvalue->as.CONS.CDR = new_cons;
-          lvalue = new_cons;
+            tail->as.CONS.CDR = cell;
 
+          tail = cell;
           args = CDR (args);
         }
 
-      environment_set (frame, params, evaluated_args);
-      return nil ();
+      env_set (frame, params, list);
+      return val_nil ();
     }
 
   if (params->type != VALUE_NIL)
@@ -162,38 +197,11 @@ bind_arguments (Val *frame, Val *caller_environment, Val *parameters,
   if (args->type != VALUE_NIL)
     return val_error ("lambda: too many arguments");
 
-  return nil ();
-}
-
-Val *
-apply (Val *function, Val *caller_env, Val *arguments)
-{
-  if (function->type == VALUE_BUILTIN)
-    return function->as.BUILTIN (caller_env, arguments);
-
-  if (function->type == VALUE_LAMBDA)
-    {
-      Val *frame = val_cons (function->as.LAMBDA.environment, nil ());
-      Val *err = bind_arguments (frame, caller_env,
-                                 function->as.LAMBDA.parameters, arguments);
-      ERROR_OUT (err);
-
-      Val *result = nil ();
-      Val *body = function->as.LAMBDA.body;
-      while (body->type == VALUE_CONS)
-        {
-          result = evaluate_expression (frame, CAR (body));
-          ERROR_OUT (result);
-          body = CDR (body);
-        }
-      return result;
-    }
-
-  return val_error ("attempt to call non-function");
+  return val_nil ();
 }
 
 static Val *
-bind_macro_arguments (Val *frame, Val *parameters, Val *arguments)
+bind_macro_arguments (Env *frame, Val *parameters, Val *arguments)
 {
   Val *params = parameters;
   Val *args = arguments;
@@ -207,16 +215,15 @@ bind_macro_arguments (Val *frame, Val *parameters, Val *arguments)
       if (param->type != VALUE_SYMBOL)
         return val_error ("macro parameter must be symbol");
 
-      environment_set (frame, param, CAR (args)); // raw VALUE
+      env_set (frame, param, CAR (args));
       params = CDR (params);
       args = CDR (args);
     }
 
-  // If the lvalue parameter is a symbol, treat it as "rest"
   if (params->type == VALUE_SYMBOL)
     {
-      environment_set (frame, params, args); // bind all remaining args
-      return nil ();
+      env_set (frame, params, args);
+      return val_nil ();
     }
 
   if (params->type != VALUE_NIL)
@@ -225,5 +232,5 @@ bind_macro_arguments (Val *frame, Val *parameters, Val *arguments)
   if (args->type != VALUE_NIL)
     return val_error ("macro: too many arguments");
 
-  return nil ();
+  return val_nil ();
 }

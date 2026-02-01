@@ -1,14 +1,13 @@
 #include "builtins/list.h"
 
-#include "core/value.h"
 #include "core/eval.h"
+#include "core/value.h"
 
 Val *
-builtin_apply (Val *environment, Val *arguments)
+builtin_apply (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) < 2)
-    return val_error (
-        "apply: expected at levalue 2 arguments");
+    return val_error ("apply: expected at levalue 2 arguments");
 
   Val *fn = CAR (arguments);
   Val *arg_list = CADR (arguments);
@@ -16,14 +15,13 @@ builtin_apply (Val *environment, Val *arguments)
   if (arg_list->type != VALUE_NIL && arg_list->type != VALUE_CONS)
     return val_error ("apply: second argument must be a list");
 
-  return apply (fn, environment, arg_list);
+  return apply (environment, fn, arg_list);
 }
 
 Val *
-builtin_cons (Val *environment, Val *arguments)
+builtin_cons (Env *environment, Val *arguments)
 {
-  if (IS_NULL (arguments) || IS_NULL (CADR (arguments))
-      || !IS_NULL (CDDR (arguments)))
+  if (arguments_length (arguments) != 2)
     return val_error ("ERROR: cons expects two argument\n");
 
   Val *first_argument = evaluate_expression (environment, CAR (arguments));
@@ -33,9 +31,9 @@ builtin_cons (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_list (Val *environment, Val *arguments)
+builtin_list (Env *environment, Val *arguments)
 {
-  Val *result = nil ();
+  Val *result = val_nil ();
   Val *lvalue = NULL;
 
   while (arguments->type == VALUE_CONS)
@@ -43,7 +41,7 @@ builtin_list (Val *environment, Val *arguments)
       Val *elem = evaluate_expression (environment, CAR (arguments));
       ERROR_OUT (elem);
 
-      Val *new_cons = val_cons (elem, nil ());
+      Val *new_cons = val_cons (elem, val_nil ());
       if (IS_NULL (result))
         result = new_cons;
       else
@@ -60,7 +58,7 @@ builtin_list (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_car (Val *environment, Val *arguments)
+builtin_car (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("car: expects exactly one argument");
@@ -74,7 +72,7 @@ builtin_car (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_cdr (Val *environment, Val *arguments)
+builtin_cdr (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("cdr: expects exactly one argument");
@@ -88,7 +86,7 @@ builtin_cdr (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_set_car (Val *environment, Val *arguments)
+builtin_set_car (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 2)
     return val_error ("set-car!: expects exactly two argument");
@@ -105,7 +103,7 @@ builtin_set_car (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_set_cdr (Val *environment, Val *arguments)
+builtin_set_cdr (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 2)
     return val_error ("set-cdr!: expects exactly two argument");
@@ -122,7 +120,7 @@ builtin_set_cdr (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_length (Val *environment, Val *arguments)
+builtin_length (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("length: expects exactly one argument");
@@ -140,13 +138,13 @@ builtin_length (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_reverse (Val *environment, Val *arguments)
+builtin_reverse (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("reverse: expects exactly one argument");
 
   Val *list = evaluate_expression (environment, CAR (arguments));
-  Val *result = nil ();
+  Val *result = val_nil ();
 
   while (list->type == VALUE_CONS)
     {
@@ -158,7 +156,7 @@ builtin_reverse (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_filter (Val *environment, Val *arguments)
+builtin_filter (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 2)
     return val_error ("filter: expects exactly two arguments");
@@ -172,20 +170,20 @@ builtin_filter (Val *environment, Val *arguments)
   if (list->type != VALUE_CONS)
     return val_error ("filter: second argument should be list/cons");
 
-  Val *result_head = val_cons (nil (), nil ());
+  Val *result_head = val_cons (val_nil (), val_nil ());
   Val *result_tail = result_head;
 
   while (list->type == VALUE_CONS && !IS_NULL (list))
     {
       Val *current_element = CAR (list);
-      Val *function_arguments = val_cons (current_element, nil ());
+      Val *function_arguments = val_cons (current_element, val_nil ());
       Val *predicate_result
-          = apply (function, environment, function_arguments);
+          = apply (environment, function, function_arguments);
       ERROR_OUT (predicate_result);
 
       if (!IS_NULL (predicate_result))
         {
-          Val *new_cell = val_cons (current_element, nil ());
+          Val *new_cell = val_cons (current_element, val_nil ());
 
           CDR (result_tail) = new_cell;
           result_tail = new_cell;

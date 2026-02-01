@@ -5,12 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "core/ast.h"
 #include "core/value.h"
 #include "core/environment.h"
 
-Val *evaluate_expression (Val *environment, Val *expression);
-Val *apply (Val *function, Val *environment, Val *arguments);
-Val *macro_expand_expression (Val *environment, Val *expr);
+Val *evaluate_expression (Env *environment, Val *expression);
+Val *apply (Env *environment, Val *function, Val *arguments);
+Val *macro_expand_expression (Env *environment, Val *expr);
 
 #define ERROR_OUT(x)                                                          \
   do                                                                          \

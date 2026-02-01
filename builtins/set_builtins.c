@@ -9,14 +9,13 @@
 #include "builtins/strings.h"
 #include "builtins/typeof.h"
 
-#define REGISTER(name, fn)                                                    \
-  environment_set (environment, make_symbol (name), make_builtin (fn))
+#define REGISTER(name, fn) env_set (environment, val_symbol(name), val_builtin (fn))
 
 void
-set_builtins (Val *environment)
+set_builtins (Env *environment)
 {
-  environment_set (environment, val_symbol ("t"), t ());
-  environment_set (environment, val_symbol ("nil"), nil ());
+  env_set (environment, val_symbol("t"), val_t ());
+  env_set (environment, val_symbol("nil"), val_nil ());
 
   REGISTER ("begin", builtin_begin);
   REGISTER ("eval", builtin_eval);

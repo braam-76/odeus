@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "core/ast.h"
+#include "core/environment.h"
+
+
 typedef enum
 {
   VALUE_NIL,
@@ -25,7 +29,7 @@ typedef enum
 } ValueType;
 
 typedef struct Value Val;
-typedef Val *(*Builtin_Function) (Val *environment, Val *arguments);
+typedef Val *(*Builtin_Function) (Env *environment, Val *arguments);
 
 struct Value
 {
@@ -52,14 +56,14 @@ struct Value
     Builtin_Function BUILTIN;
     struct
     {
-      Val *environment;
+      Env *environment;
       Val *parameters;
       Val *body;
     } LAMBDA;
 
     struct
     {
-      Val *environment;
+      Env *environment;
       Val *parameters;
       Val *body;
     } MACRO;
@@ -76,6 +80,8 @@ struct Value
 
 #define IS_NULL(a) ((a) == NULL || (a)->type == VALUE_NIL)
 
+Val *val_from_ast (AST *node);
+
 Val *val_integer (long value);
 Val *val_float (double value);
 Val *val_string (const char *string);
@@ -86,8 +92,8 @@ Val *val_builtin (Builtin_Function builtin_function);
 // special VALUE node builder, only for error messages
 Val *val_error (const char *message);
 
-Val *nil (void);
-Val *t (void);
+Val *val_nil (void);
+Val *val_t (void);
 
 char *value_to_string (Val *node);
 void value_print (Val *node);

@@ -2,17 +2,17 @@
 
 #include <string.h>
 
-#include "core/value.h"
 #include "core/eval.h"
+#include "core/value.h"
 
 Val *
-builtin_concat (Val *environment, Val *arguments)
+builtin_concat (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) < 2)
     return val_error ("concat: expects at levalue two arguments");
 
-  Val *evaluated = nil ();
-  Val *tail = nil ();
+  Val *evaluated = val_nil ();
+  Val *tail = val_nil ();
 
   size_t total_length = 0;
 
@@ -26,7 +26,7 @@ builtin_concat (Val *environment, Val *arguments)
 
       total_length += strlen (value->as.STRING);
 
-      Val *cell = val_cons (value, nil ());
+      Val *cell = val_cons (value, val_nil ());
       if (IS_NULL (evaluated))
         evaluated = tail = cell;
       else
@@ -60,7 +60,7 @@ builtin_concat (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_string_length (Val *environment, Val *arguments)
+builtin_string_length (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("string-length: expects exactly one argument");
@@ -75,7 +75,7 @@ builtin_string_length (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_substring (Val *environment, Val *arguments)
+builtin_substring (Env *environment, Val *arguments)
 {
   int arguments_count = arguments_length (arguments);
   if (arguments_count < 2 || arguments_count > 3)
@@ -151,7 +151,7 @@ builtin_substring (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_string_to_symbol (Val *environment, Val *arguments)
+builtin_string_to_symbol (Env *environment, Val *arguments)
 {
   (void)environment;
   (void)arguments;
@@ -165,7 +165,7 @@ builtin_string_to_symbol (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_symbol_to_string (Val *environment, Val *arguments)
+builtin_symbol_to_string (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("symbol->string: expects exactly one argument");

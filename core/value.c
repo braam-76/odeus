@@ -1,6 +1,5 @@
 #include "core/value.h"
-
-#include <stdarg.h> // for make_error
+#include "core/eval.h"
 
 static Val *GLOBAL_NIL = NULL;
 
@@ -10,7 +9,38 @@ static Val *symbol_table[MAX_SYMBOLS];
 static int symbol_count = 0;
 
 Val *
-nil (void)
+val_from_ast (AST *node)
+{
+    switch(node->type)
+      {
+      case AST_NIL:
+          return val_nil();
+      case AST_SYMBOL:
+          return val_symbol(node->as.SYMBOL);
+      case AST_INTEGER:
+          return val_integer(node->as.INTEGER);
+      case AST_FLOAT:
+          return val_float(node->as.FLOAT);
+      case AST_STRING:
+          return val_string(node->as.STRING);
+      case AST_CONS:
+        {
+          Val *car = val_from_ast (CAR (node));
+          ERROR_OUT (car);
+          Val *cdr = val_from_ast (CDR (node));
+          ERROR_OUT (cdr);
+
+          return val_cons(car, cdr);
+        }
+      case AST_ERROR:
+          return val_error(node->as.ERROR.MESSAGE);
+      default:
+          return val_error("ERROR: val_from_ast: Unknown ast type");
+      }
+}
+
+Val *
+val_nil (void)
 {
   if (!GLOBAL_NIL)
     {
@@ -21,7 +51,7 @@ nil (void)
 }
 
 Val *
-t (void)
+val_t (void)
 {
   return val_symbol ("t");
 }
@@ -206,7 +236,7 @@ value_print (Val *node)
       break;
 
     default:
-      printf ("#<UNKNOWN:%d>", node->type);
+      printf ("value: #<UNKNOWN:%d>", node->type);
       break;
     }
 }

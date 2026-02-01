@@ -4,10 +4,10 @@
 #include "core/value.h"
 #include "core/eval.h"
 
-Val *builtin_concat (Val *environment, Val *arguments);
-Val *builtin_string_length (Val *environment, Val *arguments);
-Val *builtin_substring (Val *environment, Val *arguments);
-Val *builtin_string_to_symbol (Val *environment, Val *arguments);
-Val *builtin_symbol_to_string (Val *environment, Val *arguments);
+Val *builtin_concat (Env *environment, Val *arguments);
+Val *builtin_string_length (Env *environment, Val *arguments);
+Val *builtin_substring (Env *environment, Val *arguments);
+Val *builtin_string_to_symbol (Env *environment, Val *arguments);
+Val *builtin_symbol_to_string (Env *environment, Val *arguments);
 
 #endif // STRINGS_H_

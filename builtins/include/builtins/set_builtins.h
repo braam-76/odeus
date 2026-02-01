@@ -4,6 +4,6 @@
 #include "core/value.h"
 #include "core/environment.h"
 
-void set_builtins (Val *environment);
+void set_builtins (Env *environment);
 
 #endif // SET_BUILTINS_H_

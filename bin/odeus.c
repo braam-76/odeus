@@ -6,9 +6,11 @@
 #include <readline/readline.h>
 
 #include "builtins/set_builtins.h"
+#include "core/environment.h"
 #include "core/eval.h"
 #include "core/lexer.h"
 #include "core/parser.h"
+#include "core/value.h"
 
 char *
 read_file_to_string (const char *filename)
@@ -39,7 +41,7 @@ int
 main (int argc, char **argv)
 {
   // Persistent global environment
-  Val *global_env = val_cons (nil (), nil ());
+  Env *global_env = env_init (NULL);
   set_builtins (global_env);
 
   if (argc > 1)
@@ -55,9 +57,10 @@ main (int argc, char **argv)
       Lexer lexer
           = lexer_from_file (filename, file_content, strlen (file_content));
       Parser *parser = parser_init (&lexer);
-      Val *program = parser_parse (parser);
+      AST *program = parser_parse (parser);
+      Val *lower = val_from_ast (program);
 
-      evaluate_expression (global_env, program);
+      evaluate_expression (global_env, lower);
 
       free (parser);
       free (file_content);
@@ -80,9 +83,10 @@ main (int argc, char **argv)
 
           Lexer lexer = lexer_from_string (input, strlen (input));
           Parser *parser = parser_init (&lexer);
-          Val *program = parser_parse (parser);
+          AST *program = parser_parse (parser);
+          Val *lower = val_from_ast (program);
 
-          Val *result = evaluate_expression (global_env, program);
+          Val *result = evaluate_expression (global_env, lower);
           printf ("-> ");
           value_print (result);
           printf ("\n");

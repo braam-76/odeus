@@ -21,6 +21,5 @@ typedef struct
 
 Parser *parser_init (Lexer *lexer);
 AST *parser_parse (Parser *parser);
-void parser_panic (Parser *parser, Token *token, const char *message);
 
 #endif // PARSER_H_

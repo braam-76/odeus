@@ -3,9 +3,11 @@
 #include <stdio.h>
 
 #include "builtins/forms.h"
+#include "core/ast.h"
+#include "core/value.h"
 
 Val *
-builtin_dump (Val *environment, Val *arguments)
+builtin_dump (Env *environment, Val *arguments)
 {
   while (arguments->type == VALUE_CONS)
     {
@@ -19,11 +21,11 @@ builtin_dump (Val *environment, Val *arguments)
     }
 
   printf ("\n");
-  return nil ();
+  return val_nil ();
 }
 
 Val *
-builtin_read (Val *environment, Val *arguments)
+builtin_read (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("read: expects exactly one argument");
@@ -35,13 +37,14 @@ builtin_read (Val *environment, Val *arguments)
 
   Lexer lexer = lexer_from_string (code->as.STRING, strlen (code->as.STRING));
   Parser *parser = parser_init (&lexer);
-  Val *expression = parser_parse (parser);
+  AST *expression = parser_parse (parser);
+  Val *lower = val_from_ast (expression);
 
-  return expression;
+  return lower;
 }
 
 Val *
-builtin_read_file (Val *environment, Val *arguments)
+builtin_read_file (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("read-file: expects exactly one argument");
@@ -67,13 +70,14 @@ builtin_read_file (Val *environment, Val *arguments)
 
   Lexer lexer = lexer_from_file (filename->as.STRING, buffer, size);
   Parser *parser = parser_init (&lexer);
-  Val *expression = parser_parse (parser);
+  AST *expression = parser_parse (parser);
+  Val *lower = val_from_ast (expression);
 
-  return expression;
+  return lower;
 }
 
 Val *
-builtin_load_file (Val *environment, Val *arguments)
+builtin_load_file (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("load-file: expects exactly one argument");
@@ -84,7 +88,7 @@ builtin_load_file (Val *environment, Val *arguments)
   if (filename->type != VALUE_STRING)
     return val_error ("load-file: filename must be a string");
 
-  Val *read_args = val_cons (filename, nil ());
+  Val *read_args = val_cons (filename, val_nil ());
   Val *program = builtin_read_file (environment, read_args);
 
   if (program->type == VALUE_ERROR)
@@ -96,7 +100,7 @@ builtin_load_file (Val *environment, Val *arguments)
       return val_error (error_msg);
     }
 
-  Val *eval_args = val_cons (program, nil ());
+  Val *eval_args = val_cons (program, val_nil ());
   Val *result = builtin_eval (environment, eval_args);
 
   if (result->type == VALUE_ERROR)
@@ -112,7 +116,7 @@ builtin_load_file (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_file_to_string (Val *environment, Val *arguments)
+builtin_file_to_string (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("file->string: expects exactly one argument");
@@ -140,7 +144,7 @@ builtin_file_to_string (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_write (Val *environment, Val *arguments)
+builtin_write (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("write: expects exactly one argument");
@@ -161,7 +165,7 @@ builtin_write (Val *environment, Val *arguments)
 static void display_value (Val *value);
 
 Val *
-builtin_display (Val *environment, Val *arguments)
+builtin_display (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("display: expects exactly 1 argument");
@@ -171,7 +175,7 @@ builtin_display (Val *environment, Val *arguments)
 
   display_value (value);
 
-  return nil ();
+  return val_nil ();
 }
 
 static void

@@ -3,7 +3,7 @@
 #include "core/eval.h"
 
 Val *
-builtin_typeof (Val *environment, Val *arguments)
+builtin_typeof (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("typeof: expects exactly one argument\n");

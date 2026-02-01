@@ -17,18 +17,18 @@ get_numeric_value (Val *node, double *out, int *is_float)
     {
     case VALUE_INTEGER:
       *out = (double)node->as.INTEGER;
-      return nil ();
+      return val_nil ();
     case VALUE_FLOAT:
       *out = node->as.FLOAT;
       *is_float = 1;
-      return nil ();
+      return val_nil ();
     default:
       return val_error ("numeric operation expects number");
     }
 }
 
 Val *
-builtin_add (Val *env, Val *args)
+builtin_add (Env *env, Val *args)
 {
   double result = 0.0;
   int has_float = 0;
@@ -54,7 +54,7 @@ builtin_add (Val *env, Val *args)
 }
 
 Val *
-builtin_sub (Val *env, Val *args)
+builtin_sub (Env *env, Val *args)
 {
   if (IS_NULL (args))
     return val_error ("- expects at levalue one argument");
@@ -95,7 +95,7 @@ builtin_sub (Val *env, Val *args)
 }
 
 Val *
-builtin_mul (Val *env, Val *args)
+builtin_mul (Env *env, Val *args)
 {
   double result = 1.0;
   int has_float = 0;
@@ -121,7 +121,7 @@ builtin_mul (Val *env, Val *args)
 }
 
 Val *
-builtin_div (Val *env, Val *args)
+builtin_div (Env *env, Val *args)
 {
   if (IS_NULL (args))
     return val_error ("/ expects at levalue one argument");
@@ -160,7 +160,7 @@ builtin_div (Val *env, Val *args)
 }
 
 Val *
-builtin_mod (Val *env, Val *args)
+builtin_mod (Env *env, Val *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("mod expects exactly two arguments");
@@ -185,7 +185,7 @@ builtin_mod (Val *env, Val *args)
 }
 
 Val *
-builtin_expt (Val *env, Val *args)
+builtin_expt (Env *env, Val *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("expt expects exactly two arguments");
@@ -212,7 +212,7 @@ builtin_expt (Val *env, Val *args)
 }
 
 Val *
-builtin_abs (Val *env, Val *args)
+builtin_abs (Env *env, Val *args)
 {
   if (arguments_length (args) != 1)
     return val_error ("abs expects exactly one argument");
@@ -229,7 +229,7 @@ builtin_abs (Val *env, Val *args)
 }
 
 Val *
-builtin_sqrt (Val *env, Val *args)
+builtin_sqrt (Env *env, Val *args)
 {
   if (arguments_length (args) != 1)
     return val_error ("sqrt expects exactly one argument");
@@ -249,7 +249,7 @@ builtin_sqrt (Val *env, Val *args)
 }
 
 Val *
-builtin_num_eq (Val *env, Val *args)
+builtin_num_eq (Env *env, Val *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("= expects exactly two arguments");
@@ -267,11 +267,11 @@ builtin_num_eq (Val *env, Val *args)
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
 
-  return (a == b) ? t () : nil ();
+  return (a == b) ? val_t () : val_nil ();
 }
 
 Val *
-builtin_num_gt (Val *env, Val *args)
+builtin_num_gt (Env *env, Val *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("> expects exactly two arguments");
@@ -289,11 +289,11 @@ builtin_num_gt (Val *env, Val *args)
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
 
-  return (a > b) ? t () : nil ();
+  return (a > b) ? val_t () : val_nil ();
 }
 
 Val *
-builtin_num_lt (Val *env, Val *args)
+builtin_num_lt (Env *env, Val *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("< expects exactly two arguments");
@@ -311,11 +311,11 @@ builtin_num_lt (Val *env, Val *args)
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
 
-  return (a < b) ? t () : nil ();
+  return (a < b) ? val_t () : val_nil ();
 }
 
 Val *
-builtin_num_gte (Val *env, Val *args)
+builtin_num_gte (Env *env, Val *args)
 {
   if (arguments_length (args) != 2)
     return val_error (">= expects exactly two arguments");
@@ -333,11 +333,11 @@ builtin_num_gte (Val *env, Val *args)
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
 
-  return (a >= b) ? t () : nil ();
+  return (a >= b) ? val_t () : val_nil ();
 }
 
 Val *
-builtin_num_lte (Val *env, Val *args)
+builtin_num_lte (Env *env, Val *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("<= expects exactly two arguments");
@@ -355,11 +355,11 @@ builtin_num_lte (Val *env, Val *args)
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
 
-  return (a <= b) ? t () : nil ();
+  return (a <= b) ? val_t () : val_nil ();
 }
 
 Val *
-builtin_floor (Val *environment, Val *arguments)
+builtin_floor (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("floor: expects exactly one arguments");
@@ -376,7 +376,7 @@ builtin_floor (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_ceil (Val *environment, Val *arguments)
+builtin_ceil (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("ceil: expects exactly one arguments");
@@ -393,7 +393,7 @@ builtin_ceil (Val *environment, Val *arguments)
 }
 
 Val *
-builtin_round (Val *environment, Val *arguments)
+builtin_round (Env *environment, Val *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("round: expects exactly one arguments");

@@ -1,72 +1,56 @@
 #include "core/environment.h"
+#include "core/value.h"
 
-void
-environment_set (Val *environment, Val *symbol, Val *value)
+Env *
+env_init (Env *parent)
 {
-  Val *variables = CDR (environment);
-
-  while (variables->type == VALUE_CONS)
-    {
-      Val *pair = CAR (variables);
-      Val *key_symbol = CAR (pair);
-
-      if (key_symbol == symbol)
-        {
-          pair->as.CONS.CDR = value;
-          return;
-        }
-
-      variables = CDR (variables);
-    }
-
-  Val *pair = val_cons (symbol, value);
-  environment->as.CONS.CDR = val_cons (pair, CDR (environment));
+  Env *env = malloc (sizeof (Env));
+  env->parent = parent;
+  env->bindings_size = 0;
+  return env;
 }
 
 void
-environment_update (Val *env, Val *symbol, Val *value)
+env_set (Env *environment, Val *symbol, Val *value)
 {
-  Val *bindings = env->as.CONS.CDR;
+  for (int i = 0; i < environment->bindings_size; i++)
+    if (environment->bindings[i].key == symbol)
+      {
+        environment->bindings[i].value = value;
+        return;
+      }
 
-  while (bindings->type == VALUE_CONS)
-    {
-      Val *binding = CAR (bindings);
+  environment->bindings[environment->bindings_size].key = symbol;
+  environment->bindings[environment->bindings_size].value = value;
+  environment->bindings_size++;
+}
 
-      if (CAR (binding) == symbol)
-        {
-          binding->as.CONS.CDR = value;
-          return;
-        }
+void
+env_update (Env *environment, Val *symbol, Val *value)
+{
+  for (int i = 0; i < environment->bindings_size; i++)
+    if (environment->bindings[i].key == symbol)
+      {
+        environment->bindings[i].value = value;
+        return;
+      }
 
-      bindings = CDR (bindings);
-    }
-
-  environment_set (env, symbol, value);
+  env_set (environment, symbol, value);
 }
 
 Val *
-environment_get (Val *environment, Val *symbol)
+env_get (Env *environment, Val *symbol)
 {
-  Val *variables = CDR (environment);
-  Val *parent_environment = CAR (environment);
+  for (int i = 0; i < environment->bindings_size; i++)
+    if (environment->bindings[i].key == symbol)
+      return environment->bindings[i].value;
 
-  while (variables->type != VALUE_NIL)
-    {
-      Val *pair = CAR (variables);
-      Val *key_symbol = CAR (pair);
-
-      if (key_symbol == symbol)
-        return CDR (pair);
-
-      variables = CDR (variables);
-    }
-
-  if (parent_environment->type == VALUE_NIL)
+  if (environment->parent == NULL)
     {
       char buf[256];
-      snprintf (buf, sizeof (buf), "Unbound symbol: %s", symbol->as.SYMBOL);
+      snprintf (buf, sizeof (buf), "Unbound symbol: %s", symbol->as.SYMBOL); // need to somehow provide symbol as character
       return val_error (buf);
     }
 
-  return environment_get (parent_environment, symbol);
+  return env_get (environment->parent, symbol);
 }
