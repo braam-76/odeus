@@ -1,6 +1,0 @@
-(print t "Hello, world" (+ 1 0.2))
-
-(def something (arg1 arg2)
-  (print '(+ arg1 arg2)))
-
-(lambda (arg1 arg-2) arg1 (print arg1) arg-2)

@@ -13,17 +13,3 @@ add_subdirectory(builtins)
 add_executable(odeus bin/odeus.c)
 target_include_directories(odeus PRIVATE ${PROJECT_SOURCE_DIR}/bin)
 target_link_libraries(odeus PRIVATE builtins readline)
-
-# Lexer test executable
-add_executable(lexer_test tests/lexer_test.c)
-target_include_directories(lexer_test PRIVATE ${PROJECT_SOURCE_DIR}/tests)
-target_link_libraries(lexer_test PRIVATE builtins readline)
-
-# Parser test executable
-add_executable(parser_test tests/parser_test.c)
-target_include_directories(parser_test PRIVATE ${PROJECT_SOURCE_DIR}/tests)
-target_link_libraries(parser_test PRIVATE builtins readline)
-
-enable_testing()
-add_test(NAME LexerTest COMMAND lexer_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/lexer_test.ode)
-add_test(NAME ParserTest COMMAND parser_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/parser_test.ode)
