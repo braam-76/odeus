@@ -8,12 +8,13 @@
 #include "core/lexer.h"
 #include "core/parser.h"
 
-Val *builtin_dump (Env *environment, Val *arguments);
-Val *builtin_read (Env *environment, Val *arguments);
-Val *builtin_read_file (Env *environment, Val *arguments);
-Val *builtin_load_file (Env *environment, Val *arguments);
-Val *builtin_file_to_string (Env *environment, Val *arguments);
-Val *builtin_write (Env *environment, Val *arguments);
-Val *builtin_display (Env *environment, Val *arguments);
+Value *builtin_dump (Environment *environment, Value *arguments);
+Value *builtin_read (Environment *environment, Value *arguments);
+Value *builtin_read_file (Environment *environment, Value *arguments);
+Value *builtin_load_file (Environment *environment, Value *arguments);
+Value *builtin_show_meta (Environment *environment, Value *arguments);
+Value *builtin_file_to_string (Environment *environment, Value *arguments);
+Value *builtin_write (Environment *environment, Value *arguments);
+Value *builtin_display (Environment *environment, Value *arguments);
 
 #endif // STDIO_H_

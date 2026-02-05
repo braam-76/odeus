@@ -4,14 +4,16 @@
 
 #include "builtins/forms.h"
 #include "core/ast.h"
+#include "core/environment.h"
+#include "core/eval.h"
 #include "core/value.h"
 
-Val *
-builtin_dump (Env *environment, Val *arguments)
+Value *
+builtin_dump (Environment *environment, Value *arguments)
 {
   while (arguments->type == VALUE_CONS)
     {
-      Val *value = evaluate_expression (environment, CAR (arguments));
+      Value *value = evaluate_expression (environment, CAR (arguments));
       ERROR_OUT (value);
 
       value_print (value);
@@ -24,13 +26,13 @@ builtin_dump (Env *environment, Val *arguments)
   return val_nil ();
 }
 
-Val *
-builtin_read (Env *environment, Val *arguments)
+Value *
+builtin_read (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("read: expects exactly one argument");
 
-  Val *code = evaluate_expression (environment, CAR (arguments));
+  Value *code = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (code);
   if (code->type != VALUE_STRING)
     return val_error ("read: argument is not string");
@@ -38,18 +40,18 @@ builtin_read (Env *environment, Val *arguments)
   Lexer lexer = lexer_from_string (code->as.STRING, strlen (code->as.STRING));
   Parser *parser = parser_init (&lexer);
   AST *expression = parser_parse (parser);
-  Val *lower = val_from_ast (expression);
+  Value *lower = val_from_ast (expression);
 
   return lower;
 }
 
-Val *
-builtin_read_file (Env *environment, Val *arguments)
+Value *
+builtin_read_file (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("read-file: expects exactly one argument");
 
-  Val *filename = evaluate_expression (environment, CAR (arguments));
+  Value *filename = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (filename);
   if (filename->type != VALUE_STRING)
     return val_error ("read-file: argument is not string");
@@ -71,25 +73,25 @@ builtin_read_file (Env *environment, Val *arguments)
   Lexer lexer = lexer_from_file (filename->as.STRING, buffer, size);
   Parser *parser = parser_init (&lexer);
   AST *expression = parser_parse (parser);
-  Val *lower = val_from_ast (expression);
+  Value *lower = val_from_ast (expression);
 
   return lower;
 }
 
-Val *
-builtin_load_file (Env *environment, Val *arguments)
+Value *
+builtin_load_file (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("load-file: expects exactly one argument");
 
-  Val *filename = evaluate_expression (environment, CAR (arguments));
+  Value *filename = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (filename);
 
   if (filename->type != VALUE_STRING)
     return val_error ("load-file: filename must be a string");
 
-  Val *read_args = val_cons (filename, val_nil ());
-  Val *program = builtin_read_file (environment, read_args);
+  Value *read_args = val_cons (filename, val_nil ());
+  Value *program = builtin_read_file (environment, read_args);
 
   if (program->type == VALUE_ERROR)
     {
@@ -100,8 +102,8 @@ builtin_load_file (Env *environment, Val *arguments)
       return val_error (error_msg);
     }
 
-  Val *eval_args = val_cons (program, val_nil ());
-  Val *result = builtin_eval (environment, eval_args);
+  Value *eval_args = val_cons (program, val_nil ());
+  Value *result = builtin_eval (environment, eval_args);
 
   if (result->type == VALUE_ERROR)
     {
@@ -115,13 +117,33 @@ builtin_load_file (Env *environment, Val *arguments)
   return result;
 }
 
-Val *
-builtin_file_to_string (Env *environment, Val *arguments)
+Value *
+builtin_show_meta (Environment *environment, Value *arguments)
+{
+  if (arguments_length (arguments) != 1)
+    return val_error ("show-meta: expects exactly one argument");
+
+  Value *symbol = CAR (arguments);
+  if (symbol->type != VALUE_SYMBOL)
+    return val_error ("show-meta: argument is not symbol");
+
+  Binding *binding = env_get_binding (environment, symbol);
+  if (!binding)
+    return val_error ("show-meta: symbol is not defined");
+
+  printf ("Filename: %s\n", binding->meta.filename);
+  printf ("Line: %d\n", binding->meta.line_number);
+
+  return val_nil ();
+}
+
+Value *
+builtin_file_to_string (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("file->string: expects exactly one argument");
 
-  Val *filename = evaluate_expression (environment, CAR (arguments));
+  Value *filename = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (filename);
   if (filename->type != VALUE_STRING)
     return val_error ("file->string: argument is not string");
@@ -143,34 +165,34 @@ builtin_file_to_string (Env *environment, Val *arguments)
   return val_string (buffer);
 }
 
-Val *
-builtin_write (Env *environment, Val *arguments)
+Value *
+builtin_write (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("write: expects exactly one argument");
 
-  Val *expr = evaluate_expression (environment, CAR (arguments));
+  Value *expr = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (expr);
 
   char *str = value_to_string (expr);
   if (!str)
     return val_error ("write: memory allocation failed");
 
-  Val *result = val_string (str);
+  Value *result = val_string (str);
   free (str);
 
   return result;
 }
 
-static void display_value (Val *value);
+static void display_value (Value *value);
 
-Val *
-builtin_display (Env *environment, Val *arguments)
+Value *
+builtin_display (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("display: expects exactly 1 argument");
 
-  Val *value = evaluate_expression (environment, CAR (arguments));
+  Value *value = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (value);
 
   display_value (value);
@@ -179,7 +201,7 @@ builtin_display (Env *environment, Val *arguments)
 }
 
 static void
-display_value (Val *value)
+display_value (Value *value)
 {
   switch (value->type)
     {
@@ -202,7 +224,7 @@ display_value (Val *value)
     case VALUE_CONS:
       {
         printf ("(");
-        Val *cur = value;
+        Value *cur = value;
         while (cur->type == VALUE_CONS)
           {
             display_value (CAR (cur));
