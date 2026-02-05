@@ -1,42 +1,38 @@
 #include "core/value.h"
 #include "core/eval.h"
+#include "core/intern_string.h"
 
 static Val *GLOBAL_NIL = NULL;
-
-// symbol table used for interning symbols
-#define MAX_SYMBOLS 4096
-static Val *symbol_table[MAX_SYMBOLS];
-static int symbol_count = 0;
 
 Val *
 val_from_ast (AST *node)
 {
-    switch(node->type)
+  switch (node->type)
+    {
+    case AST_NIL:
+      return val_nil ();
+    case AST_SYMBOL:
+      return val_symbol (node->as.SYMBOL, node->source_meta);
+    case AST_INTEGER:
+      return val_integer (node->as.INTEGER);
+    case AST_FLOAT:
+      return val_float (node->as.FLOAT);
+    case AST_STRING:
+      return val_string (node->as.STRING);
+    case AST_CONS:
       {
-      case AST_NIL:
-          return val_nil();
-      case AST_SYMBOL:
-          return val_symbol(node->as.SYMBOL);
-      case AST_INTEGER:
-          return val_integer(node->as.INTEGER);
-      case AST_FLOAT:
-          return val_float(node->as.FLOAT);
-      case AST_STRING:
-          return val_string(node->as.STRING);
-      case AST_CONS:
-        {
-          Val *car = val_from_ast (CAR (node));
-          ERROR_OUT (car);
-          Val *cdr = val_from_ast (CDR (node));
-          ERROR_OUT (cdr);
+        Val *car = val_from_ast (CAR (node));
+        ERROR_OUT (car);
+        Val *cdr = val_from_ast (CDR (node));
+        ERROR_OUT (cdr);
 
-          return val_cons(car, cdr);
-        }
-      case AST_ERROR:
-          return val_error(node->as.ERROR.MESSAGE);
-      default:
-          return val_error("ERROR: val_from_ast: Unknown ast type");
+        return val_cons (car, cdr);
       }
+    case AST_ERROR:
+      return val_error (node->as.ERROR.MESSAGE);
+    default:
+      return val_error ("ERROR: val_from_ast: Unknown ast type");
+    }
 }
 
 Val *
@@ -44,7 +40,7 @@ val_nil (void)
 {
   if (!GLOBAL_NIL)
     {
-      GLOBAL_NIL = malloc (sizeof (Val));
+      GLOBAL_NIL = calloc (1, sizeof (Val));
       GLOBAL_NIL->type = VALUE_NIL;
     }
   return GLOBAL_NIL;
@@ -53,13 +49,16 @@ val_nil (void)
 Val *
 val_t (void)
 {
-  return val_symbol ("t");
+  return val_symbol ("t", (Meta){
+                              .filename = "#<core>",
+                              .line_number = 0,
+                          });
 }
 
 Val *
 val_integer (long value)
 {
-  Val *node = (Val *)malloc (sizeof (Val));
+  Val *node = (Val *)calloc (1, sizeof (Val));
   node->type = VALUE_INTEGER;
   node->as.INTEGER = value;
   return node;
@@ -68,7 +67,7 @@ val_integer (long value)
 Val *
 val_float (double value)
 {
-  Val *node = (Val *)malloc (sizeof (Val));
+  Val *node = (Val *)calloc (1, sizeof (Val));
   node->type = VALUE_FLOAT;
   node->as.FLOAT = value;
   return node;
@@ -77,7 +76,7 @@ val_float (double value)
 Val *
 val_string (const char *string)
 {
-  Val *node = (Val *)malloc (sizeof (Val));
+  Val *node = (Val *)calloc (1, sizeof (Val));
   node->type = VALUE_STRING;
   node->as.STRING = strdup (string);
   return node;
@@ -86,7 +85,7 @@ val_string (const char *string)
 Val *
 val_cons (Val *car, Val *cdr)
 {
-  Val *n = malloc (sizeof (Val));
+  Val *n = calloc (1, sizeof (Val));
   n->type = VALUE_CONS;
   CAR (n) = car;
   CDR (n) = cdr;
@@ -96,7 +95,7 @@ val_cons (Val *car, Val *cdr)
 Val *
 val_builtin (Builtin_Function builtin_function)
 {
-  Val *node = (Val *)malloc (sizeof (Val));
+  Val *node = (Val *)calloc (1, sizeof (Val));
   node->type = VALUE_BUILTIN;
   node->as.BUILTIN = builtin_function;
   return node;
@@ -105,28 +104,22 @@ val_builtin (Builtin_Function builtin_function)
 Val *
 val_error (const char *message)
 {
-  Val *node = (Val *)malloc (sizeof (Val));
+  Val *node = (Val *)calloc (1, sizeof (Val));
   node->type = VALUE_ERROR;
   node->as.ERROR.MESSAGE = strdup (message);
   return node;
 }
 
 Val *
-val_symbol (const char *symbol)
+val_symbol (const char *symbol, Meta meta)
 {
-  for (int i = 0; i < symbol_count; i++)
-    if (strcmp (symbol_table[i]->as.SYMBOL, symbol) == 0)
-      return symbol_table[i];
+  const char *interned_name = intern_string (symbol);
 
-  if (symbol_count >= MAX_SYMBOLS)
-    return val_error (
-        "FATAL ERROR: can't create more symbols. symbol_table is full");
-
-  Val *sym = malloc (sizeof (Val));
+  Val *sym = calloc (1, sizeof (Val));
   sym->type = VALUE_SYMBOL;
-  sym->as.SYMBOL = strdup (symbol);
+  sym->as.SYMBOL = (char *)interned_name;
+  sym->meta = meta;
 
-  symbol_table[symbol_count++] = sym;
   return sym;
 }
 

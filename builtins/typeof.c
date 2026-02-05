@@ -12,22 +12,22 @@ builtin_typeof (Env *environment, Val *arguments)
   switch (expression->type)
     {
     case VALUE_NIL:
-      return val_symbol ("cons");
+      return val_symbol ("cons", expression->meta);
     case VALUE_SYMBOL:
-      return val_symbol ("symbol");
+      return val_symbol ("symbol", expression->meta);
     case VALUE_INTEGER:
-      return val_symbol ("integer");
+      return val_symbol ("integer", expression->meta);
     case VALUE_FLOAT:
-      return val_symbol ("float");
+      return val_symbol ("float", expression->meta);
     case VALUE_STRING:
-      return val_symbol ("string");
+      return val_symbol ("string", expression->meta);
     case VALUE_CONS:
-      return val_symbol ("cons");
+      return val_symbol ("cons", expression->meta);
     case VALUE_BUILTIN:
     case VALUE_LAMBDA:
-      return val_symbol ("function");
+      return val_symbol ("function", expression->meta);
     case VALUE_MACRO:
-      return val_symbol ("macro");
+      return val_symbol ("macro", expression->meta);
     case VALUE_ERROR:
       return expression;
     case VALUE_END_OF_FILE:

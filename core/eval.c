@@ -1,17 +1,9 @@
 #include "core/eval.h"
 #include "core/value.h"
 
-/*
- * Bind lambda arguments
- *  - call_env  : environment where arguments are evaluated
- *  - frame     : fresh lambda call frame
- */
 static Val *bind_arguments (Env *call_env, Env *frame, Val *parameters,
                             Val *arguments);
 
-/*
- * Bind macro arguments (unevaluated)
- */
 static Val *bind_macro_arguments (Env *frame, Val *parameters, Val *arguments);
 
 Val *
@@ -92,14 +84,12 @@ macro_expand_expression (Env *environment, Val *expr)
   if (macro->type != VALUE_MACRO)
     return expr;
 
-  /* fresh macro expansion frame */
   Env *frame = env_init (macro->as.MACRO.environment);
 
   Val *err
       = bind_macro_arguments (frame, macro->as.MACRO.parameters, CDR (expr));
   ERROR_OUT (err);
 
-  /* evaluate macro body to produce code */
   Val *result = val_nil ();
   for (Val *body = macro->as.MACRO.body; body->type == VALUE_CONS;
        body = CDR (body))
@@ -108,7 +98,7 @@ macro_expand_expression (Env *environment, Val *expr)
       ERROR_OUT (result);
     }
 
-  return result; /* returned unevaluated */
+  return result;
 }
 
 Val *
@@ -119,11 +109,9 @@ apply (Env *call_env, Val *function, Val *arguments)
 
   if (function->type == VALUE_LAMBDA)
     {
-      /* fresh call frame */
       Env *frame = env_init (function->as.LAMBDA.environment);
 
-      Val *err = bind_arguments (call_env, /* arguments evaluated here */
-                                 frame,    /* bindings stored here */
+      Val *err = bind_arguments (call_env, frame,
                                  function->as.LAMBDA.parameters, arguments);
       ERROR_OUT (err);
 
@@ -160,7 +148,7 @@ bind_arguments (Env *call_env, Env *frame, Val *parameters, Val *arguments)
       Val *value = evaluate_expression (call_env, CAR (args));
       ERROR_OUT (value);
 
-      env_set (frame, param, value);
+      env_set (frame, param, value, param->meta);
 
       params = CDR (params);
       args = CDR (args);
@@ -187,7 +175,7 @@ bind_arguments (Env *call_env, Env *frame, Val *parameters, Val *arguments)
           args = CDR (args);
         }
 
-      env_set (frame, params, list);
+      env_set (frame, params, list, params->meta);
       return val_nil ();
     }
 
@@ -215,14 +203,14 @@ bind_macro_arguments (Env *frame, Val *parameters, Val *arguments)
       if (param->type != VALUE_SYMBOL)
         return val_error ("macro parameter must be symbol");
 
-      env_set (frame, param, CAR (args));
+      env_set (frame, param, CAR (args), param->meta);
       params = CDR (params);
       args = CDR (args);
     }
 
   if (params->type == VALUE_SYMBOL)
     {
-      env_set (frame, params, args);
+      env_set (frame, params, args, params->meta);
       return val_nil ();
     }
 

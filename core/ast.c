@@ -1,20 +1,16 @@
 #include "core/ast.h"
+#include "core/intern_string.h"
 
 #include <stdarg.h> // for make_error
 
 static AST *GLOBAL_NIL = NULL;
-
-// symbol table used for interning symbols
-#define MAX_SYMBOLS 4096
-static AST *symbol_table[MAX_SYMBOLS];
-static int symbol_count = 0;
 
 AST *
 ast_nil ()
 {
   if (!GLOBAL_NIL)
     {
-      GLOBAL_NIL = malloc (sizeof (AST));
+      GLOBAL_NIL = calloc (1, sizeof (AST));
       GLOBAL_NIL->type = AST_NIL;
     }
   return GLOBAL_NIL;
@@ -23,7 +19,7 @@ ast_nil ()
 AST *
 ast_integer (long ast)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
+  AST *node = (AST *)calloc (1, sizeof (AST));
   node->type = AST_INTEGER;
   node->as.INTEGER = ast;
   return node;
@@ -32,7 +28,7 @@ ast_integer (long ast)
 AST *
 ast_float (double ast)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
+  AST *node = (AST *)calloc (1, sizeof (AST));
   node->type = AST_FLOAT;
   node->as.FLOAT = ast;
   return node;
@@ -41,7 +37,7 @@ ast_float (double ast)
 AST *
 ast_string (const char *string)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
+  AST *node = (AST *)calloc (1, sizeof (AST));
   node->type = AST_STRING;
   node->as.STRING = strdup (string);
   return node;
@@ -50,7 +46,7 @@ ast_string (const char *string)
 AST *
 ast_cons (AST *car, AST *cdr)
 {
-  AST *n = malloc (sizeof (AST));
+  AST *n = calloc (1, sizeof (AST));
   n->type = AST_CONS;
   CAR (n) = car;
   CDR (n) = cdr;
@@ -60,28 +56,21 @@ ast_cons (AST *car, AST *cdr)
 AST *
 ast_error (const char *message)
 {
-  AST *node = (AST *)malloc (sizeof (AST));
+  AST *node = (AST *)calloc (1, sizeof (AST));
   node->type = AST_ERROR;
   node->as.ERROR.MESSAGE = strdup (message);
   return node;
 }
 
 AST *
-ast_symbol (const char *symbol)
+ast_symbol (const char *symbol, Meta meta)
 {
-  for (int i = 0; i < symbol_count; i++)
-    if (strcmp (symbol_table[i]->as.SYMBOL, symbol) == 0)
-      return symbol_table[i];
+  const char *interned_name = intern_string (symbol);
 
-  if (symbol_count >= MAX_SYMBOLS)
-    return ast_error (
-        "FATAL ERROR: can't create more symbols. symbol_table is full");
-
-  AST *sym = malloc (sizeof (AST));
+  AST *sym = calloc (1, sizeof (AST));
   sym->type = AST_SYMBOL;
-  sym->as.SYMBOL = strdup (symbol);
-
-  symbol_table[symbol_count++] = sym;
+  sym->as.SYMBOL = (char *)interned_name;
+  sym->source_meta = meta;
   return sym;
 }
 

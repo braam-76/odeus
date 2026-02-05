@@ -22,6 +22,8 @@ static AST *parse_quasiquote (Parser *parser, Token *token);
 static AST *parse_unquote (Parser *parser, Token *token);
 static AST *parse_unquote_splicing (Parser *parser, Token *token);
 
+static AST *parse_symbol (Parser *parser, Token *token);
+
 Parser *
 parser_init (Lexer *lexer)
 {
@@ -59,7 +61,12 @@ parser_parse (Parser *parser)
         }
     }
 
-  return ast_cons (ast_symbol ("begin"), begin_head);
+  return ast_cons (ast_symbol ("begin",
+                               (Meta){
+                                   .filename = parser->lexer->filename,
+                                   .line_number = token.line,
+                               }),
+                   begin_head);
 }
 
 static AST *
@@ -162,7 +169,7 @@ parse_literal (Parser *parser, Token *token)
       n = ast_string (token->value);
       break;
     case TOKEN_SYMBOL:
-      n = ast_symbol (token->value);
+      n = parse_symbol (parser, token);
       break;
 
     default:
@@ -175,46 +182,84 @@ parse_literal (Parser *parser, Token *token)
 }
 
 static AST *
+parse_symbol (Parser *parser, Token *token)
+{
+  Meta m = {
+    .filename = parser->lexer->filename,
+    .line_number = token->line,
+  };
+
+  char *colon = strchr (token->value, ':');
+  if (colon)
+    {
+      *colon = 0;
+      char *mod = token->value;
+      char *sym = colon + 1;
+      return ast_cons (ast_symbol ("get-from-module", m),
+                       ast_cons (ast_symbol (mod, m),
+                                 ast_cons (ast_symbol (sym, m), ast_nil ())));
+    }
+  else
+    return ast_symbol (token->value, m);
+}
+
+static AST *
 parse_quote (Parser *parser, Token *token)
 {
+  Meta m = {
+    .filename = parser->lexer->filename,
+    .line_number = token->line,
+  };
   // consume '
   *token = lexer_next_token (parser->lexer);
 
   AST *expr = parse_expr (parser, token);
 
-  return ast_cons (ast_symbol ("quote"), ast_cons (expr, ast_nil ()));
+  return ast_cons (ast_symbol ("quote", m), ast_cons (expr, ast_nil ()));
 }
 
 static AST *
 parse_quasiquote (Parser *parser, Token *token)
 {
+  Meta m = {
+    .filename = parser->lexer->filename,
+    .line_number = token->line,
+  };
   // consume `
   *token = lexer_next_token (parser->lexer);
 
   AST *expr = parse_expr (parser, token);
 
-  return ast_cons (ast_symbol ("quasiquote"), ast_cons (expr, ast_nil ()));
+  return ast_cons (ast_symbol ("quasiquote", m), ast_cons (expr, ast_nil ()));
 }
 
 static AST *
 parse_unquote (Parser *parser, Token *token)
 {
+  Meta m = {
+    .filename = parser->lexer->filename,
+    .line_number = token->line,
+  };
   // consume ,
   *token = lexer_next_token (parser->lexer);
 
   AST *expr = parse_expr (parser, token);
 
-  return ast_cons (ast_symbol ("unquote"), ast_cons (expr, ast_nil ()));
+  return ast_cons (ast_symbol ("unquote", m), ast_cons (expr, ast_nil ()));
 }
 
 static AST *
 parse_unquote_splicing (Parser *parser, Token *token)
 {
+  Meta m = {
+    .filename = parser->lexer->filename,
+    .line_number = token->line,
+  };
   // consume ,@
   *token = lexer_next_token (parser->lexer);
 
   AST *expr = parse_expr (parser, token);
 
-  return ast_cons (ast_symbol ("unquote-splicing"),
+  return ast_cons (ast_symbol ("unquote-splicing", m),
                    ast_cons (expr, ast_nil ()));
 }

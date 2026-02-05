@@ -7,6 +7,7 @@ add_library(core STATIC
     quasiquote.c
     value.c
     value_to_string.c
+    intern_string.c
   )
 
 target_include_directories(core PUBLIC

@@ -43,14 +43,14 @@ builtin_defmacro (Env *environment, Val *arguments)
   Val *params = CDR (to_be_defined);
 
   // Initialize with nil first
-  env_set (environment, func_name, val_nil ());
+  env_set (environment, func_name, val_nil (), func_name->meta);
 
   Val *macro_args = val_cons (params, CDR (arguments));
   Val *macro = builtin_macro (environment, macro_args);
   ERROR_OUT (macro);
 
   // Update the environment with the macro
-  env_update (environment, func_name, macro);
+  env_update (environment, func_name, macro, func_name->meta);
 
   return func_name;
 }

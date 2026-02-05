@@ -9,13 +9,19 @@
 #include "builtins/strings.h"
 #include "builtins/typeof.h"
 
-#define REGISTER(name, fn) env_set (environment, val_symbol(name), val_builtin (fn))
+// environment.h
+static const Meta META_BUILTIN = { .filename = "<builtin>", .line_number = 0 };
+#define REGISTER(name, fn)                                                    \
+  env_set (environment, val_symbol (name, META_BUILTIN), val_builtin (fn),    \
+           META_BUILTIN)
 
 void
 set_builtins (Env *environment)
 {
-  env_set (environment, val_symbol("t"), val_t ());
-  env_set (environment, val_symbol("nil"), val_nil ());
+  env_set (environment, val_symbol ("t", META_BUILTIN), val_t (),
+           META_BUILTIN);
+  env_set (environment, val_symbol ("nil", META_BUILTIN), val_nil (),
+           META_BUILTIN);
 
   REGISTER ("begin", builtin_begin);
   REGISTER ("eval", builtin_eval);

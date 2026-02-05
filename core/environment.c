@@ -11,38 +11,41 @@ env_init (Env *parent)
 }
 
 void
-env_set (Env *environment, Val *symbol, Val *value)
+env_set (Env *environment, Val *symbol, Val *value, Meta meta)
 {
   for (int i = 0; i < environment->bindings_size; i++)
     if (environment->bindings[i].key == symbol)
       {
         environment->bindings[i].value = value;
+        environment->bindings[i].meta = meta;
         return;
       }
 
   environment->bindings[environment->bindings_size].key = symbol;
   environment->bindings[environment->bindings_size].value = value;
+  environment->bindings[environment->bindings_size].meta = meta;
   environment->bindings_size++;
 }
 
 void
-env_update (Env *environment, Val *symbol, Val *value)
+env_update (Env *environment, Val *symbol, Val *value, Meta meta)
 {
   for (int i = 0; i < environment->bindings_size; i++)
     if (environment->bindings[i].key == symbol)
       {
         environment->bindings[i].value = value;
+        environment->bindings[i].meta = meta;
         return;
       }
 
-  env_set (environment, symbol, value);
+  env_set (environment, symbol, value, meta);
 }
 
 Val *
 env_get (Env *environment, Val *symbol)
 {
   for (int i = 0; i < environment->bindings_size; i++)
-    if (environment->bindings[i].key == symbol)
+    if (environment->bindings[i].key->as.SYMBOL == symbol->as.SYMBOL)
       return environment->bindings[i].value;
 
   if (environment->parent == NULL)

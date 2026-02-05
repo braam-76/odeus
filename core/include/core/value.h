@@ -9,7 +9,7 @@
 
 #include "core/ast.h"
 #include "core/environment.h"
-
+#include "core/meta.h"
 
 typedef enum
 {
@@ -68,6 +68,8 @@ struct Value
       Val *body;
     } MACRO;
   } as;
+
+  Meta meta;
 };
 
 #define CAR(cons) ((cons)->as.CONS.CAR)
@@ -85,7 +87,7 @@ Val *val_from_ast (AST *node);
 Val *val_integer (long value);
 Val *val_float (double value);
 Val *val_string (const char *string);
-Val *val_symbol (const char *symbol);
+Val *val_symbol (const char *symbol, Meta meta);
 Val *val_cons (Val *car, Val *cdr);
 Val *val_builtin (Builtin_Function builtin_function);
 

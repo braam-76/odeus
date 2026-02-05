@@ -1,6 +1,7 @@
 #ifndef AST_H_
 #define AST_H_
 
+#include "core/meta.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -42,6 +43,8 @@ struct ASTNode
       char *MESSAGE;
     } ERROR;
   } as;
+
+  Meta source_meta;
 };
 
 #define CAR(cons) ((cons)->as.CONS.CAR)
@@ -51,7 +54,7 @@ AST *ast_nil ();
 AST *ast_integer (long v);
 AST *ast_float (double v);
 AST *ast_string (const char *string);
-AST *ast_symbol (const char *symbol);
+AST* ast_symbol (const char *symbol, Meta meta);
 AST *ast_cons (AST *car, AST *cdr);
 
 // special AST node builder, only for error messages

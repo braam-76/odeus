@@ -6,16 +6,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "core/meta.h"
+
 #define ENV_CAPACITY 4096
 
 // forward declarations to resolve cycling includes
 typedef struct Value Val;
 Val *val_error (const char *message);
 
-typedef struct Binding
+typedef struct
 {
   Val *key;
+
   Val *value;
+  Meta meta;
 } Binding;
 
 typedef struct Environment
@@ -27,8 +31,8 @@ typedef struct Environment
 
 Env *env_init (Env *parent);
 
-void env_set (Env *env, Val *symbol, Val *value);
+void env_set (Env *env, Val *symbol, Val *value, Meta meta);
 Val *env_get (Env *env, Val *symbol);
-void env_update (Env *env, Val *symbol, Val *value);
+void env_update (Env *env, Val *symbol, Val *value, Meta meta);
 
 #endif // ENVIRONMENT_H_
