@@ -2,9 +2,9 @@
 #include "core/eval.h"
 #include "core/intern_string.h"
 
-static Val *GLOBAL_NIL = NULL;
+static Value *GLOBAL_NIL = NULL;
 
-Val *
+Value *
 val_from_ast (AST *node)
 {
   switch (node->type)
@@ -21,9 +21,9 @@ val_from_ast (AST *node)
       return val_string (node->as.STRING);
     case AST_CONS:
       {
-        Val *car = val_from_ast (CAR (node));
+        Value *car = val_from_ast (CAR (node));
         ERROR_OUT (car);
-        Val *cdr = val_from_ast (CDR (node));
+        Value *cdr = val_from_ast (CDR (node));
         ERROR_OUT (cdr);
 
         return val_cons (car, cdr);
@@ -35,18 +35,18 @@ val_from_ast (AST *node)
     }
 }
 
-Val *
+Value *
 val_nil (void)
 {
   if (!GLOBAL_NIL)
     {
-      GLOBAL_NIL = calloc (1, sizeof (Val));
+      GLOBAL_NIL = calloc (1, sizeof (Value));
       GLOBAL_NIL->type = VALUE_NIL;
     }
   return GLOBAL_NIL;
 }
 
-Val *
+Value *
 val_t (void)
 {
   return val_symbol ("t", (Meta){
@@ -55,67 +55,67 @@ val_t (void)
                           });
 }
 
-Val *
+Value *
 val_integer (long value)
 {
-  Val *node = (Val *)calloc (1, sizeof (Val));
+  Value *node = (Value *)calloc (1, sizeof (Value));
   node->type = VALUE_INTEGER;
   node->as.INTEGER = value;
   return node;
 }
 
-Val *
+Value *
 val_float (double value)
 {
-  Val *node = (Val *)calloc (1, sizeof (Val));
+  Value *node = (Value *)calloc (1, sizeof (Value));
   node->type = VALUE_FLOAT;
   node->as.FLOAT = value;
   return node;
 }
 
-Val *
+Value *
 val_string (const char *string)
 {
-  Val *node = (Val *)calloc (1, sizeof (Val));
+  Value *node = (Value *)calloc (1, sizeof (Value));
   node->type = VALUE_STRING;
   node->as.STRING = strdup (string);
   return node;
 }
 
-Val *
-val_cons (Val *car, Val *cdr)
+Value *
+val_cons (Value *car, Value *cdr)
 {
-  Val *n = calloc (1, sizeof (Val));
+  Value *n = calloc (1, sizeof (Value));
   n->type = VALUE_CONS;
   CAR (n) = car;
   CDR (n) = cdr;
   return n;
 }
 
-Val *
+Value *
 val_builtin (Builtin_Function builtin_function)
 {
-  Val *node = (Val *)calloc (1, sizeof (Val));
+  Value *node = (Value *)calloc (1, sizeof (Value));
   node->type = VALUE_BUILTIN;
   node->as.BUILTIN = builtin_function;
   return node;
 }
 
-Val *
+Value *
 val_error (const char *message)
 {
-  Val *node = (Val *)calloc (1, sizeof (Val));
+  Value *node = (Value *)calloc (1, sizeof (Value));
   node->type = VALUE_ERROR;
   node->as.ERROR.MESSAGE = strdup (message);
   return node;
 }
 
-Val *
+Value *
 val_symbol (const char *symbol, Meta meta)
 {
   const char *interned_name = intern_string (symbol);
 
-  Val *sym = calloc (1, sizeof (Val));
+  Value *sym = calloc (1, sizeof (Value));
   sym->type = VALUE_SYMBOL;
   sym->as.SYMBOL = (char *)interned_name;
   sym->meta = meta;
@@ -124,7 +124,7 @@ val_symbol (const char *symbol, Meta meta)
 }
 
 void
-value_print (Val *node)
+value_print (Value *node)
 {
   if (!node)
     {
@@ -190,7 +190,7 @@ value_print (Val *node)
     case VALUE_CONS:
       {
         printf ("(");
-        Val *cur = node;
+        Value *cur = node;
 
         while (cur->type == VALUE_CONS)
           {

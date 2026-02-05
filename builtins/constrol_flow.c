@@ -3,28 +3,28 @@
 #include "core/value.h"
 #include "core/eval.h"
 
-Val *
-builtin_eq (Env *environment, Val *arguments)
+Value *
+builtin_eq (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 2)
     return val_error ("ERROR: eq expects exactly two arguments");
 
-  Val *first_value = evaluate_expression (environment, CAR (arguments));
+  Value *first_value = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (first_value);
-  Val *second_value = evaluate_expression (environment, CADR (arguments));
+  Value *second_value = evaluate_expression (environment, CADR (arguments));
   ERROR_OUT (second_value);
 
   return (first_value == second_value) ? val_t () : val_nil ();
 }
 
-Val *
-builtin_if (Env *environment, Val *args)
+Value *
+builtin_if (Environment *environment, Value *args)
 {
   if (arguments_length (args) != 3)
     return val_error (
         "if: expects exactly 3 arguments (if [condition] [then] [else])");
 
-  Val *cond = evaluate_expression (environment, CAR (args));
+  Value *cond = evaluate_expression (environment, CAR (args));
   ERROR_OUT (cond);
 
   if (!IS_NULL (cond))
@@ -33,15 +33,15 @@ builtin_if (Env *environment, Val *args)
     return evaluate_expression (environment, CADR (CDR (args)));
 }
 
-Val *
-builtin_and (Env *environment, Val *arguments)
+Value *
+builtin_and (Environment *environment, Value *arguments)
 {
   if (arguments_length(arguments) <= 0)
     return val_error ("ERROR: and expects at levalue 1 argument\n");
 
   while (arguments->type == VALUE_CONS)
     {
-      Val *current_condition
+      Value *current_condition
           = evaluate_expression (environment, CAR (arguments));
 
       if (IS_NULL (current_condition))
@@ -53,15 +53,15 @@ builtin_and (Env *environment, Val *arguments)
   return val_t ();
 }
 
-Val *
-builtin_or (Env *environment, Val *arguments)
+Value *
+builtin_or (Environment *environment, Value *arguments)
 {
   if (arguments_length(arguments) <= 0)
     return val_error ("ERROR: or expects at levalue 1 argument\n");
 
   while (arguments->type == VALUE_CONS)
     {
-      Val *current_condition
+      Value *current_condition
           = evaluate_expression (environment, CAR (arguments));
 
       if (!IS_NULL (current_condition))

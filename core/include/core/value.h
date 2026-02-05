@@ -28,8 +28,9 @@ typedef enum
   VALUE_END_OF_FILE,
 } ValueType;
 
-typedef struct Value Val;
-typedef Val *(*Builtin_Function) (Env *environment, Val *arguments);
+typedef struct Value Value;
+typedef Value *(*Builtin_Function) (Environment *environment,
+                                    Value *arguments);
 
 struct Value
 {
@@ -43,8 +44,8 @@ struct Value
 
     struct
     {
-      Val *CAR;
-      Val *CDR;
+      Value *CAR;
+      Value *CDR;
     } CONS;
 
     struct
@@ -56,16 +57,16 @@ struct Value
     Builtin_Function BUILTIN;
     struct
     {
-      Env *environment;
-      Val *parameters;
-      Val *body;
+      Environment *environment;
+      Value *parameters;
+      Value *body;
     } LAMBDA;
 
     struct
     {
-      Env *environment;
-      Val *parameters;
-      Val *body;
+      Environment *environment;
+      Value *parameters;
+      Value *body;
     } MACRO;
   } as;
 
@@ -82,22 +83,22 @@ struct Value
 
 #define IS_NULL(a) ((a) == NULL || (a)->type == VALUE_NIL)
 
-Val *val_from_ast (AST *node);
+Value *val_from_ast (AST *node);
 
-Val *val_integer (long value);
-Val *val_float (double value);
-Val *val_string (const char *string);
-Val *val_symbol (const char *symbol, Meta meta);
-Val *val_cons (Val *car, Val *cdr);
-Val *val_builtin (Builtin_Function builtin_function);
+Value *val_integer (long value);
+Value *val_float (double value);
+Value *val_string (const char *string);
+Value *val_symbol (const char *symbol, Meta meta);
+Value *val_cons (Value *car, Value *cdr);
+Value *val_builtin (Builtin_Function builtin_function);
 
 // special VALUE node builder, only for error messages
-Val *val_error (const char *message);
+Value *val_error (const char *message);
 
-Val *val_nil (void);
-Val *val_t (void);
+Value *val_nil (void);
+Value *val_t (void);
 
-char *value_to_string (Val *node);
-void value_print (Val *node);
+char *value_to_string (Value *node);
+void value_print (Value *node);
 
 #endif // VALUE_H_

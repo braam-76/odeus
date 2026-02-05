@@ -2,13 +2,13 @@
 #include "core/value.h"
 #include "core/eval.h"
 
-Val *
-builtin_typeof (Env *environment, Val *arguments)
+Value *
+builtin_typeof (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("typeof: expects exactly one argument\n");
 
-  Val *expression = evaluate_expression (environment, CAR (arguments));
+  Value *expression = evaluate_expression (environment, CAR (arguments));
   switch (expression->type)
     {
     case VALUE_NIL:

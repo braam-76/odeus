@@ -1,17 +1,17 @@
 #include "core/environment.h"
 #include "core/value.h"
 
-Env *
-env_init (Env *parent)
+Environment *
+env_init (Environment *parent)
 {
-  Env *env = malloc (sizeof (Env));
+  Environment *env = malloc (sizeof (Environment));
   env->parent = parent;
   env->bindings_size = 0;
   return env;
 }
 
 void
-env_set (Env *environment, Val *symbol, Val *value, Meta meta)
+env_set (Environment *environment, Value *symbol, Value *value, Meta meta)
 {
   for (int i = 0; i < environment->bindings_size; i++)
     if (environment->bindings[i].key == symbol)
@@ -28,7 +28,7 @@ env_set (Env *environment, Val *symbol, Val *value, Meta meta)
 }
 
 void
-env_update (Env *environment, Val *symbol, Val *value, Meta meta)
+env_update (Environment *environment, Value *symbol, Value *value, Meta meta)
 {
   for (int i = 0; i < environment->bindings_size; i++)
     if (environment->bindings[i].key == symbol)
@@ -41,8 +41,8 @@ env_update (Env *environment, Val *symbol, Val *value, Meta meta)
   env_set (environment, symbol, value, meta);
 }
 
-Val *
-env_get (Env *environment, Val *symbol)
+Value *
+env_get (Environment *environment, Value *symbol)
 {
   for (int i = 0; i < environment->bindings_size; i++)
     if (environment->bindings[i].key->as.SYMBOL == symbol->as.SYMBOL)
@@ -51,9 +51,24 @@ env_get (Env *environment, Val *symbol)
   if (environment->parent == NULL)
     {
       char buf[256];
-      snprintf (buf, sizeof (buf), "Unbound symbol: %s", symbol->as.SYMBOL); // need to somehow provide symbol as character
+      snprintf (
+          buf, sizeof (buf), "Unbound symbol: %s",
+          symbol->as.SYMBOL); // need to somehow provide symbol as character
       return val_error (buf);
     }
 
   return env_get (environment->parent, symbol);
+}
+
+Binding *
+env_get_binding (Environment *environment, Value *symbol)
+{
+  for (int i = 0; i < environment->bindings_size; i++)
+    if (environment->bindings[i].key->as.SYMBOL == symbol->as.SYMBOL)
+      return &environment->bindings[i];
+
+  if (environment->parent == NULL)
+    return NULL;
+
+  return env_get_binding (environment->parent, symbol);
 }

@@ -5,28 +5,28 @@ static const Meta QQ_EXPAND_META
     = { .filename = "<quasiquote-expanded>", .line_number = 0 };
 
 static int
-is_symbol_named (Val *node, const char *name)
+is_symbol_named (Value *node, const char *name)
 {
   return node->type == VALUE_SYMBOL && strcmp (node->as.SYMBOL, name) == 0;
 }
 
 static int
-is_unquote (Val *node)
+is_unquote (Value *node)
 {
   return node->type == VALUE_CONS && is_symbol_named (CAR (node), "unquote")
          && !IS_NULL (CDR (node)) && IS_NULL (CDDR (node));
 }
 
 static int
-is_unquote_splicing (Val *node)
+is_unquote_splicing (Value *node)
 {
   return node->type == VALUE_CONS
          && is_symbol_named (CAR (node), "unquote-splicing")
          && !IS_NULL (CDR (node)) && IS_NULL (CDDR (node));
 }
 
-Val *
-expand_quasiquote (Val *expr, int depth)
+Value *
+expand_quasiquote (Value *expr, int depth)
 {
   if (expr->type != VALUE_CONS)
     {
@@ -51,7 +51,7 @@ expand_quasiquote (Val *expr, int depth)
     }
 
   // Handle ( ,@splice . rest )
-  Val *head = CAR (expr);
+  Value *head = CAR (expr);
   if (is_unquote_splicing (head) && depth == 1)
     {
       // This turns `(,@a . b) into (append a `b)

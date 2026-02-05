@@ -7,25 +7,25 @@
 #include "core/eval.h"
 
 // Essentials
-Val *builtin_add (Env *environment, Val *arguments);
-Val *builtin_sub (Env *environment, Val *arguments);
-Val *builtin_mul (Env *environment, Val *arguments);
-Val *builtin_div (Env *environment, Val *arguments);
+Value *builtin_add (Environment *environment, Value *arguments);
+Value *builtin_sub (Environment *environment, Value *arguments);
+Value *builtin_mul (Environment *environment, Value *arguments);
+Value *builtin_div (Environment *environment, Value *arguments);
 
 // More math
-Val *builtin_mod (Env *environment, Val *arguments);
-Val *builtin_expt (Env *environment, Val *arguments);
-Val *builtin_sqrt (Env *environment, Val *arguments);
-Val *builtin_abs (Env *environment, Val *arguments);
-Val *builtin_floor (Env *environment, Val *arguments);
-Val *builtin_ceil (Env *environment, Val *arguments);
-Val *builtin_round (Env *environment, Val *arguments);
+Value *builtin_mod (Environment *environment, Value *arguments);
+Value *builtin_expt (Environment *environment, Value *arguments);
+Value *builtin_sqrt (Environment *environment, Value *arguments);
+Value *builtin_abs (Environment *environment, Value *arguments);
+Value *builtin_floor (Environment *environment, Value *arguments);
+Value *builtin_ceil (Environment *environment, Value *arguments);
+Value *builtin_round (Environment *environment, Value *arguments);
 
 // Numeric comparison
-Val *builtin_num_eq (Env *environment, Val *arguments);
-Val *builtin_num_gt (Env *environment, Val *arguments);
-Val *builtin_num_lt (Env *environment, Val *arguments);
-Val *builtin_num_gte (Env *environment, Val *arguments);
-Val *builtin_num_lte (Env *environment, Val *arguments);
+Value *builtin_num_eq (Environment *environment, Value *arguments);
+Value *builtin_num_gt (Environment *environment, Value *arguments);
+Value *builtin_num_lt (Environment *environment, Value *arguments);
+Value *builtin_num_gte (Environment *environment, Value *arguments);
+Value *builtin_num_lte (Environment *environment, Value *arguments);
 
 #endif // MATH_H_

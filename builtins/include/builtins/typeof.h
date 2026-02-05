@@ -4,6 +4,6 @@
 #include "core/value.h"
 #include "core/eval.h"
 
-Val *builtin_typeof (Env *environment, Val *arguments);
+Value *builtin_typeof (Environment *environment, Value *arguments);
 
 #endif // TYPE_OF_H_

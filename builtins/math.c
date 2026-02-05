@@ -5,8 +5,8 @@
 #include "core/value.h"
 #include "core/eval.h"
 
-static Val *
-get_numeric_value (Val *node, double *out, int *is_float)
+static Value *
+get_numeric_value (Value *node, double *out, int *is_float)
 {
   *is_float = 0;
 
@@ -27,8 +27,8 @@ get_numeric_value (Val *node, double *out, int *is_float)
     }
 }
 
-Val *
-builtin_add (Env *env, Val *args)
+Value *
+builtin_add (Environment *env, Value *args)
 {
   double result = 0.0;
   int has_float = 0;
@@ -36,11 +36,11 @@ builtin_add (Env *env, Val *args)
   while (args->type == VALUE_CONS)
     {
       int is_float = 0;
-      Val *val_node = evaluate_expression (env, CAR (args));
+      Value *val_node = evaluate_expression (env, CAR (args));
       ERROR_OUT (val_node);
 
       double value;
-      Val *err = get_numeric_value (val_node, &value, &is_float);
+      Value *err = get_numeric_value (val_node, &value, &is_float);
       ERROR_OUT (err);
 
       if (is_float)
@@ -53,18 +53,18 @@ builtin_add (Env *env, Val *args)
   return has_float ? val_float (result) : val_integer ((long)result);
 }
 
-Val *
-builtin_sub (Env *env, Val *args)
+Value *
+builtin_sub (Environment *env, Value *args)
 {
   if (IS_NULL (args))
     return val_error ("- expects at levalue one argument");
 
   int is_float = 0;
-  Val *first_node = evaluate_expression (env, CAR (args));
+  Value *first_node = evaluate_expression (env, CAR (args));
   ERROR_OUT (first_node);
 
   double result;
-  Val *err = get_numeric_value (first_node, &result, &is_float);
+  Value *err = get_numeric_value (first_node, &result, &is_float);
   ERROR_OUT (err);
 
   args = CDR (args);
@@ -77,7 +77,7 @@ builtin_sub (Env *env, Val *args)
   while (args->type == VALUE_CONS)
     {
       int arg_float = 0;
-      Val *val_node = evaluate_expression (env, CAR (args));
+      Value *val_node = evaluate_expression (env, CAR (args));
       ERROR_OUT (val_node);
 
       double value;
@@ -94,8 +94,8 @@ builtin_sub (Env *env, Val *args)
   return has_float ? val_float (result) : val_integer ((long)result);
 }
 
-Val *
-builtin_mul (Env *env, Val *args)
+Value *
+builtin_mul (Environment *env, Value *args)
 {
   double result = 1.0;
   int has_float = 0;
@@ -103,11 +103,11 @@ builtin_mul (Env *env, Val *args)
   while (args->type == VALUE_CONS)
     {
       int is_float = 0;
-      Val *val_node = evaluate_expression (env, CAR (args));
+      Value *val_node = evaluate_expression (env, CAR (args));
       ERROR_OUT (val_node);
 
       double value;
-      Val *err = get_numeric_value (val_node, &value, &is_float);
+      Value *err = get_numeric_value (val_node, &value, &is_float);
       ERROR_OUT (err);
 
       if (is_float)
@@ -120,18 +120,18 @@ builtin_mul (Env *env, Val *args)
   return has_float ? val_float (result) : val_integer ((long)result);
 }
 
-Val *
-builtin_div (Env *env, Val *args)
+Value *
+builtin_div (Environment *env, Value *args)
 {
   if (IS_NULL (args))
     return val_error ("/ expects at levalue one argument");
 
   int is_float = 0;
-  Val *first_node = evaluate_expression (env, CAR (args));
+  Value *first_node = evaluate_expression (env, CAR (args));
   ERROR_OUT (first_node);
 
   double result;
-  Val *err = get_numeric_value (first_node, &result, &is_float);
+  Value *err = get_numeric_value (first_node, &result, &is_float);
   ERROR_OUT (err);
 
   args = CDR (args);
@@ -142,7 +142,7 @@ builtin_div (Env *env, Val *args)
   while (args->type == VALUE_CONS)
     {
       int arg_float = 0;
-      Val *val_node = evaluate_expression (env, CAR (args));
+      Value *val_node = evaluate_expression (env, CAR (args));
       ERROR_OUT (val_node);
 
       double divisor;
@@ -159,8 +159,8 @@ builtin_div (Env *env, Val *args)
   return val_float (result);
 }
 
-Val *
-builtin_mod (Env *env, Val *args)
+Value *
+builtin_mod (Environment *env, Value *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("mod expects exactly two arguments");
@@ -168,12 +168,12 @@ builtin_mod (Env *env, Val *args)
   int is_float_a = 0, is_float_b = 0;
   double a, b;
 
-  Val *node_a = evaluate_expression (env, CAR (args));
+  Value *node_a = evaluate_expression (env, CAR (args));
   ERROR_OUT (node_a);
-  Val *err = get_numeric_value (node_a, &a, &is_float_a);
+  Value *err = get_numeric_value (node_a, &a, &is_float_a);
   ERROR_OUT (err);
 
-  Val *node_b = evaluate_expression (env, CADR (args));
+  Value *node_b = evaluate_expression (env, CADR (args));
   ERROR_OUT (node_b);
   err = get_numeric_value (node_b, &b, &is_float_b);
   ERROR_OUT (err);
@@ -184,8 +184,8 @@ builtin_mod (Env *env, Val *args)
   return val_integer ((long)fmod (a, b));
 }
 
-Val *
-builtin_expt (Env *env, Val *args)
+Value *
+builtin_expt (Environment *env, Value *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("expt expects exactly two arguments");
@@ -193,12 +193,12 @@ builtin_expt (Env *env, Val *args)
   int is_float_a = 0, is_float_b = 0;
   double a, b;
 
-  Val *node_a = evaluate_expression (env, CAR (args));
+  Value *node_a = evaluate_expression (env, CAR (args));
   ERROR_OUT (node_a);
-  Val *err = get_numeric_value (node_a, &a, &is_float_a);
+  Value *err = get_numeric_value (node_a, &a, &is_float_a);
   ERROR_OUT (err);
 
-  Val *node_b = evaluate_expression (env, CADR (args));
+  Value *node_b = evaluate_expression (env, CADR (args));
   ERROR_OUT (node_b);
   err = get_numeric_value (node_b, &b, &is_float_b);
   ERROR_OUT (err);
@@ -211,35 +211,35 @@ builtin_expt (Env *env, Val *args)
     return val_float (result);
 }
 
-Val *
-builtin_abs (Env *env, Val *args)
+Value *
+builtin_abs (Environment *env, Value *args)
 {
   if (arguments_length (args) != 1)
     return val_error ("abs expects exactly one argument");
 
   int is_float = 0;
   double a;
-  Val *node = evaluate_expression (env, CAR (args));
+  Value *node = evaluate_expression (env, CAR (args));
   ERROR_OUT (node);
 
-  Val *err = get_numeric_value (node, &a, &is_float);
+  Value *err = get_numeric_value (node, &a, &is_float);
   ERROR_OUT (err);
 
   return is_float ? val_float (fabs (a)) : val_integer ((long)fabs (a));
 }
 
-Val *
-builtin_sqrt (Env *env, Val *args)
+Value *
+builtin_sqrt (Environment *env, Value *args)
 {
   if (arguments_length (args) != 1)
     return val_error ("sqrt expects exactly one argument");
 
   int is_float = 0;
   double a;
-  Val *node = evaluate_expression (env, CAR (args));
+  Value *node = evaluate_expression (env, CAR (args));
   ERROR_OUT (node);
 
-  Val *err = get_numeric_value (node, &a, &is_float);
+  Value *err = get_numeric_value (node, &a, &is_float);
   ERROR_OUT (err);
 
   if (a < 0.0)
@@ -248,8 +248,8 @@ builtin_sqrt (Env *env, Val *args)
   return val_float (sqrt (a));
 }
 
-Val *
-builtin_num_eq (Env *env, Val *args)
+Value *
+builtin_num_eq (Environment *env, Value *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("= expects exactly two arguments");
@@ -257,12 +257,12 @@ builtin_num_eq (Env *env, Val *args)
   int unused1 = 0, unused2 = 0;
   double a, b;
 
-  Val *node_a = evaluate_expression (env, CAR (args));
+  Value *node_a = evaluate_expression (env, CAR (args));
   ERROR_OUT (node_a);
-  Val *err = get_numeric_value (node_a, &a, &unused1);
+  Value *err = get_numeric_value (node_a, &a, &unused1);
   ERROR_OUT (err);
 
-  Val *node_b = evaluate_expression (env, CADR (args));
+  Value *node_b = evaluate_expression (env, CADR (args));
   ERROR_OUT (node_b);
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
@@ -270,8 +270,8 @@ builtin_num_eq (Env *env, Val *args)
   return (a == b) ? val_t () : val_nil ();
 }
 
-Val *
-builtin_num_gt (Env *env, Val *args)
+Value *
+builtin_num_gt (Environment *env, Value *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("> expects exactly two arguments");
@@ -279,12 +279,12 @@ builtin_num_gt (Env *env, Val *args)
   int unused1 = 0, unused2 = 0;
   double a, b;
 
-  Val *node_a = evaluate_expression (env, CAR (args));
+  Value *node_a = evaluate_expression (env, CAR (args));
   ERROR_OUT (node_a);
-  Val *err = get_numeric_value (node_a, &a, &unused1);
+  Value *err = get_numeric_value (node_a, &a, &unused1);
   ERROR_OUT (err);
 
-  Val *node_b = evaluate_expression (env, CADR (args));
+  Value *node_b = evaluate_expression (env, CADR (args));
   ERROR_OUT (node_b);
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
@@ -292,8 +292,8 @@ builtin_num_gt (Env *env, Val *args)
   return (a > b) ? val_t () : val_nil ();
 }
 
-Val *
-builtin_num_lt (Env *env, Val *args)
+Value *
+builtin_num_lt (Environment *env, Value *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("< expects exactly two arguments");
@@ -301,12 +301,12 @@ builtin_num_lt (Env *env, Val *args)
   int unused1 = 0, unused2 = 0;
   double a, b;
 
-  Val *node_a = evaluate_expression (env, CAR (args));
+  Value *node_a = evaluate_expression (env, CAR (args));
   ERROR_OUT (node_a);
-  Val *err = get_numeric_value (node_a, &a, &unused1);
+  Value *err = get_numeric_value (node_a, &a, &unused1);
   ERROR_OUT (err);
 
-  Val *node_b = evaluate_expression (env, CADR (args));
+  Value *node_b = evaluate_expression (env, CADR (args));
   ERROR_OUT (node_b);
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
@@ -314,8 +314,8 @@ builtin_num_lt (Env *env, Val *args)
   return (a < b) ? val_t () : val_nil ();
 }
 
-Val *
-builtin_num_gte (Env *env, Val *args)
+Value *
+builtin_num_gte (Environment *env, Value *args)
 {
   if (arguments_length (args) != 2)
     return val_error (">= expects exactly two arguments");
@@ -323,12 +323,12 @@ builtin_num_gte (Env *env, Val *args)
   int unused1 = 0, unused2 = 0;
   double a, b;
 
-  Val *node_a = evaluate_expression (env, CAR (args));
+  Value *node_a = evaluate_expression (env, CAR (args));
   ERROR_OUT (node_a);
-  Val *err = get_numeric_value (node_a, &a, &unused1);
+  Value *err = get_numeric_value (node_a, &a, &unused1);
   ERROR_OUT (err);
 
-  Val *node_b = evaluate_expression (env, CADR (args));
+  Value *node_b = evaluate_expression (env, CADR (args));
   ERROR_OUT (node_b);
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
@@ -336,8 +336,8 @@ builtin_num_gte (Env *env, Val *args)
   return (a >= b) ? val_t () : val_nil ();
 }
 
-Val *
-builtin_num_lte (Env *env, Val *args)
+Value *
+builtin_num_lte (Environment *env, Value *args)
 {
   if (arguments_length (args) != 2)
     return val_error ("<= expects exactly two arguments");
@@ -345,12 +345,12 @@ builtin_num_lte (Env *env, Val *args)
   int unused1 = 0, unused2 = 0;
   double a, b;
 
-  Val *node_a = evaluate_expression (env, CAR (args));
+  Value *node_a = evaluate_expression (env, CAR (args));
   ERROR_OUT (node_a);
-  Val *err = get_numeric_value (node_a, &a, &unused1);
+  Value *err = get_numeric_value (node_a, &a, &unused1);
   ERROR_OUT (err);
 
-  Val *node_b = evaluate_expression (env, CADR (args));
+  Value *node_b = evaluate_expression (env, CADR (args));
   ERROR_OUT (node_b);
   err = get_numeric_value (node_b, &b, &unused2);
   ERROR_OUT (err);
@@ -358,52 +358,52 @@ builtin_num_lte (Env *env, Val *args)
   return (a <= b) ? val_t () : val_nil ();
 }
 
-Val *
-builtin_floor (Env *environment, Val *arguments)
+Value *
+builtin_floor (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("floor: expects exactly one arguments");
 
-  Val *first_node = evaluate_expression (environment, CAR (arguments));
+  Value *first_node = evaluate_expression (environment, CAR (arguments));
 
   double a;
   int is_float;
 
-  Val *err = get_numeric_value (first_node, &a, &is_float);
+  Value *err = get_numeric_value (first_node, &a, &is_float);
   ERROR_OUT (err);
 
   return val_integer (floor (a));
 }
 
-Val *
-builtin_ceil (Env *environment, Val *arguments)
+Value *
+builtin_ceil (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("ceil: expects exactly one arguments");
 
-  Val *first_node = evaluate_expression (environment, CAR (arguments));
+  Value *first_node = evaluate_expression (environment, CAR (arguments));
 
   double a;
   int is_float;
 
-  Val *err = get_numeric_value (first_node, &a, &is_float);
+  Value *err = get_numeric_value (first_node, &a, &is_float);
   ERROR_OUT (err);
 
   return val_integer (ceil (a));
 }
 
-Val *
-builtin_round (Env *environment, Val *arguments)
+Value *
+builtin_round (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("round: expects exactly one arguments");
 
-  Val *first_node = evaluate_expression (environment, CAR (arguments));
+  Value *first_node = evaluate_expression (environment, CAR (arguments));
 
   double a;
   int is_float;
 
-  Val *err = get_numeric_value (first_node, &a, &is_float);
+  Value *err = get_numeric_value (first_node, &a, &is_float);
   ERROR_OUT (err);
 
   return val_integer (round (a));

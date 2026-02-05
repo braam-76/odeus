@@ -16,7 +16,7 @@ static const Meta META_BUILTIN = { .filename = "<builtin>", .line_number = 0 };
            META_BUILTIN)
 
 void
-set_builtins (Env *environment)
+set_builtins (Environment *environment)
 {
   env_set (environment, val_symbol ("t", META_BUILTIN), val_t (),
            META_BUILTIN);
@@ -65,6 +65,7 @@ set_builtins (Env *environment)
   REGISTER ("read", builtin_read);
   REGISTER ("read-file", builtin_read_file); // expects lisp code
   REGISTER ("load-file", builtin_load_file);
+  REGISTER ("show-meta", builtin_show_meta);
   REGISTER ("file->string",
             builtin_file_to_string); // just reads file as string
   REGISTER ("write", builtin_write);

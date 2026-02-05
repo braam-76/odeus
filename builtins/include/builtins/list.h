@@ -4,16 +4,16 @@
 #include "core/value.h"
 #include "core/eval.h"
 
-Val *builtin_cons (Env *environment, Val *arguments);
-Val *builtin_list (Env *environment, Val *arguments);
+Value *builtin_cons (Environment *environment, Value *arguments);
+Value *builtin_list (Environment *environment, Value *arguments);
 
-Val *builtin_car (Env *environment, Val *arguments);
-Val *builtin_cdr (Env *environment, Val *arguments);
-Val *builtin_set_car (Env *environment, Val *arguments);
-Val *builtin_set_cdr (Env *environment, Val *arguments);
-Val *builtin_length (Env *environment, Val *arguments);
-Val *builtin_reverse (Env *environment, Val *arguments);
-Val *builtin_filter (Env *environment, Val *arguments);
-Val *builtin_apply (Env *environment, Val *arguments);
+Value *builtin_car (Environment *environment, Value *arguments);
+Value *builtin_cdr (Environment *environment, Value *arguments);
+Value *builtin_set_car (Environment *environment, Value *arguments);
+Value *builtin_set_cdr (Environment *environment, Value *arguments);
+Value *builtin_length (Environment *environment, Value *arguments);
+Value *builtin_reverse (Environment *environment, Value *arguments);
+Value *builtin_filter (Environment *environment, Value *arguments);
+Value *builtin_apply (Environment *environment, Value *arguments);
 
 #endif // LIST_OPERATIONS_H_

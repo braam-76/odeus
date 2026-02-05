@@ -95,7 +95,7 @@ escape_string (const char *str)
 }
 
 static void
-value_to_string_recursive (Val *node, char **buffer, size_t *capacity,
+value_to_string_recursive (Value *node, char **buffer, size_t *capacity,
                          size_t *length)
 {
   if (!node)
@@ -133,7 +133,7 @@ value_to_string_recursive (Val *node, char **buffer, size_t *capacity,
     case VALUE_CONS:
       {
         append_string (buffer, capacity, length, "(");
-        Val *cur = node;
+        Value *cur = node;
 
         while (cur->type == VALUE_CONS)
           {
@@ -171,7 +171,7 @@ value_to_string_recursive (Val *node, char **buffer, size_t *capacity,
 }
 
 char *
-value_to_string (Val *node)
+value_to_string (Value *node)
 {
   if (!node)
     return strdup ("()");

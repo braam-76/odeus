@@ -41,7 +41,7 @@ int
 main (int argc, char **argv)
 {
   // Persistent global environment
-  Env *global_env = env_init (NULL);
+  Environment *global_env = env_init (NULL);
   set_builtins (global_env);
 
   if (argc > 1)
@@ -58,7 +58,7 @@ main (int argc, char **argv)
           = lexer_from_file (filename, file_content, strlen (file_content));
       Parser *parser = parser_init (&lexer);
       AST *program = parser_parse (parser);
-      Val *lower = val_from_ast (program);
+      Value *lower = val_from_ast (program);
 
       evaluate_expression (global_env, lower);
 
@@ -84,9 +84,9 @@ main (int argc, char **argv)
           Lexer lexer = lexer_from_string (input, strlen (input));
           Parser *parser = parser_init (&lexer);
           AST *program = parser_parse (parser);
-          Val *lower = val_from_ast (program);
+          Value *lower = val_from_ast (program);
 
-          Val *result = evaluate_expression (global_env, lower);
+          Value *result = evaluate_expression (global_env, lower);
           printf ("-> ");
           value_print (result);
           printf ("\n");

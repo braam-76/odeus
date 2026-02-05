@@ -5,20 +5,20 @@
 #include "core/eval.h"
 #include "core/value.h"
 
-Val *
-builtin_concat (Env *environment, Val *arguments)
+Value *
+builtin_concat (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) < 2)
     return val_error ("concat: expects at levalue two arguments");
 
-  Val *evaluated = val_nil ();
-  Val *tail = val_nil ();
+  Value *evaluated = val_nil ();
+  Value *tail = val_nil ();
 
   size_t total_length = 0;
 
   while (arguments->type == VALUE_CONS)
     {
-      Val *value = evaluate_expression (environment, CAR (arguments));
+      Value *value = evaluate_expression (environment, CAR (arguments));
       ERROR_OUT (value);
 
       if (value->type != VALUE_STRING)
@@ -26,7 +26,7 @@ builtin_concat (Env *environment, Val *arguments)
 
       total_length += strlen (value->as.STRING);
 
-      Val *cell = val_cons (value, val_nil ());
+      Value *cell = val_cons (value, val_nil ());
       if (IS_NULL (evaluated))
         evaluated = tail = cell;
       else
@@ -40,7 +40,7 @@ builtin_concat (Env *environment, Val *arguments)
     return val_error ("concat: memory allocation failed");
 
   char *dst = buffer;
-  Val *current = evaluated;
+  Value *current = evaluated;
 
   while (current->type == VALUE_CONS)
     {
@@ -53,19 +53,19 @@ builtin_concat (Env *environment, Val *arguments)
 
   *dst = '\0';
 
-  Val *result = val_string (buffer);
+  Value *result = val_string (buffer);
   free (buffer);
 
   return result;
 }
 
-Val *
-builtin_string_length (Env *environment, Val *arguments)
+Value *
+builtin_string_length (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("string-length: expects exactly one argument");
 
-  Val *string = evaluate_expression (environment, CAR (arguments));
+  Value *string = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (string);
 
   if (string->type != VALUE_STRING)
@@ -74,8 +74,8 @@ builtin_string_length (Env *environment, Val *arguments)
   return val_integer (strlen (string->as.STRING));
 }
 
-Val *
-builtin_substring (Env *environment, Val *arguments)
+Value *
+builtin_substring (Environment *environment, Value *arguments)
 {
   int arguments_count = arguments_length (arguments);
   if (arguments_count < 2 || arguments_count > 3)
@@ -83,17 +83,17 @@ builtin_substring (Env *environment, Val *arguments)
         "substring: expects either 2 or 3 arguments: (substring [str] [low "
         "index] <high index>)");
 
-  Val *string = evaluate_expression (environment, CAR (arguments));
+  Value *string = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (string);
   if (string->type != VALUE_STRING)
     return val_error ("substring: first argument must be a string");
 
-  Val *low_index = evaluate_expression (environment, CADR (arguments));
+  Value *low_index = evaluate_expression (environment, CADR (arguments));
   ERROR_OUT (low_index);
   if (low_index->type != VALUE_INTEGER)
     return val_error ("substring: low index must be an integer");
 
-  Val *high_index;
+  Value *high_index;
   if (arguments_count == 3)
     {
       high_index = evaluate_expression (environment, CADR (CDR (arguments)));
@@ -144,14 +144,14 @@ builtin_substring (Env *environment, Val *arguments)
   memcpy (buffer, str + low, substr_len);
   buffer[substr_len] = '\0';
 
-  Val *result = val_string (buffer);
+  Value *result = val_string (buffer);
   free (buffer);
 
   return result;
 }
 
-Val *
-builtin_string_to_symbol (Env *environment, Val *arguments)
+Value *
+builtin_string_to_symbol (Environment *environment, Value *arguments)
 {
   (void)environment;
   (void)arguments;
@@ -164,13 +164,13 @@ builtin_string_to_symbol (Env *environment, Val *arguments)
   return val_error ("string->symbol: not implemented yet");
 }
 
-Val *
-builtin_symbol_to_string (Env *environment, Val *arguments)
+Value *
+builtin_symbol_to_string (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)
     return val_error ("symbol->string: expects exactly one argument");
 
-  Val *symbol_arg = evaluate_expression (environment, CAR (arguments));
+  Value *symbol_arg = evaluate_expression (environment, CAR (arguments));
   ERROR_OUT (symbol_arg);
 
   if (symbol_arg->type != VALUE_SYMBOL)

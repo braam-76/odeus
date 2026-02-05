@@ -11,28 +11,29 @@
 #define ENV_CAPACITY 4096
 
 // forward declarations to resolve cycling includes
-typedef struct Value Val;
-Val *val_error (const char *message);
+typedef struct Value Value;
+Value *val_error (const char *message);
 
 typedef struct
 {
-  Val *key;
+  Value *key;
 
-  Val *value;
+  Value *value;
   Meta meta;
 } Binding;
 
-typedef struct Environment
+typedef struct Env
 {
-  struct Environment *parent;
+  struct Env *parent;
   Binding bindings[ENV_CAPACITY];
   size_t bindings_size;
-} Env;
+} Environment;
 
-Env *env_init (Env *parent);
+Environment *env_init (Environment *parent);
 
-void env_set (Env *env, Val *symbol, Val *value, Meta meta);
-Val *env_get (Env *env, Val *symbol);
-void env_update (Env *env, Val *symbol, Val *value, Meta meta);
+void env_set (Environment *env, Value *symbol, Value *value, Meta meta);
+Value *env_get (Environment *env, Value *symbol);
+Binding *env_get_binding (Environment *env, Value *symbol);
+void env_update (Environment *env, Value *symbol, Value *value, Meta meta);
 
 #endif // ENVIRONMENT_H_

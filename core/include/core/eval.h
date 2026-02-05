@@ -9,9 +9,9 @@
 #include "core/value.h"
 #include "core/environment.h"
 
-Val *evaluate_expression (Env *environment, Val *expression);
-Val *apply (Env *environment, Val *function, Val *arguments);
-Val *macro_expand_expression (Env *environment, Val *expr);
+Value *evaluate_expression (Environment *environment, Value *expression);
+Value *apply (Environment *environment, Value *function, Value *arguments);
+Value *macro_expand_expression (Environment *environment, Value *expr);
 
 #define ERROR_OUT(x)                                                          \
   do                                                                          \
@@ -21,6 +21,6 @@ Val *macro_expand_expression (Env *environment, Val *expr);
     }                                                                         \
   while (0)
 
-int arguments_length (Val *arguments);
+int arguments_length (Value *arguments);
 
 #endif // EVAL_H_

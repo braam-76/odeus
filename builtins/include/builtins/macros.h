@@ -4,8 +4,8 @@
 #include "core/value.h"
 #include "core/eval.h"
 
-Val *builtin_defmacro (Env *environment, Val *arguments);
-Val *builtin_macro (Env *environment, Val *arguments);
-Val *builtin_macroexpand (Env *environment, Val *arguments);
+Value *builtin_defmacro (Environment *environment, Value *arguments);
+Value *builtin_macro (Environment *environment, Value *arguments);
+Value *builtin_macroexpand (Environment *environment, Value *arguments);
 
 #endif // MACROS_H_

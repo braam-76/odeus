@@ -3,6 +3,6 @@
 
 #include "core/value.h"
 
-Val *expand_quasiquote (Val *expr, int depth);
+Value *expand_quasiquote (Value *expr, int depth);
 
 #endif // QUASIQUOTE_H_
