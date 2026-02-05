@@ -1,6 +1,7 @@
 #include "core/value.h"
 #include "core/eval.h"
 #include "core/intern_string.h"
+#include <stdarg.h>
 
 static Value *GLOBAL_NIL = NULL;
 
@@ -102,15 +103,6 @@ val_builtin (Builtin_Function builtin_function)
 }
 
 Value *
-val_error (const char *message)
-{
-  Value *node = (Value *)calloc (1, sizeof (Value));
-  node->type = VALUE_ERROR;
-  node->as.ERROR.MESSAGE = strdup (message);
-  return node;
-}
-
-Value *
 val_symbol (const char *symbol, Meta meta)
 {
   const char *interned_name = intern_string (symbol);
@@ -121,6 +113,47 @@ val_symbol (const char *symbol, Meta meta)
   sym->meta = meta;
 
   return sym;
+}
+
+Value *
+val_error (const char *format, ...)
+{
+  va_list arguments;
+
+  va_start (arguments, format);
+  int length = vsnprintf (NULL, 0, format, arguments);
+  va_end (arguments);
+
+  if (length < 0)
+    {
+      fprintf (stderr,
+               "INTERNAL-VALUE-ERROR: could not compute error string length");
+      exit (1);
+    }
+
+  char *error_msg = (char *)malloc (length + 1);
+  if (!error_msg)
+    {
+      fprintf (stderr, "INTERNAL-VALUE-ERROR: memory allocation failed");
+      exit (1);
+    }
+
+  va_start (arguments, format);
+  vsnprintf (error_msg, length + 1, format, arguments);
+  va_end (arguments);
+
+  Value *node = (Value *)calloc (1, sizeof (Value));
+  if (!node)
+    {
+      free (error_msg);
+      fprintf (stderr, "INTERNAL-VAL-ERROR: memory allocation failed");
+      exit (1);
+    }
+
+  node->type = VALUE_ERROR;
+  node->as.ERROR.MESSAGE = error_msg;
+
+  return node;
 }
 
 void

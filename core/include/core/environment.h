@@ -12,7 +12,7 @@
 
 // forward declarations to resolve cycling includes
 typedef struct Value Value;
-Value *val_error (const char *message);
+Value *val_error (const char *message, ...);
 
 typedef struct
 {

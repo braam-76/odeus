@@ -93,7 +93,7 @@ Value *val_cons (Value *car, Value *cdr);
 Value *val_builtin (Builtin_Function builtin_function);
 
 // special VALUE node builder, only for error messages
-Value *val_error (const char *message);
+Value *val_error (const char *message, ...);
 
 Value *val_nil (void);
 Value *val_t (void);
