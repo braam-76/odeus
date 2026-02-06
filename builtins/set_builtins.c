@@ -65,6 +65,7 @@ set_builtins (Environment *environment)
   REGISTER ("read", builtin_read);
   REGISTER ("read-file", builtin_read_file); // expects lisp code
   REGISTER ("load-file", builtin_load_file);
+  REGISTER ("reload-file", builtin_reload_file);
   REGISTER ("show-meta", builtin_show_meta);
   REGISTER ("file->string",
             builtin_file_to_string); // just reads file as string

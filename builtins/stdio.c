@@ -118,6 +118,35 @@ builtin_load_file (Environment *environment, Value *arguments)
 }
 
 Value *
+builtin_reload_file (Environment *environment, Value *arguments)
+{
+  if (arguments_length (arguments) != 1)
+    return val_error ("reload-file: expects exactly one argument");
+
+  Value *value = CAR (arguments);
+  if (value->type != VALUE_STRING)
+    return val_error ("reload-file: argument is not string");
+
+  char *val_str = value->as.STRING;
+
+  for (int i = 0; i < environment->bindings_size; i++)
+    {
+
+      Binding binding = environment->bindings[i];
+      if (binding.meta.filename
+          && strcmp (binding.meta.filename, val_str) == 0)
+        {
+          for (int j = i; j < environment->bindings_size - 1; j++)
+            environment->bindings[j] = environment->bindings[j + 1];
+          environment->bindings_size--;
+          i--;
+        }
+    }
+
+  return builtin_load_file (environment, arguments);
+}
+
+Value *
 builtin_show_meta (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 1)

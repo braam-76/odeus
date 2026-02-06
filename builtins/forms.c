@@ -19,7 +19,7 @@ builtin_define (Environment *environment, Value *arguments)
     {
       Value *current = env_get (environment, to_be_defined);
       if (current->type != VALUE_ERROR)
-        return val_error ("define: symbol already defined");
+        return val_error ("define: symbol already defined: %s", to_be_defined->as.SYMBOL);
 
       // Initialize with nil first
       env_set (environment, to_be_defined, val_nil (), to_be_defined->meta);
@@ -44,7 +44,7 @@ builtin_define (Environment *environment, Value *arguments)
 
       Value *current = env_get (environment, func_name);
       if (current->type != VALUE_ERROR)
-        return val_error ("define: symbol already defined");
+        return val_error ("define: symbol already defined: %s", func_name->as.SYMBOL);
 
       Value *params = CDR (to_be_defined);
 
@@ -63,6 +63,7 @@ builtin_define (Environment *environment, Value *arguments)
   else
     return val_error ("define: first argument must be a symbol or cons");
 }
+
 Value *
 builtin_set (Environment *environment, Value *arguments)
 {
