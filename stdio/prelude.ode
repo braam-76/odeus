@@ -30,6 +30,13 @@
          nil
          list))
 
+(define (filter list predicate)
+  (if (nil? list) '()
+      (let ((rest (filter (cdr list) predicate)))
+        (if (predicate (car list))
+            (cons (car list) rest)
+            rest))))
+
 (define (compose . functions)
   (define (compose-2 f g)
     (lambda (x) (f (g x))))
