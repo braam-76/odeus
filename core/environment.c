@@ -1,10 +1,12 @@
 #include "core/environment.h"
 #include "core/value.h"
+#include <gc/gc.h>
 
 Environment *
 env_init (Environment *parent)
 {
-  Environment *env = malloc (sizeof (Environment));
+  Environment *env = GC_malloc (sizeof (Environment));
+  memset (env, 0, sizeof (Environment));
   env->parent = parent;
   env->bindings_size = 0;
   return env;

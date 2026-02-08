@@ -1,6 +1,7 @@
 #include "core/ast.h"
 #include "core/intern_string.h"
 
+#include <gc/gc.h>
 #include <stdarg.h> // for make_error
 
 static AST *GLOBAL_NIL = NULL;
@@ -10,7 +11,8 @@ ast_nil ()
 {
   if (!GLOBAL_NIL)
     {
-      GLOBAL_NIL = calloc (1, sizeof (AST));
+      GLOBAL_NIL = GC_malloc (sizeof (AST));
+      memset (GLOBAL_NIL, 0, sizeof (AST));
       GLOBAL_NIL->type = AST_NIL;
     }
   return GLOBAL_NIL;
@@ -19,7 +21,8 @@ ast_nil ()
 AST *
 ast_integer (long ast)
 {
-  AST *node = (AST *)calloc (1, sizeof (AST));
+  AST *node = (AST *)GC_malloc (sizeof (AST));
+  memset (node, 0, sizeof (AST));
   node->type = AST_INTEGER;
   node->as.INTEGER = ast;
   return node;
@@ -28,7 +31,8 @@ ast_integer (long ast)
 AST *
 ast_float (double ast)
 {
-  AST *node = (AST *)calloc (1, sizeof (AST));
+  AST *node = (AST *)GC_malloc (sizeof (AST));
+  memset (node, 0, sizeof (AST));
   node->type = AST_FLOAT;
   node->as.FLOAT = ast;
   return node;
@@ -37,7 +41,8 @@ ast_float (double ast)
 AST *
 ast_string (const char *string)
 {
-  AST *node = (AST *)calloc (1, sizeof (AST));
+  AST *node = (AST *)GC_malloc (sizeof (AST));
+  memset (node, 0, sizeof (AST));
   node->type = AST_STRING;
   node->as.STRING = strdup (string);
   return node;
@@ -46,19 +51,21 @@ ast_string (const char *string)
 AST *
 ast_cons (AST *car, AST *cdr)
 {
-  AST *n = calloc (1, sizeof (AST));
-  n->type = AST_CONS;
-  CAR (n) = car;
-  CDR (n) = cdr;
-  return n;
+  AST *node = GC_malloc (sizeof (AST));
+  memset (node, 0, sizeof (AST));
+  node->type = AST_CONS;
+  CAR (node) = car;
+  CDR (node) = cdr;
+  return node;
 }
 
 AST *
 ast_error (const char *message)
 {
-  AST *node = (AST *)calloc (1, sizeof (AST));
+  AST *node = (AST *)GC_malloc (sizeof (AST));
+  memset (node, 0, sizeof (AST));
   node->type = AST_ERROR;
-  node->as.ERROR.MESSAGE = strdup (message);
+  node->as.ERROR.MESSAGE = GC_strdup (message);
   return node;
 }
 
@@ -67,11 +74,12 @@ ast_symbol (const char *symbol, Meta meta)
 {
   const char *interned_name = intern_string (symbol);
 
-  AST *sym = calloc (1, sizeof (AST));
-  sym->type = AST_SYMBOL;
-  sym->as.SYMBOL = (char *)interned_name;
-  sym->source_meta = meta;
-  return sym;
+  AST *node = GC_malloc (sizeof (AST));
+  memset (node, 0, sizeof (AST));
+  node->type = AST_SYMBOL;
+  node->as.SYMBOL = (char *)interned_name;
+  node->source_meta = meta;
+  return node;
 }
 
 void

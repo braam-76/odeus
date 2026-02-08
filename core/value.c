@@ -1,6 +1,8 @@
 #include "core/value.h"
 #include "core/eval.h"
 #include "core/intern_string.h"
+
+#include <gc/gc.h>
 #include <stdarg.h>
 
 static Value *GLOBAL_NIL = NULL;
@@ -41,7 +43,8 @@ val_nil (void)
 {
   if (!GLOBAL_NIL)
     {
-      GLOBAL_NIL = calloc (1, sizeof (Value));
+      GLOBAL_NIL = GC_malloc (sizeof (Value));
+      memset (GLOBAL_NIL, 0, sizeof (AST));
       GLOBAL_NIL->type = VALUE_NIL;
     }
   return GLOBAL_NIL;
@@ -59,7 +62,8 @@ val_t (void)
 Value *
 val_integer (long value)
 {
-  Value *node = (Value *)calloc (1, sizeof (Value));
+  Value *node = (Value *)GC_malloc (sizeof (Value));
+  memset (node, 0, sizeof (AST));
   node->type = VALUE_INTEGER;
   node->as.INTEGER = value;
   return node;
@@ -68,7 +72,8 @@ val_integer (long value)
 Value *
 val_float (double value)
 {
-  Value *node = (Value *)calloc (1, sizeof (Value));
+  Value *node = (Value *)GC_malloc (sizeof (Value));
+  memset (node, 0, sizeof (AST));
   node->type = VALUE_FLOAT;
   node->as.FLOAT = value;
   return node;
@@ -77,26 +82,29 @@ val_float (double value)
 Value *
 val_string (const char *string)
 {
-  Value *node = (Value *)calloc (1, sizeof (Value));
+  Value *node = (Value *)GC_malloc (sizeof (Value));
+  memset (node, 0, sizeof (AST));
   node->type = VALUE_STRING;
-  node->as.STRING = strdup (string);
+  node->as.STRING = GC_strdup (string);
   return node;
 }
 
 Value *
 val_cons (Value *car, Value *cdr)
 {
-  Value *n = calloc (1, sizeof (Value));
-  n->type = VALUE_CONS;
-  CAR (n) = car;
-  CDR (n) = cdr;
-  return n;
+  Value *node = GC_malloc (sizeof (Value));
+  memset (node, 0, sizeof (AST));
+  node->type = VALUE_CONS;
+  CAR (node) = car;
+  CDR (node) = cdr;
+  return node;
 }
 
 Value *
 val_builtin (Builtin_Function builtin_function)
 {
-  Value *node = (Value *)calloc (1, sizeof (Value));
+  Value *node = (Value *)GC_malloc (sizeof (Value));
+  memset (node, 0, sizeof (AST));
   node->type = VALUE_BUILTIN;
   node->as.BUILTIN = builtin_function;
   return node;
@@ -107,12 +115,13 @@ val_symbol (const char *symbol, Meta meta)
 {
   const char *interned_name = intern_string (symbol);
 
-  Value *sym = calloc (1, sizeof (Value));
-  sym->type = VALUE_SYMBOL;
-  sym->as.SYMBOL = (char *)interned_name;
-  sym->meta = meta;
+  Value *node = GC_malloc (sizeof (Value));
+  memset (node, 0, sizeof (AST));
+  node->type = VALUE_SYMBOL;
+  node->as.SYMBOL = (char *)interned_name;
+  node->meta = meta;
 
-  return sym;
+  return node;
 }
 
 Value *
@@ -142,7 +151,8 @@ val_error (const char *format, ...)
   vsnprintf (error_msg, length + 1, format, arguments);
   va_end (arguments);
 
-  Value *node = (Value *)calloc (1, sizeof (Value));
+  Value *node = (Value *)GC_malloc (sizeof (Value));
+  memset (node, 0, sizeof (AST));
   if (!node)
     {
       free (error_msg);

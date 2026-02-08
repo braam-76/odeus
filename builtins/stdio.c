@@ -75,6 +75,8 @@ builtin_read_file (Environment *environment, Value *arguments)
   AST *expression = parser_parse (parser);
   Value *lower = val_from_ast (expression);
 
+  free(buffer);
+
   return lower;
 }
 
@@ -191,7 +193,10 @@ builtin_file_to_string (Environment *environment, Value *arguments)
 
   fclose (f);
 
-  return val_string (buffer);
+  Value* result =val_string (buffer);
+
+  free(buffer);
+  return result;
 }
 
 Value *

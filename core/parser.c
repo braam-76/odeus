@@ -189,18 +189,7 @@ parse_symbol (Parser *parser, Token *token)
     .line_number = token->line,
   };
 
-  char *colon = strchr (token->value, ':');
-  if (colon)
-    {
-      *colon = 0;
-      char *mod = token->value;
-      char *sym = colon + 1;
-      return ast_cons (ast_symbol ("get-from-module", m),
-                       ast_cons (ast_symbol (mod, m),
-                                 ast_cons (ast_symbol (sym, m), ast_nil ())));
-    }
-  else
-    return ast_symbol (token->value, m);
+  return ast_symbol (token->value, m);
 }
 
 static AST *

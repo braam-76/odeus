@@ -5,6 +5,8 @@
 #include "core/quasiquote.h"
 #include "core/value.h"
 
+#include <gc.h>
+
 Value *
 builtin_define (Environment *environment, Value *arguments)
 {
@@ -250,7 +252,7 @@ builtin_lambda (Environment *environment, Value *arguments)
   Value *parameters = CAR (arguments);
   Value *body = CDR (arguments);
 
-  Value *lambda = malloc (sizeof (Value));
+  Value *lambda = GC_malloc (sizeof (Value));
   lambda->type = VALUE_LAMBDA;
   lambda->as.LAMBDA.parameters = parameters;
   lambda->as.LAMBDA.body = body;

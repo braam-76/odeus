@@ -1,3 +1,4 @@
+#include <gc/gc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,7 +24,7 @@ read_file_to_string (const char *filename)
   long size = ftell (f);
   fseek (f, 0, SEEK_SET);
 
-  char *buffer = malloc (size + 1);
+  char *buffer = GC_malloc (size + 1);
   if (!buffer)
     {
       fclose (f);
@@ -40,6 +41,9 @@ read_file_to_string (const char *filename)
 int
 main (int argc, char **argv)
 {
+  GC_INIT ();
+  GC_enable_incremental ();
+
   // Persistent global environment
   Environment *global_env = env_init (NULL);
   set_builtins (global_env);
@@ -61,14 +65,14 @@ main (int argc, char **argv)
       Value *lower = val_from_ast (program);
 
       evaluate_expression (global_env, lower);
-
-      free (parser);
-      free (file_content);
     }
   else
     {
       // REPL mode
       char *prompt = "odeus> ";
+      Value *result = NULL;
+      GC_add_roots (&result, &result + 1);
+
       while (1)
         {
           char *input = readline (prompt);
@@ -86,14 +90,18 @@ main (int argc, char **argv)
           AST *program = parser_parse (parser);
           Value *lower = val_from_ast (program);
 
-          Value *result = evaluate_expression (global_env, lower);
+          result = evaluate_expression (global_env, lower);
           printf ("-> ");
           value_print (result);
           printf ("\n");
 
-          free (parser);
           free (input);
+
+          static int counter = 0;
+          if (++counter % 100 == 0)
+            GC_gcollect ();
         }
+      GC_remove_roots (&result, &result + 1);
     }
 
   return 0;
