@@ -1,20 +1,33 @@
 #include "builtins/constrol_flow.h"
 
-#include "core/value.h"
 #include "core/eval.h"
+#include "core/value.h"
 
 Value *
 builtin_eq (Environment *environment, Value *arguments)
 {
   if (arguments_length (arguments) != 2)
-    return val_error ("ERROR: eq expects exactly two arguments");
+    return val_error ("eq: expects exactly two arguments");
 
-  Value *first_value = evaluate_expression (environment, CAR (arguments));
-  ERROR_OUT (first_value);
-  Value *second_value = evaluate_expression (environment, CADR (arguments));
-  ERROR_OUT (second_value);
+  Value *first = evaluate_expression (environment, CAR (arguments));
+  ERROR_OUT (first);
+  Value *second = evaluate_expression (environment, CADR (arguments));
+  ERROR_OUT (second);
 
-  return (first_value == second_value) ? val_t () : val_nil ();
+  if (first->type != second->type)
+    return val_nil ();
+
+  switch (first->type)
+    {
+    case VALUE_NIL:
+    case VALUE_BUILTIN:
+    case VALUE_SYMBOL:
+      return (first == second) ? val_t () : val_nil ();
+    default:
+      return val_nil ();
+    }
+
+  return (first == second) ? val_t () : val_nil ();
 }
 
 Value *
@@ -36,7 +49,7 @@ builtin_if (Environment *environment, Value *args)
 Value *
 builtin_and (Environment *environment, Value *arguments)
 {
-  if (arguments_length(arguments) <= 0)
+  if (arguments_length (arguments) <= 0)
     return val_error ("ERROR: and expects at levalue 1 argument\n");
 
   while (arguments->type == VALUE_CONS)
@@ -56,7 +69,7 @@ builtin_and (Environment *environment, Value *arguments)
 Value *
 builtin_or (Environment *environment, Value *arguments)
 {
-  if (arguments_length(arguments) <= 0)
+  if (arguments_length (arguments) <= 0)
     return val_error ("ERROR: or expects at levalue 1 argument\n");
 
   while (arguments->type == VALUE_CONS)

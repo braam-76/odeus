@@ -12,7 +12,7 @@ builtin_typeof (Environment *environment, Value *arguments)
   switch (expression->type)
     {
     case VALUE_NIL:
-      return val_symbol ("cons", expression->meta);
+      return val_symbol ("nil", expression->meta);
     case VALUE_SYMBOL:
       return val_symbol ("symbol", expression->meta);
     case VALUE_INTEGER:

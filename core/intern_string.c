@@ -1,4 +1,5 @@
 #include "core/intern_string.h"
+#include <gc/gc.h>
 
 #define MAX_STRINGS 8192
 static const char *string_pool[MAX_STRINGS];
@@ -11,7 +12,7 @@ intern_string (const char *s)
     if (strcmp (string_pool[i], s) == 0)
       return string_pool[i];
 
-  char *news = strdup (s);
+  char *news = GC_strdup (s);
   string_pool[pool_count++] = news;
   return news;
 }

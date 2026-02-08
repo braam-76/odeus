@@ -41,7 +41,7 @@ set_builtins (Environment *environment)
   REGISTER ("set-cdr!", builtin_set_cdr);
   REGISTER ("length", builtin_length);
   REGISTER ("reverse", builtin_reverse);
-  REGISTER ("filter", builtin_filter);
+  // REGISTER ("filter", builtin_filter);
   REGISTER ("apply", builtin_apply);
 
   // Comparison operators

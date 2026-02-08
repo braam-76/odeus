@@ -1,6 +1,6 @@
 #include "core/value.h"
 #include "core/eval.h"
-#include "core/intern_string.h"
+#include "core/symbol_map.h"
 
 #include <gc/gc.h>
 #include <stdarg.h>
@@ -44,7 +44,7 @@ val_nil (void)
   if (!GLOBAL_NIL)
     {
       GLOBAL_NIL = GC_malloc (sizeof (Value));
-      memset (GLOBAL_NIL, 0, sizeof (AST));
+      memset (GLOBAL_NIL, 0, sizeof (Value));
       GLOBAL_NIL->type = VALUE_NIL;
     }
   return GLOBAL_NIL;
@@ -53,17 +53,14 @@ val_nil (void)
 Value *
 val_t (void)
 {
-  return val_symbol ("t", (Meta){
-                              .filename = "#<core>",
-                              .line_number = 0,
-                          });
+  return val_symbol ("t", (Meta){ .filename = "#<core>", .line_number = 0 });
 }
 
 Value *
 val_integer (long value)
 {
   Value *node = (Value *)GC_malloc (sizeof (Value));
-  memset (node, 0, sizeof (AST));
+  memset (node, 0, sizeof (Value));
   node->type = VALUE_INTEGER;
   node->as.INTEGER = value;
   return node;
@@ -73,7 +70,7 @@ Value *
 val_float (double value)
 {
   Value *node = (Value *)GC_malloc (sizeof (Value));
-  memset (node, 0, sizeof (AST));
+  memset (node, 0, sizeof (Value));
   node->type = VALUE_FLOAT;
   node->as.FLOAT = value;
   return node;
@@ -83,7 +80,7 @@ Value *
 val_string (const char *string)
 {
   Value *node = (Value *)GC_malloc (sizeof (Value));
-  memset (node, 0, sizeof (AST));
+  memset (node, 0, sizeof (Value));
   node->type = VALUE_STRING;
   node->as.STRING = GC_strdup (string);
   return node;
@@ -93,7 +90,7 @@ Value *
 val_cons (Value *car, Value *cdr)
 {
   Value *node = GC_malloc (sizeof (Value));
-  memset (node, 0, sizeof (AST));
+  memset (node, 0, sizeof (Value));
   node->type = VALUE_CONS;
   CAR (node) = car;
   CDR (node) = cdr;
@@ -104,7 +101,7 @@ Value *
 val_builtin (Builtin_Function builtin_function)
 {
   Value *node = (Value *)GC_malloc (sizeof (Value));
-  memset (node, 0, sizeof (AST));
+  memset (node, 0, sizeof (Value));
   node->type = VALUE_BUILTIN;
   node->as.BUILTIN = builtin_function;
   return node;
@@ -113,13 +110,19 @@ val_builtin (Builtin_Function builtin_function)
 Value *
 val_symbol (const char *symbol, Meta meta)
 {
-  const char *interned_name = intern_string (symbol);
+  const char *name = GC_strdup (symbol);
+
+  Value *existing = symbol_map_get (name);
+  if (existing)
+    return existing;
 
   Value *node = GC_malloc (sizeof (Value));
-  memset (node, 0, sizeof (AST));
+  memset (node, 0, sizeof (Value));
   node->type = VALUE_SYMBOL;
-  node->as.SYMBOL = (char *)interned_name;
+  node->as.SYMBOL = (char *)name;
   node->meta = meta;
+
+  symbol_map_set (name, node);
 
   return node;
 }
@@ -152,7 +155,7 @@ val_error (const char *format, ...)
   va_end (arguments);
 
   Value *node = (Value *)GC_malloc (sizeof (Value));
-  memset (node, 0, sizeof (AST));
+  memset (node, 0, sizeof (Value));
   if (!node)
     {
       free (error_msg);

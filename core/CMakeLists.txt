@@ -8,6 +8,7 @@ add_library(core STATIC
     value.c
     value_to_string.c
     intern_string.c
+    symbol_map.c
   )
 
 target_include_directories(core PUBLIC

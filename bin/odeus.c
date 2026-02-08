@@ -11,6 +11,7 @@
 #include "core/eval.h"
 #include "core/lexer.h"
 #include "core/parser.h"
+#include "core/symbol_map.h"
 #include "core/value.h"
 
 char *
@@ -44,6 +45,7 @@ main (int argc, char **argv)
   GC_INIT ();
   GC_enable_incremental ();
 
+  symbol_map_init();
   // Persistent global environment
   Environment *global_env = env_init (NULL);
   set_builtins (global_env);

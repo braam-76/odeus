@@ -5,4 +5,4 @@
 
 const char *intern_string (const char *s);
 
-#endif
+#endif // INTERN_STRING_H_
