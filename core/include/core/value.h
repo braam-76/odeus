@@ -60,14 +60,7 @@ struct Value
       Environment *environment;
       Value *parameters;
       Value *body;
-    } LAMBDA;
-
-    struct
-    {
-      Environment *environment;
-      Value *parameters;
-      Value *body;
-    } MACRO;
+    } CLOSURE;
   } as;
 
   Meta meta;

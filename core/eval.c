@@ -84,14 +84,14 @@ macro_expand_expression (Environment *environment, Value *expr)
   if (macro->type != VALUE_MACRO)
     return expr;
 
-  Environment *frame = env_init (macro->as.MACRO.environment);
+  Environment *frame = env_init (macro->as.CLOSURE.environment);
 
   Value *err
-      = bind_macro_arguments (frame, macro->as.MACRO.parameters, CDR (expr));
+      = bind_macro_arguments (frame, macro->as.CLOSURE.parameters, CDR (expr));
   ERROR_OUT (err);
 
   Value *result = val_nil ();
-  for (Value *body = macro->as.MACRO.body; body->type == VALUE_CONS;
+  for (Value *body = macro->as.CLOSURE.body; body->type == VALUE_CONS;
        body = CDR (body))
     {
       result = evaluate_expression (frame, CAR (body));
@@ -109,14 +109,14 @@ apply (Environment *call_env, Value *function, Value *arguments)
 
   if (function->type == VALUE_LAMBDA)
     {
-      Environment *frame = env_init (function->as.LAMBDA.environment);
+      Environment *frame = env_init (function->as.CLOSURE.environment);
 
       Value *err = bind_arguments (call_env, frame,
-                                 function->as.LAMBDA.parameters, arguments);
+                                 function->as.CLOSURE.parameters, arguments);
       ERROR_OUT (err);
 
       Value *result = val_nil ();
-      for (Value *body = function->as.LAMBDA.body; body->type == VALUE_CONS;
+      for (Value *body = function->as.CLOSURE.body; body->type == VALUE_CONS;
            body = CDR (body))
         {
           result = evaluate_expression (frame, CAR (body));

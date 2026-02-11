@@ -254,9 +254,9 @@ builtin_lambda (Environment *environment, Value *arguments)
 
   Value *lambda = GC_malloc (sizeof (Value));
   lambda->type = VALUE_LAMBDA;
-  lambda->as.LAMBDA.parameters = parameters;
-  lambda->as.LAMBDA.body = body;
-  lambda->as.LAMBDA.environment = environment;
+  lambda->as.CLOSURE.parameters = parameters;
+  lambda->as.CLOSURE.body = body;
+  lambda->as.CLOSURE.environment = environment;
 
   return lambda;
 }

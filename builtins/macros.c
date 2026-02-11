@@ -14,9 +14,9 @@ builtin_macro (Environment *environment, Value *arguments)
 
   Value *macro = GC_malloc (sizeof (Value));
   macro->type = VALUE_MACRO;
-  macro->as.MACRO.parameters = parameters;
-  macro->as.MACRO.body = body;
-  macro->as.MACRO.environment = environment;
+  macro->as.CLOSURE.parameters = parameters;
+  macro->as.CLOSURE.body = body;
+  macro->as.CLOSURE.environment = environment;
 
   return macro;
 }
