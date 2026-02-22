@@ -133,7 +133,6 @@ builtin_reload_file (Environment *environment, Value *arguments)
 
   for (int i = 0; i < environment->bindings_size; i++)
     {
-
       Binding binding = environment->bindings[i];
       if (binding.meta.filename
           && strcmp (binding.meta.filename, val_str) == 0)

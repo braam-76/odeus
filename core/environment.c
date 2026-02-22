@@ -5,11 +5,11 @@
 Environment *
 env_init (Environment *parent)
 {
-  Environment *env = GC_malloc (sizeof (Environment));
-  memset (env, 0, sizeof (Environment));
-  env->parent = parent;
-  env->bindings_size = 0;
-  return env;
+  Environment *environment = GC_malloc (sizeof (Environment));
+  memset (environment, 0, sizeof (Environment));
+  environment->parent = parent;
+  environment->bindings_size = 0;
+  return environment;
 }
 
 void
