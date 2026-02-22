@@ -8,7 +8,8 @@ add_library(
   stdio.c
   typeof.c
   strings.c
-  set_builtins.c)
+  set_builtins.c
+  module.c)
 
 target_link_libraries(builtins PUBLIC core)
 

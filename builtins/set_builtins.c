@@ -5,6 +5,7 @@
 #include "builtins/list.h"
 #include "builtins/macros.h"
 #include "builtins/math.h"
+#include "builtins/module.h"
 #include "builtins/stdio.h"
 #include "builtins/strings.h"
 #include "builtins/typeof.h"
@@ -84,6 +85,10 @@ set_builtins (Environment *environment)
   REGISTER ("floor", builtin_floor);
   REGISTER ("ceil", builtin_ceil);
   REGISTER ("round", builtin_round);
+
+  REGISTER ("get-from-module", builtin_get_from_module);
+  REGISTER ("load-module", builtin_load_module);
+  REGISTER ("reload-module", builtin_reload_module);
 
   // Variable managment
   REGISTER ("define", builtin_define);

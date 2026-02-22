@@ -189,6 +189,18 @@ parse_symbol (Parser *parser, Token *token)
     .line_number = token->line,
   };
 
+  char *slash = strchr (token->value, '/');
+  if (slash)
+    { // module/symbol
+      *slash = '\0';
+      char *module = token->value;
+      char *symbol = slash + 1;
+      return ast_cons (
+          ast_symbol ("get-from-module", m),
+          ast_cons (ast_symbol (module, m),
+                    ast_cons (ast_symbol (symbol, m), ast_nil ())));
+    }
+
   return ast_symbol (token->value, m);
 }
 

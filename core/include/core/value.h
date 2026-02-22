@@ -23,6 +23,7 @@ typedef enum
   VALUE_BUILTIN,
   VALUE_LAMBDA,
   VALUE_MACRO,
+  VALUE_MODULE,
 
   VALUE_ERROR,
   VALUE_END_OF_FILE,
@@ -61,6 +62,13 @@ struct Value
       Value *parameters;
       Value *body;
     } CLOSURE;
+
+    struct
+    {
+      char *name;
+      Environment *environment;
+    } MODULE;
+
   } as;
 
   Meta meta;
@@ -84,6 +92,7 @@ Value *val_string (const char *string);
 Value *val_symbol (const char *symbol, Meta meta);
 Value *val_cons (Value *car, Value *cdr);
 Value *val_builtin (Builtin_Function builtin_function);
+Value* val_module(const char* module_name, Environment* environment);
 
 // special VALUE node builder, only for error messages
 Value *val_error (const char *message, ...);
