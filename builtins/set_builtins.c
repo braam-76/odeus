@@ -87,8 +87,7 @@ set_builtins (Environment *environment)
   REGISTER ("round", builtin_round);
 
   REGISTER ("get-from-module", builtin_get_from_module);
-  REGISTER ("load-module", builtin_load_module);
-  REGISTER ("reload-module", builtin_reload_module);
+  REGISTER ("import", builtin_import);
 
   // Variable managment
   REGISTER ("define", builtin_define);

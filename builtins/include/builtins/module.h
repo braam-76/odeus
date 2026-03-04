@@ -8,8 +8,7 @@
 #include "core/environment.h"
 #include "core/value.h"
 
-Value *builtin_load_module (Environment *environment, Value *arguments);
+Value *builtin_import (Environment *environment, Value *arguments);
 Value *builtin_get_from_module (Environment *environment, Value *arguments);
-Value *builtin_reload_module (Environment *environment, Value *arguments);
 
 #endif // MODULE_H_

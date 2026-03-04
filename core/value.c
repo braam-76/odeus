@@ -1,6 +1,5 @@
 #include "core/value.h"
 #include "core/eval.h"
-#include "core/module_map.h"
 #include "core/symbol_map.h"
 
 #include <gc/gc.h>
@@ -114,17 +113,11 @@ val_module (const char *module_name, Environment *environment)
 {
   const char *name = GC_strdup (module_name);
 
-  Value *existing = module_map_get (module_name);
-  if (existing)
-      return existing;
-
   Value *node = (Value *)GC_malloc (sizeof (Value));
   memset (node, 0, sizeof (Value));
   node->type = VALUE_MODULE;
   node->as.MODULE.name = (char*)name;
   node->as.MODULE.environment = environment;
-
-  module_map_set(name, node);
 
   return node;
 }
