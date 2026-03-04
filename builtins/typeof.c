@@ -1,6 +1,6 @@
 #include "builtins/typeof.h"
-#include "core/value.h"
 #include "core/eval.h"
+#include "core/value.h"
 
 Value *
 builtin_typeof (Environment *environment, Value *arguments)
@@ -28,6 +28,8 @@ builtin_typeof (Environment *environment, Value *arguments)
       return val_symbol ("function", expression->meta);
     case VALUE_MACRO:
       return val_symbol ("macro", expression->meta);
+    case VALUE_MODULE:
+      return val_symbol ("module", expression->meta);
     case VALUE_ERROR:
       return expression;
     case VALUE_END_OF_FILE:
