@@ -1,5 +1,6 @@
 #include "builtins/macros.h"
 #include "core/eval.h"
+#include "core/value.h"
 
 #include <gc.h>
 
@@ -60,12 +61,37 @@ builtin_defmacro (Environment *environment, Value *arguments)
 Value *
 builtin_macroexpand (Environment *environment, Value *arguments)
 {
-    if (IS_NULL(arguments))
-        return val_error("macroexpand: expected 1 argument");
+  if (IS_NULL (arguments))
+    return val_error ("macroexpand: expected 1 argument");
 
-    // Get the expression (e.g., strip the quote from '(my-macro ...))
-    Value *expr = macro_expand_expression(environment, CAR(arguments));
-    ERROR_OUT(expr);
+  // Get the expression (e.g., strip the quote from '(my-macro ...))
+  Value *expr = macro_expand_expression (environment, CAR (arguments));
+  ERROR_OUT (expr);
 
-    return expr;
+  return expr;
+}
+
+static size_t gensym_counter = 0;
+
+Value *
+builtin_gensym (Environment *environment, Value *arguments)
+{
+  (void)environment;
+
+  char *gensym_prefix = "";
+
+  int args_length = arguments_length (arguments);
+  if (args_length == 0)
+    gensym_prefix = "g__";
+  else if (args_length == 1 && CAR (arguments)->type == VALUE_SYMBOL)
+    gensym_prefix = CAR (arguments)->as.SYMBOL;
+  else if (args_length == 1 && CAR (arguments)->type != VALUE_SYMBOL)
+    return val_error ("gensym: first optional argument is not symbol");
+  else
+    return val_error ("gensym: gensym only accepts 1 OPTIONAL argument");
+
+  char buffer[256];
+  snprintf (buffer, sizeof (buffer), "%s%zu", gensym_prefix, gensym_counter++);
+
+  return val_symbol (buffer, (Meta){ "<gensym>", 0 });
 }

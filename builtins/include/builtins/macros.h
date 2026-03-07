@@ -7,5 +7,6 @@
 Value *builtin_defmacro (Environment *environment, Value *arguments);
 Value *builtin_macro (Environment *environment, Value *arguments);
 Value *builtin_macroexpand (Environment *environment, Value *arguments);
+Value *builtin_gensym (Environment *environment, Value *arguments);
 
 #endif // MACROS_H_

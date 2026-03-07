@@ -100,5 +100,6 @@ set_builtins (Environment *environment)
   REGISTER ("macro", builtin_macro);
   REGISTER ("defmacro", builtin_defmacro);
   REGISTER ("macroexpand", builtin_macroexpand);
+  REGISTER ("gensym", builtin_gensym);
   REGISTER ("quasiquote", builtin_quasiquote);
 }
