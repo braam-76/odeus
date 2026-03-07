@@ -68,30 +68,36 @@
       (let* ((clause (car clauses))
              (test   (car clause))
              (body   (cdr clause)))
-        `(if ,test
-             ,(if (nil? body)
-                  test
-                  (cons 'begin body))
-             (cond ,@(cdr clauses))))))
+        (if (nil? body)
+            (let ((g (gensym)))
+              `(let ((,g ,test))
+                 (if ,g ,g (cond ,@(cdr clauses)))))
+            `(if ,test
+                 ,(cons 'begin body)
+                 (cond ,@(cdr clauses)))))))
 
-;; Thread-first (->)
+;; Thread-first (->): one gensym per step so no capture
 (defmacro (-> expr . forms)
   (define (thread expr forms)
     (if (nil? forms)
         expr
-        (let* ((form (car forms))
-               (op (if (cons? form) (car form) form))
-               (args (if (cons? form) (cdr form) '())))
-          (thread `(,op ,expr ,@args) (cdr forms)))))
+        (let ((g (gensym)))
+          (let* ((form (car forms))
+                 (op (if (cons? form) (car form) form))
+                 (args (if (cons? form) (cdr form) '())))
+            `(let ((,g ,expr))
+               ,(thread `(,op ,g ,@args) (cdr forms)))))))
   (thread expr forms))
 
-;; Thread-last (->>)
+;; Thread-last (->>): one gensym per step so no capture
 (defmacro (->> expr . forms)
   (define (thread expr forms)
     (if (nil? forms)
         expr
-        (let* ((form (car forms))
-               (op (if (cons? form) (car form) form))
-               (args (if (cons? form) (cdr form) '())))
-          (thread `(,op ,@args ,expr) (cdr forms)))))
+        (let ((g (gensym)))
+          (let* ((form (car forms))
+                 (op (if (cons? form) (car form) form))
+                 (args (if (cons? form) (cdr form) '())))
+            `(let ((,g ,expr))
+               ,(thread `(,op ,@args ,g) (cdr forms)))))))
   (thread expr forms))
