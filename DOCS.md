@@ -1,190 +1,306 @@
-# Odeus documentation
+# Odeus language documentation
+
+Odeus is a Lisp-style language implemented in C. This document describes the language as implemented: syntax, built-in forms, and how to use them.
 
 ---
 
-## Primitives
+## 1. Running Odeus
 
-Odeus programming language has 5 atomic types:
+**REPL** (no arguments):
 
-- Nil
-- Integer
-- Float
-- String
-- Symbol
+```sh
+./odeus
+```
 
-Odeus does not have native booleans. 
-- nil represents false.
-- t represents true.
-- Any other value is considered truthy in conditionals.
+**Run a file**:
+
+```sh
+./odeus <filename>
+```
+
+Example: `./odeus script.ode`
+
+**Build** (from repo root):
+
+```sh
+mkdir build && cd build
+cmake ../
+make
+```
 
 ---
 
-## Complex constructs
+## 2. Syntax overview
 
-Odeus programming language has only 1 complex type: *cons* which is pair of values (*car* . *cdr*),
-*car* stores pointer to current element (basically, just value, can be either atom or another cons).
-*cdr* usually stores pointer to the next cons cell (but if it is improper list, it can store atom).
-To understand, those 2 lists are equal in this language
+- **Lists**: `(a b c)` — parentheses, space-separated elements.
+- **Dotted pair**: `(a . b)` — one cons cell with CAR `a` and CDR `b`.
+- **Literals**: integers (`42`), floats (`3.14`), strings (`"hello"`), symbols (`foo`, `+`, `my-var`).
+- **Quote**: `'x` or `(quote x)` — return the expression without evaluating.
+- **Quasiquote**: `` `expr `` — template; `,expr` evaluates and inserts a value; `,@expr` splices a list.
+- **Comments**: one-line comments starting with `;` symbol.
+
+Anything not in double quotes is tokenized as symbol or number; parentheses, quote, backtick, comma, and `,@` are special.
+
+---
+
+## 3. Value types
+
+| Type       | Description                          |
+|-----------|--------------------------------------|
+| `nil`     | Empty list / false.                  |
+| `t`       | Canonical true value.               |
+| symbol    | Identifier (interned).              |
+| integer   | Whole numbers.                      |
+| float     | Floating-point.                     |
+| string    | `"..."`                             |
+| cons      | Pair (CAR . CDR), used for lists.   |
+| function  | Lambda or builtin.                  |
+| macro     | Macro (transforms syntax).          |
+| module    | Result of `import`.                  |
+| error     | Error value (message string).       |
+
+Predicates: use `(typeof x)` and compare to symbols `'nil`, `'symbol`, `'integer`, `'float`, `'string`, `'cons`, `'function`, `'macro`, `'module`, `'error`.
+
+---
+
+## 4. Core forms and special operators
+
+### 4.1 Definitions and mutation
+
+- **`(define symbol expr)`**  
+  Defines a variable. Evaluates `expr` and binds it to `symbol`. Error if `symbol` is already defined.
+
+- **`(define (name arg ...) body ...)`**  
+  Shorthand for defining a function:  
+  `(define name (lambda (arg ...) body ...))`.
+
+- **`(set! symbol expr)`**  
+  Mutates an existing binding. Evaluates `expr` and assigns to `symbol`. Error if `symbol` is not defined.
+
+### 4.2 Binding forms
+
+- **`(let ((sym val) ...) body ...)`**  
+  Local bindings. All `val` expressions are evaluated in the environment *outside* the `let`; then all `body` forms are evaluated in an environment where each `sym` is bound to the corresponding result. Returns the value of the last `body` form.
+
+- **`(let* ((sym val) ...) body ...)`**  
+  Sequential bindings. Each `val` is evaluated in an environment that already contains the previous bindings. Then `body ...` is evaluated in the full binding environment.
+
+### 4.3 Control flow
+
+- **`(if cond then else)`**  
+  Evaluates `cond`; if non-nil, evaluates and returns `then`, otherwise evaluates and returns `else`.
+
+- **`(begin expr ...)`**  
+  Evaluates expressions in order; returns the value of the last one.
+
+- **`(eq a b)`**  
+  Identity comparison: returns `t` only if `a` and `b` are the same object (for nils, symbols, builtins). Not for structural equality of lists or numbers.
+
+- **`(and expr ...)`**  
+  Short-circuit and: evaluates left to right; returns the first nil, or the last value if all are non-nil.
+
+- **`(or expr ...)`**  
+  Short-circuit or: returns the first non-nil value, or nil if all are nil.
+
+### 4.4 Quote and quasiquote
+
+- **`(quote x)`** / **`'x`**  
+  Returns `x` without evaluation.
+
+- **`(quasiquote expr)`** / **`` `expr ``**  
+  Builds a structure from `expr`, evaluating only where unquote (`,expr`) and unquote-splicing (`,@expr`) appear.  
+  Splicing uses `append`; if you use `,@` you need `append` in scope (e.g. from a prelude or your own definition).
+
+---
+
+## 5. Functions and application
+
+- **`(lambda (arg ...) body ...)`**  
+  Creates a closure: parameters and body in a list, captured current environment. Rest parameter: a single symbol in the parameter list receives the rest of the arguments as a list.
+
+- **`(apply proc list)`**  
+  Applies `proc` to the elements of `list` as arguments. Expects two arguments: a function value and a list value.
+
+- **`(eval expr)`**  
+  Evaluates `expr` once to get a value, then evaluates that value again in the current environment. So `(eval x)` is “evaluate x, then evaluate the result.”
+
+---
+
+## 6. Lists and pairs
+
+| Form            | Description |
+|-----------------|-------------|
+| `(cons a b)`    | Builds a pair (CAR = `a`, CDR = `b`). |
+| `(list x ...)`  | Builds a proper list of the evaluated arguments. |
+| `(car pair)`    | First element of a pair. |
+| `(cdr pair)`    | Second element of a pair. |
+| `(set-car! pair val)` | Mutates CAR of `pair`. |
+| `(set-cdr! pair val)` | Mutates CDR of `pair`. |
+| `(length list)`  | Number of elements in a proper list. |
+| `(reverse list)` | New list with elements reversed. |
+
+---
+
+## 7. Numeric operations
+
+All accept integers and floats; result is integer only when all operands are integers and the operation is exact.
+
+| Operator | Form           | Description |
+|----------|----------------|-------------|
+| `+`      | `(+ n ...)`    | Sum (zero args → 0). |
+| `-`      | `(- n ...)`    | Negation; `(- a b ...)` subtracts rest from first. |
+| `*`      | `(* n ...)`    | Product (zero args → 1). |
+| `/`      | `(/ a b ...)`  | Division; always returns float. |
+| `mod`    | `(mod a b)`    | Remainder (integer). |
+| `expt`   | `(expt base exp)` | Power. |
+| `sqrt`   | `(sqrt x)`     | Square root (float). |
+| `abs`    | `(abs x)`      | Absolute value. |
+| `floor`  | `(floor x)`    | Floor (integer). |
+| `ceil`   | `(ceil x)`     | Ceiling (integer). |
+| `round`  | `(round x)`    | Round (integer). |
+
+Comparisons (return `t` or `nil`): `=`, `>`, `<`, `>=`, `<=`.
+
+---
+
+## 8. Strings
+
+| Form | Description |
+|------|-------------|
+| `(concat s ...)` | Concatenates strings. |
+| `(string-length s)` | Length of string. |
+| `(substring s start [end])` | Substring; negative indices from end; default end is length. |
+| `(symbol->string sym)` | Name of symbol as string. |
+| `(string->symbol s)` | Not implemented (returns error). |
+
+---
+
+## 9. Type and I/O
+
+- **`(typeof x)`**  
+  Returns a symbol describing the type: `nil`, `symbol`, `integer`, `float`, `string`, `cons`, `function`, `macro`, `module`, or `error`.
+
+- **`(dump x ...)`**  
+  Prints values with `value_print` (readable representation), space-separated, then newline. Returns nil.
+
+- **`(write x)`**  
+  Returns a string representation of `x` (as from `value_to_string`).
+
+- **`(display x)`**  
+  Prints a simplified representation of `x` (no quotes around strings, etc.). Returns nil.
+
+- **`(read string)`**  
+  Parses the string as Odeus code and returns the parsed value (one expression). Does not evaluate.
+
+- **`(read-file path)`**  
+  Reads file at `path` (string), parses as Odeus, returns parsed value. Does not evaluate.
+
+- **`(load-file path)`**  
+  Reads and evaluates the file in the current environment. Returns the last result or errors.
+
+- **`(reload-file path)`**  
+  Unbinds bindings that were defined from the given filename, then loads the file again.
+
+- **`(file->string path)`**  
+  Returns file contents as a single string.
+
+- **`(show-meta symbol)`**  
+  Prints filename and line number of the binding of `symbol` (for debugging). Returns nil.
+
+---
+
+## 10. Modules
+
+Modules are first-class values; there is no global module registry. You bind a module to a variable and use it from there.
+
+- **`(import path)`**  
+  `path` must be a **string** (e.g. `"mymod.ode"`). Loads and evaluates the file in a fresh environment (child of the current one) and returns a **module value**. Does not register the module anywhere; you bind the result yourself.
+
+  Example:
+
+  ```scheme
+  (define mymod (import "mymod.ode"))
+  ```
+
+  Symbol argument (e.g. `(import fs)` for a future standard module) is not supported yet and signals an error.
+
+- **`(get-from-module module symbol)`**  
+  `module` must be a module value (e.g. the result of `import`). Looks up `symbol` in that module’s environment and returns its value. Error if not a module or symbol is unbound.
+
+- **Module/symbol syntax**  
+  The token `module/symbol` is rewritten at parse time to `(get-from-module module symbol)`. So if `mymod` is bound to a module that has `foo`, you can write:
+
+  ```scheme
+  mymod/foo
+  ```
+
+  and it behaves like `(get-from-module mymod foo)`.
+
+---
+
+## 11. Macros
+
+- **`(macro (param ...) body ...)`**  
+  Creates a macro: receives unevaluated argument trees, runs in an environment whose parent is the definition environment, returns one value that is then evaluated. Parameters are bound to the raw argument forms; rest parameter (single symbol) gets the rest as a list.
+
+- **`(defmacro (name param ...) body ...)`**  
+  Defines a macro in the current environment. Same as defining a variable whose value is `(macro (param ...) body ...)`. The macro name must not already be defined.
+
+- **`(macroexpand expr)`**  
+  Expands macros in `expr` (one level) and returns the result. Does not evaluate further. Useful for debugging macros.
+
+### 11.1 gensym — fresh symbols for macros
+
+Because macros are unhygienic, any identifier you introduce in the expansion (e.g. a temporary variable) can clash with the user’s bindings: the user might have a variable with the same name, or your temp might accidentally capture the user’s identifier. To avoid that, use **gensym** to generate a new symbol that is guaranteed not to exist elsewhere.
+
+- **`(gensym)`**  
+  Returns a **new symbol** with a unique name each time (e.g. `g__0`, `g__1`, `g__2`, …). Takes no arguments. Each call returns a different symbol.
+
+- **`(gensym prefix)`**  
+  Returns a new symbol whose **name starts with** `prefix`. The only argument is a **symbol**; its print name is used as the prefix (e.g. `(gensym tmp)` → `tmp0`, `tmp1`, …). Useful when debugging macro expansions so you can recognise your temps (e.g. `tmp`, `result`, `loop`).
+
+**When to use:** Whenever your macro inserts a **binding** (e.g. a `let` variable, a lambda parameter) that is only for internal use — create it with `gensym` so it never clashes with user code.
+
+**Example** — a `when` macro that must not capture a user’s `tmp`:
 
 ```scheme
-(list 1 2 3 4) ;; == (cons 1 (cons 2 (cons 3 (cons 4 nil))))
+(defmacro (when cond . body)
+  (let ((tmp (gensym)))
+    `(let ((,tmp ,cond))
+       (if ,tmp (begin ,@body) nil))))
 ```
 
-and in fact, builtin function *list* produces that pair of pairs. This builtin is just easier and faster way to write same thing on the right of *==*
+Here `tmp` is bound to a fresh symbol (e.g. `g__42`) inside the macro, and the expansion uses that symbol in `(let ((g__42 <cond>)) ...)`. So user code can use a variable named `tmp` and it will not be affected.
+
+Macros are unhygienic by default: identifiers you introduce are normal symbols. Use `gensym` (or a helper like `with-gensyms`) for all temporary bindings in macro output.
 
 ---
 
-## Quote
+## 12. Summary of built-in names
 
-Quote in this programming language is type, which represents not yet evaluated expression. It can be atom, cons, function call, everything. 
-
-```scheme
-(display "some string") ;; prints "some string"
-'(display "some string") ;; returns itself: '(display "some string")
-(quote (display "some string")) ;; same thing as above with quote symbol (')
-```
-
-and quote can be used as the way to represent list (just like *list* function), meaning
-
-```scheme
-(car '(display "some string")) ; retuns 'display' symbol
-(cdr '(display "some string")) ; retuns ("some string") 
-```
+**Core / control:** `begin`, `eval`, `if`, `eq`, `and`, `or`  
+**Variables:** `define`, `set!`, `let`, `let*`  
+**Quote:** `quote`, `quasiquote`  
+**Functions:** `lambda`, `apply`  
+**Lists:** `cons`, `list`, `car`, `cdr`, `set-car!`, `set-cdr!`, `length`, `reverse`  
+**Numbers:** `+`, `-`, `*`, `/`, `mod`, `expt`, `sqrt`, `abs`, `floor`, `ceil`, `round`, `=`, `>`, `<`, `>=`, `<=`  
+**Type:** `typeof`  
+**Strings:** `concat`, `string-length`, `substring`, `string->symbol`, `symbol->string`  
+**I/O:** `dump`, `read`, `read-file`, `load-file`, `reload-file`, `file->string`, `write`, `display`, `show-meta`  
+**Modules:** `import`, `get-from-module`  
+**Macros:** `macro`, `defmacro`, `macroexpand`, `gensym`  
+**Constants:** `t`, `nil`
 
 ---
 
-## Quasiquote, unquote and unquote-splicing
+## 13. Files and structure (reference)
 
-Quasiquote works like *quote*, except you can control what to evaluate and what not.
+- **Entry:** `bin/odeus.c` — REPL or file execution, single global environment.
+- **Evaluation:** `core/eval.c` — `evaluate_expression`, `apply`, `macro_expand_expression`; macros expanded before application.
+- **Values:** `core/value.c`, `core/include/core/value.h` — value types and constructors; `val_module` is a pure constructor (no registry).
+- **Environments:** `core/environment.c` — parent-linked frames; bindings by symbol identity.
+- **Parser:** `core/parser.c` — lists, dotted pairs, quote, quasiquote, unquote, `module/symbol` → `(get-from-module module symbol)`.
+- **Builtins:** `builtins/set_builtins.c` registers all builtins; individual files under `builtins/` (e.g. `forms.c`, `list.c`, `module.c`, `macros.c`).
+- **Quasiquote:** `core/quasiquote.c` — expands to `quote`, `cons`, and `append`; `,@` requires `append` in scope.
 
-```scheme
-;; next 2 lines are similar
-`(1 2 3 ,(+ 1 3))                      ;; => (1 2 3 4)_ 
-(quasiquote (1 2 3 (unquote (+ 1 3)))) ;; => (1 2 3 4)
-
-;; those 2 lines too
-`(1 2 3 ,@(4 5 6 7))                              ;; => (1 2 3 4 5 6 7)
-(quasiquote (1 2 3 (unquote-splicing (4 5 6 7)))) ;; => (1 2 3 4 5 6 7)
-```
-
-As you can see, *unquote* (comma character) denotes what's needs to be evaluated, then result is inserted in list.
-And *unquote-splicing* (comma with at symbol) denotes what's needs to be spliced/emplaced inside list.
-
-*Unquote* and *unquote-splicing* does not have meaning outside of quasiquote, and leads to error. Also, user cannot assing anything to symbols named *unquote* and *unquote-splicing*, since it would lead to expansion error. 
-
----
-
-## Function call
-
-Function call created by putting symbol as first element in list. Then evaluator searches for that symbol in environment, and if it finds symbol binding, then it executes function assigned to symbol.
-
-```scheme
-;; Example
-(car (list 1 2 3 4)) ;; => 1
-(cdr (list 1 2 3 4)) ;; => (2 3 4)
-```
-
----
-
-## Special forms
-
-Special forms control evaluation; their arguments may **not be evaluated automatically**.
-
-| Form         | Syntax / Description                                                                                               | Example                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
-| `quote`      | `(quote expr)` returns `expr` without evaluating it                                                                | `(quote x)` → `x`                                  |
-| `if`         | `(if condition then else)` evaluates `condition`; returns `then` if true, `else` otherwise                         | `(if (< 1 2) 'yes 'no)` → `yes`                    |
-| `define`     | `(define symbol expr)` defines a new variable with the evaluated value of `expr`. Cannot redefine existing symbols | `(define x 10)`                                    |
-| `set!`       | `(set! symbol expr)` updates an existing variable                                                                  | `(set! x 20)`                                      |
-| `lambda`     | `(lambda (params ...) body ...)` creates an anonymous function                                                     | `((lambda (x) (+ x 1)) 5)` → `6`                   |
-| `macro`      | `(macro (params ...) body ...)` creates an anonymous macro                                                         | `((macro (x) (quasiquote (+ x 1))) 5)` → `(list '+ '6 '5)`                   |
-| `let`        | `(let ((var val) ...) body ...)` creates a new environment and evaluates body                                      | `(let ((x 2) (y 3)) (+ x y))` → `5`                |
-| `let*`       | `(let* ((var val) ...) body ...)` like `let` but sequential bindings (supports recursion)                          | `(let* ((x 2) (y x)) (+ x y))` → `4`               |
-| `quasiquote` | `(quasiquote expr)` allows unquoting and splicing inside `expr`                                                    | `(quasiquote (1 2 (unquote (+ 1 1))))` → `(1 2 2)` |
-
----
-
-## List Primitives
-
-| Function  | Description                                                    | Example                                              |
-| --------- | -------------------------------------------------------------- | ---------------------------------------------------- |
-| `cons`    | `(cons a b)` creates a pair                                    | `(cons 1 2)` → `(1 . 2)`                             |
-| `car`     | `(car pair)` returns the first element of a pair               | `(car (cons 1 2))` → `1`                             |
-| `cdr`     | `(cdr pair)` returns the second element of a pair              | `(cdr (cons 1 2))` → `2`                             |
-| `list`    | `(list a b c ...)` creates a proper list                       | `(list 1 2 3)` → `(1 2 3)`                           |
-| `append`  | `(append list1 list2 ...)` concatenates lists                  | `(append '(1 2) '(3 4))` → `(1 2 3 4)`               |
-| `length`  | `(length lst)` returns the length of a list                    | `(length '(a b c))` → `3`                            |
-| `reverse` | `(reverse lst)` returns a reversed copy of the list            | `(reverse '(1 2 3))` → `(3 2 1)`                     |
-| `map`     | `(map func lst)` applies `func` to each element                | `(map (lambda (x) (* x 2)) '(1 2 3))` → `(2 4 6)`    |
-| `filter`  | `(filter pred lst)` returns elements where `pred` returns true | `(filter (lambda (x) (> x 2)) '(1 2 3 4))` → `(3 4)` |
-
----
-
-## Comparison Operators
-
-| Operator | Description           | Example          |
-| -------- | --------------------- | ---------------- |
-| `=`      | Numeric equality      | `(= 3 3)` → `t`  |
-| `<`      | Less than             | `(< 2 3)` → `t`  |
-| `>`      | Greater than          | `(> 5 2)` → `t`  |
-| `<=`     | Less than or equal    | `(<= 3 3)` → `t` |
-| `>=`     | Greater than or equal | `(>= 5 2)` → `t` |
-
----
-
-## Arithmetic
-
-| Function | Description              | Example             |
-| -------- | ------------------------ | ------------------- |
-| `+`      | Addition                 | `(+ 1 2 3)` → `6`   |
-| `-`      | Subtraction              | `(- 5 2)` → `3`     |
-| `*`      | Multiplication           | `(* 2 3)` → `6`     |
-| `/`      | Division                 | `(/ 6 2)` → `3`     |
-| `mod`    | Modulus                  | `(mod 5 2)` → `1`   |
-| `expt`   | Power                    | `(expt 2 3)` → `8`  |
-| `abs`    | Absolute value           | `(abs -5)` → `5`    |
-| `floor`  | Floor function           | `(floor 3.7)` → `3` |
-| `ceil`   | Ceiling function         | `(ceil 3.2)` → `4`  |
-| `round`  | Round to nearest integer | `(round 3.6)` → `4` |
-| `sqrt`   | Square root              | `(sqrt 16)` → `4`   |
-
----
-
-## Type Predicates
-
-| Predicate   | Description                   | Example                            |
-| ----------- | ----------------------------- | ---------------------------------- |
-| `atom?`     | Checks if value is not a pair | `(atom? 1)` → `t`                  |
-| `symbol?`   | Checks if value is a symbol   | `(symbol? 'x)` → `t`               |
-| `string?`   | Checks if value is a string   | `(string? "hi")` → `t`             |
-| `number?`   | Checks if value is a number   | `(number? 3.14)` → `t`             |
-| `integer?`  | Checks if value is integer    | `(integer? 5)` → `t`               |
-| `float?`    | Checks if value is float      | `(float? 5.0)` → `t`               |
-| `cons?`     | Checks if value is a pair     | `(cons? '(1 2))` → `t`             |
-| `function?` | Checks if value is a function | `(function? (lambda (x) x))` → `t` |
-
----
-
-## I/O Functions
-
-| Function       | Description                             | Example                              |
-| -------------- | --------------------------------------- | ------------------------------------ |
-| `display`      | Prints value to stdout                  | `(display "hello")` → prints `hello`|
-| `dump`         | Prints internal AST representation      | `(dump '(1 2 3))` → `(1 2 3)`       |
-| `read`         | Reads a Lisp expression from input      | `(read)` → user input expression    |
-| `read-file`    | Reads a file and returns content as AST | `(read-file "file.odeus")`           |
-| `write`        | Turns expression into string            | `(write "file.odeus" '(1 2 3))`      |
-| `file->string` | Reads file content as string            | `(file->string "file.txt")`          |
-
-## Example Programs
-
-### Factorial
-
-```lisp
-(define factorial
-  (lambda (n)
-    (if (= n 0)
-        1
-        (* n (factorial (- n 1))))))
-(factorial 5) ; => 120
-```
+This document reflects the current implementation; for the latest behavior, refer to the source.
