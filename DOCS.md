@@ -45,19 +45,19 @@ Anything not in double quotes is tokenized as symbol or number; parentheses, quo
 
 ## 3. Value types
 
-| Type       | Description                          |
-|-----------|--------------------------------------|
-| `nil`     | Empty list / false.                  |
-| `t`       | Canonical true value.               |
-| symbol    | Identifier (interned).              |
-| integer   | Whole numbers.                      |
-| float     | Floating-point.                     |
-| string    | `"..."`                             |
-| cons      | Pair (CAR . CDR), used for lists.   |
-| function  | Lambda or builtin.                  |
-| macro     | Macro (transforms syntax).          |
-| module    | Result of `import`.                  |
-| error     | Error value (message string).       |
+| Type     | Description                       |
+|----------|-----------------------------------|
+| `nil`    | Empty list / false.               |
+| `t`      | Canonical true value.             |
+| symbol   | Identifier (interned).            |
+| integer  | Whole numbers.                    |
+| float    | Floating-point.                   |
+| string   | `"..."`                           |
+| cons     | Pair (CAR . CDR), used for lists. |
+| function | Lambda or builtin.                |
+| macro    | Macro (transforms syntax).        |
+| module   | Result of `import`.               |
+| error    | Error value (message string).     |
 
 Predicates: use `(typeof x)` and compare to symbols `'nil`, `'symbol`, `'integer`, `'float`, `'string`, `'cons`, `'function`, `'macro`, `'module`, `'error`.
 
@@ -128,16 +128,16 @@ Predicates: use `(typeof x)` and compare to symbols `'nil`, `'symbol`, `'integer
 
 ## 6. Lists and pairs
 
-| Form            | Description |
-|-----------------|-------------|
-| `(cons a b)`    | Builds a pair (CAR = `a`, CDR = `b`). |
-| `(list x ...)`  | Builds a proper list of the evaluated arguments. |
-| `(car pair)`    | First element of a pair. |
-| `(cdr pair)`    | Second element of a pair. |
-| `(set-car! pair val)` | Mutates CAR of `pair`. |
-| `(set-cdr! pair val)` | Mutates CDR of `pair`. |
-| `(length list)`  | Number of elements in a proper list. |
-| `(reverse list)` | New list with elements reversed. |
+| Form                  | Description                                      |
+|-----------------------|--------------------------------------------------|
+| `(cons a b)`          | Builds a pair (CAR = `a`, CDR = `b`).            |
+| `(list x ...)`        | Builds a proper list of the evaluated arguments. |
+| `(car pair)`          | First element of a pair.                         |
+| `(cdr pair)`          | Second element of a pair.                        |
+| `(set-car! pair val)` | Mutates CAR of `pair`.                           |
+| `(set-cdr! pair val)` | Mutates CDR of `pair`.                           |
+| `(length list)`       | Number of elements in a proper list.             |
+| `(reverse list)`      | New list with elements reversed.                 |
 
 ---
 
@@ -145,19 +145,19 @@ Predicates: use `(typeof x)` and compare to symbols `'nil`, `'symbol`, `'integer
 
 All accept integers and floats; result is integer only when all operands are integers and the operation is exact.
 
-| Operator | Form           | Description |
-|----------|----------------|-------------|
-| `+`      | `(+ n ...)`    | Sum (zero args → 0). |
-| `-`      | `(- n ...)`    | Negation; `(- a b ...)` subtracts rest from first. |
-| `*`      | `(* n ...)`    | Product (zero args → 1). |
-| `/`      | `(/ a b ...)`  | Division; always returns float. |
-| `mod`    | `(mod a b)`    | Remainder (integer). |
-| `expt`   | `(expt base exp)` | Power. |
-| `sqrt`   | `(sqrt x)`     | Square root (float). |
-| `abs`    | `(abs x)`      | Absolute value. |
-| `floor`  | `(floor x)`    | Floor (integer). |
-| `ceil`   | `(ceil x)`     | Ceiling (integer). |
-| `round`  | `(round x)`    | Round (integer). |
+| Operator | Form              | Description                                        |
+|----------|-------------------|----------------------------------------------------|
+| `+`      | `(+ n ...)`       | Sum (zero args → 0).                               |
+| `-`      | `(- n ...)`       | Negation; `(- a b ...)` subtracts rest from first. |
+| `*`      | `(* n ...)`       | Product (zero args → 1).                           |
+| `/`      | `(/ a b ...)`     | Division; always returns float.                    |
+| `mod`    | `(mod a b)`       | Remainder (integer).                               |
+| `expt`   | `(expt base exp)` | Power.                                             |
+| `sqrt`   | `(sqrt x)`        | Square root (float).                               |
+| `abs`    | `(abs x)`         | Absolute value.                                    |
+| `floor`  | `(floor x)`       | Floor (integer).                                   |
+| `ceil`   | `(ceil x)`        | Ceiling (integer).                                 |
+| `round`  | `(round x)`       | Round (integer).                                   |
 
 Comparisons (return `t` or `nil`): `=`, `>`, `<`, `>=`, `<=`.
 
@@ -165,13 +165,13 @@ Comparisons (return `t` or `nil`): `=`, `>`, `<`, `>=`, `<=`.
 
 ## 8. Strings
 
-| Form | Description |
-|------|-------------|
-| `(concat s ...)` | Concatenates strings. |
-| `(string-length s)` | Length of string. |
+| Form                        | Description                                                  |
+|-----------------------------|--------------------------------------------------------------|
+| `(concat s ...)`            | Concatenates strings.                                        |
+| `(string-length s)`         | Length of string.                                            |
 | `(substring s start [end])` | Substring; negative indices from end; default end is length. |
-| `(symbol->string sym)` | Name of symbol as string. |
-| `(string->symbol s)` | Not implemented (returns error). |
+| `(symbol->string sym)`      | Name of symbol as string.                                    |
+| `(string->symbol s)`        | Not implemented (returns error).                             |
 
 ---
 
@@ -257,7 +257,7 @@ Because macros are unhygienic, any identifier you introduce in the expansion (e.
   Returns a **new symbol** with a unique name each time (e.g. `g__0`, `g__1`, `g__2`, …). Takes no arguments. Each call returns a different symbol.
 
 - **`(gensym prefix)`**  
-  Returns a new symbol whose **name starts with** `prefix`. The only argument is a **symbol**; its print name is used as the prefix (e.g. `(gensym tmp)` → `tmp0`, `tmp1`, …). Useful when debugging macro expansions so you can recognise your temps (e.g. `tmp`, `result`, `loop`).
+  Returns a new symbol whose **name starts with** `prefix`. The only argument is a **symbol**; its print name is used as the prefix (e.g. `(gensym tmp)` → `tmp0`, `tmp1`, …). Useful when debugging macro expansions so you can recognize your temps (e.g. `tmp`, `result`, `loop`).
 
 **When to use:** Whenever your macro inserts a **binding** (e.g. a `let` variable, a lambda parameter) that is only for internal use — create it with `gensym` so it never clashes with user code.
 
