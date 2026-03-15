@@ -21,7 +21,8 @@ builtin_define (Environment *environment, Value *arguments)
     {
       Value *current = env_get (environment, to_be_defined);
       if (current->type != VALUE_ERROR)
-        return val_error ("define: symbol already defined: %s", to_be_defined->as.SYMBOL);
+        return val_error ("define: symbol already defined: %s",
+                          to_be_defined->as.SYMBOL);
 
       // Initialize with nil first
       env_set (environment, to_be_defined, val_nil (), to_be_defined->meta);
@@ -46,7 +47,8 @@ builtin_define (Environment *environment, Value *arguments)
 
       Value *current = env_get (environment, func_name);
       if (current->type != VALUE_ERROR)
-        return val_error ("define: symbol already defined: %s", func_name->as.SYMBOL);
+        return val_error ("define: symbol already defined: %s",
+                          func_name->as.SYMBOL);
 
       Value *params = CDR (to_be_defined);
 
@@ -92,7 +94,7 @@ Value *
 builtin_let (Environment *environment, Value *arguments)
 {
   if (IS_NULL (arguments))
-    return val_error ("let: expects at levalue bindings and body");
+    return val_error ("let: expects at least bindings and body");
 
   Value *bindings = CAR (arguments);
   Value *body = CDR (arguments);
@@ -116,36 +118,33 @@ builtin_let (Environment *environment, Value *arguments)
       if (key->type != VALUE_SYMBOL)
         return val_error ("let: binding first element must be symbol");
 
-      // Initialize with nil first
       env_set (inner_environment, key, val_nil (), key->meta);
 
-      // Evaluate value in parent environment
       Value *value = evaluate_expression (environment, value_expression);
       ERROR_OUT (value);
 
-      // Update binding
       env_update (inner_environment, key, value, key->meta);
 
       current = CDR (current);
     }
 
-  Value *result = val_nil ();
-  current = body;
-  while (current->type == VALUE_CONS)
+  // evaluate all body forms except last
+  while (body->type == VALUE_CONS && CDR (body)->type == VALUE_CONS)
     {
-      result = evaluate_expression (inner_environment, CAR (current));
+      Value *result = evaluate_expression (inner_environment, CAR (body));
       ERROR_OUT (result);
-      current = CDR (current);
+      body = CDR (body);
     }
 
-  return result;
+  // TCO: tail position
+  return val_loop (inner_environment, CAR (body));
 }
 
 Value *
 builtin_let_star (Environment *environment, Value *arguments)
 {
   if (IS_NULL (arguments))
-    return val_error ("let*: expects at levalue bindings and body");
+    return val_error ("let*: expects at least bindings and body");
 
   Value *bindings = CAR (arguments);
   Value *body = CDR (arguments);
@@ -154,20 +153,18 @@ builtin_let_star (Environment *environment, Value *arguments)
     return val_error ("let*: first argument must be a list of bindings");
 
   Environment *inner_environment = environment;
-
   Value *current = bindings;
   while (current->type == VALUE_CONS)
     {
       Value *binding = CAR (current);
       if (binding->type != VALUE_CONS || IS_NULL (binding)
           || IS_NULL (CDR (binding)))
-        return val_error ("let: each binding must be (symbol value)");
+        return val_error ("let*: each binding must be (symbol value)");
 
       Value *key = CAR (binding);
       Value *value_expression = CADR (binding);
-
       if (key->type != VALUE_SYMBOL)
-        return val_error ("let: binding first element must be symbol");
+        return val_error ("let*: binding first element must be symbol");
 
       env_set (inner_environment, key, val_nil (), key->meta);
 
@@ -175,35 +172,35 @@ builtin_let_star (Environment *environment, Value *arguments)
       ERROR_OUT (value);
 
       env_update (inner_environment, key, value, key->meta);
-
       current = CDR (current);
     }
 
-  Value *result = val_nil ();
-  current = body;
-  while (current->type == VALUE_CONS)
+  // evaluate all body forms except last
+  while (body->type == VALUE_CONS && CDR (body)->type == VALUE_CONS)
     {
-      result = evaluate_expression (inner_environment, CAR (current));
+      Value *result = evaluate_expression (inner_environment, CAR (body));
       ERROR_OUT (result);
-      current = CDR (current);
+      body = CDR (body);
     }
 
-  return result;
+  // TCO: tail position
+  return val_loop (inner_environment, CAR (body));
 }
 
 Value *
 builtin_begin (Environment *environment, Value *arguments)
 {
-  Value *lvalue = val_nil ();
+  if (arguments->type != VALUE_CONS)
+    return val_nil ();
 
-  while (arguments->type == VALUE_CONS)
+  while (CDR (arguments)->type == VALUE_CONS)
     {
-      lvalue = evaluate_expression (environment, CAR (arguments));
-      ERROR_OUT (lvalue);
+      Value *result = evaluate_expression (environment, CAR (arguments));
+      ERROR_OUT (result);
       arguments = CDR (arguments);
     }
 
-  return lvalue;
+  return val_loop (environment, CAR (arguments));
 }
 
 Value *

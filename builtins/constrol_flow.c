@@ -41,9 +41,9 @@ builtin_if (Environment *environment, Value *args)
   ERROR_OUT (cond);
 
   if (!IS_NULL (cond))
-    return evaluate_expression (environment, CADR (args));
+    return val_loop (environment, CADR (args));
   else
-    return evaluate_expression (environment, CADR (CDR (args)));
+    return val_loop (environment, CADR (CDR (args)));
 }
 
 Value *
