@@ -189,6 +189,9 @@ parse_symbol (Parser *parser, Token *token)
     .line_number = token->line,
   };
 
+  if (token->value[0] == ':')
+    return ast_string (++token->value); // skip first colon
+
   char *slash = strchr (token->value, '/');
   if (slash)
     { // module/symbol
