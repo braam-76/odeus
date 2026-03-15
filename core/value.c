@@ -109,6 +109,16 @@ val_builtin (Builtin_Function builtin_function)
 }
 
 Value *
+val_loop (Environment *environment, Value *expression)
+{
+  Value *node = (Value *)GC_malloc (sizeof (Value));
+  node->type = VALUE_LOOP;
+  node->as.LOOP.environment = environment;
+  node->as.LOOP.expression = expression;
+  return node;
+}
+
+Value *
 val_module (const char *module_name, Environment *environment)
 {
   const char *name = GC_strdup (module_name);
@@ -116,7 +126,7 @@ val_module (const char *module_name, Environment *environment)
   Value *node = (Value *)GC_malloc (sizeof (Value));
   memset (node, 0, sizeof (Value));
   node->type = VALUE_MODULE;
-  node->as.MODULE.name = (char*)name;
+  node->as.MODULE.name = (char *)name;
   node->as.MODULE.environment = environment;
 
   return node;
