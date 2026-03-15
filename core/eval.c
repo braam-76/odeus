@@ -1,56 +1,80 @@
 #include "core/eval.h"
 #include "core/value.h"
 
-static Value *bind_arguments (Environment *call_env, Environment *frame, Value *parameters,
-                            Value *arguments);
+static Value *bind_arguments (Environment *call_env, Environment *frame,
+                              Value *parameters, Value *arguments);
 
-static Value *bind_macro_arguments (Environment *frame, Value *parameters, Value *arguments);
+static Value *bind_macro_arguments (Environment *frame, Value *parameters,
+                                    Value *arguments);
 
 Value *
 evaluate_expression (Environment *environment, Value *expression)
 {
-  if (!expression)
-    return val_nil ();
-
-  switch (expression->type)
+  while (1)
     {
-    case VALUE_INTEGER:
-    case VALUE_FLOAT:
-    case VALUE_STRING:
-    case VALUE_NIL:
-    case VALUE_LAMBDA:
-    case VALUE_MACRO:
-      return expression;
+      if (!expression)
+        return val_nil ();
 
-    case VALUE_SYMBOL:
-      return env_get (environment, expression);
+      switch (expression->type)
+        {
+        case VALUE_INTEGER:
+        case VALUE_FLOAT:
+        case VALUE_STRING:
+        case VALUE_NIL:
+        case VALUE_LAMBDA:
+        case VALUE_MACRO:
+          return expression;
 
-    case VALUE_CONS:
-      {
-        Value *expanded = macro_expand_expression (environment, expression);
-        ERROR_OUT (expanded);
+        case VALUE_SYMBOL:
+          return env_get (environment, expression);
 
-        if (expanded != expression)
-          return evaluate_expression (environment, expanded);
+        case VALUE_LOOP:
+          environment = expression->as.LOOP.environment;
+          expression = expression->as.LOOP.expression;
+          continue;
 
-        Value *op = CAR (expression);
-        Value *args = CDR (expression);
+        case VALUE_CONS:
+          {
+            Value *expanded
+                = macro_expand_expression (environment, expression);
+            ERROR_OUT (expanded);
 
-        Value *fn = (op->type == VALUE_SYMBOL)
-                      ? env_get (environment, op)
-                      : evaluate_expression (environment, op);
+            if (expanded != expression)
+              {
+                expression = expanded;
+                continue;
+              }
 
-        ERROR_OUT (fn);
+            Value *op = CAR (expression);
+            Value *args = CDR (expression);
 
-        return apply (environment, fn, args);
-      }
+            Value *fn = (op->type == VALUE_SYMBOL)
+                            ? env_get (environment, op)
+                            : evaluate_expression (environment, op);
 
-    case VALUE_ERROR:
-    case VALUE_END_OF_FILE:
-      return expression;
+            ERROR_OUT (fn);
 
-    default:
-      return val_error ("evaluate_expression: unknown VALUE type");
+            Value *result = apply (environment, fn, args);
+
+            // Tail Call Optimization: if apply returned a VALUE_LOOP, loop
+            // instead of returning
+            if (result->type == VALUE_LOOP)
+              {
+                environment = result->as.LOOP.environment;
+                expression = result->as.LOOP.expression;
+                continue;
+              }
+
+            return result;
+          }
+
+        case VALUE_ERROR:
+        case VALUE_END_OF_FILE:
+          return expression;
+
+        default:
+          return val_error ("evaluate_expression: unknown VALUE type");
+        }
     }
 }
 
@@ -110,27 +134,29 @@ apply (Environment *call_env, Value *function, Value *arguments)
   if (function->type == VALUE_LAMBDA)
     {
       Environment *frame = env_init (function->as.CLOSURE.environment);
-
       Value *err = bind_arguments (call_env, frame,
-                                 function->as.CLOSURE.parameters, arguments);
+                                   function->as.CLOSURE.parameters, arguments);
       ERROR_OUT (err);
 
-      Value *result = val_nil ();
-      for (Value *body = function->as.CLOSURE.body; body->type == VALUE_CONS;
-           body = CDR (body))
+      // evaluate all body forms except last
+      Value *body = function->as.CLOSURE.body;
+      while (body->type == VALUE_CONS && CDR (body)->type == VALUE_CONS)
         {
-          result = evaluate_expression (frame, CAR (body));
+          Value *result = evaluate_expression (frame, CAR (body));
           ERROR_OUT (result);
+          body = CDR (body);
         }
 
-      return result;
+      // return VALUE_LOOP instead of recursing — lets evaluate_expression loop
+      return val_loop (frame, CAR (body));
     }
 
   return val_error ("attempt to call non-function");
 }
 
 static Value *
-bind_arguments (Environment *call_env, Environment *frame, Value *parameters, Value *arguments)
+bind_arguments (Environment *call_env, Environment *frame, Value *parameters,
+                Value *arguments)
 {
   Value *params = parameters;
   Value *args = arguments;
